@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    'lighthouse' => [
+        'url'    => env('LIGHTHOUSE_API_URL'),
+        'token'  => env('LIGHTHOUSE_API_TOKEN'),
+        'regions' => array_values(array_filter(array_map('trim', explode(',', (string) env('LIGHTHOUSE_API_REGIONS', ''))))),
+        'region' => env('LIGHTHOUSE_API_REGION', null),
+        'device' => env('LIGHTHOUSE_API_DEVICE', 'mobile'), // 'mobile' | 'desktop'
+    ],
+
 ];
