@@ -5,7 +5,6 @@ namespace App\Jobs;
 use App\Models\{SeoAudit, Site, WpIntegration};
 use App\Services\WordPressClient;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Arr;
@@ -18,94 +17,101 @@ class RunSeoAuditJob implements ShouldQueue
 
     public function __construct(public int $siteId) {}
 
-    private function httpClient(array $headers = []): Client
+    private function psiClient(): Client
     {
-        $token = config('services.lighthouse.token');
-        $hdrs = array_merge([
-            'Accept' => 'application/json',
-            'Content-Type' => 'application/json',
-        ], $headers);
-
-        if ($token) {
-            $hdrs['Authorization'] = $token;        }
-
-        return new Client(['timeout' => 60, 'headers' => $hdrs]);
+        return new Client(['timeout' => 60]);
     }
 
-    private function startLighthouseCheck(string $base, string $url): string
+    private function psiEndpoint(): string
     {
-        $client = $this->httpClient();
-        $endpoint = rtrim($base, '/').'/lighthouse/checks';
+        return 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed';
+    }
 
-        // Regions: kräv minst en
-        $regions = config('services.lighthouse.regions');
-        if (empty($regions)) {
-            $single = config('services.lighthouse.region');
-            if (!empty($single)) {
-                $regions = [$single];
-            } else {
-                // Fallback om inget är satt
-                $regions = ['us-east4'];
-            }
+    private function baseQuery(string $url, string $strategy): array
+    {
+        $key = config('services.pagespeed.key');
+        if (!$key) {
+            throw new \RuntimeException('PAGESPEED_API_KEY saknas i .env');
         }
-
-        $payload = [
+        return [
             'url' => $url,
-            'regions' => $regions, // VIKTIGT: API kräver array
+            'key' => $key,
+            'strategy' => $strategy, // 'mobile' | 'desktop'
         ];
-
-        // Valfritt: device/strategy (om API stöder)
-        if ($device = config('services.lighthouse.device')) {
-            $payload['device'] = $device;                  // vissa API:n
-            $payload['formFactor'] = $device;              // andra
-            $payload['strategy'] = $device === 'desktop' ? 'desktop' : 'mobile'; // PageSpeed-stil
-        }
-
-        try {
-            $res = $client->post($endpoint, ['json' => $payload, 'timeout' => 60]);
-            $json = json_decode((string) $res->getBody(), true);
-            $id = Arr::get($json, 'id') ?? Arr::get($json, 'check.id');
-            if (!$id) {
-                throw new \RuntimeException('Inget checkId i svaret: '.json_encode($json, JSON_UNESCAPED_UNICODE));
-            }
-            Log::info('[SEO Audit] Lighthouse check skapad', ['checkId' => $id, 'regions' => $regions]);
-            return (string) $id;
-        } catch (RequestException $e) {
-            $status = $e->getResponse()?->getStatusCode();
-            $body = (string) ($e->getResponse()?->getBody() ?? '');
-            throw new \RuntimeException("Kunde inte skapa Lighthouse-check (status {$status}): {$body}");
-        }
     }
 
-    private function pollLighthouseCheck(string $base, string $checkId, int $timeoutSeconds = 90, int $intervalMs = 2000): array
+    // Bygg query-string med upprepade category-parametrar: category=...&category=...
+    private function buildQueryString(array $base, array $categories = []): string
     {
-        $client = $this->httpClient();
-        $endpoint = rtrim($base, '/').'/lighthouse/checks/'.urlencode($checkId);
+        $qs = http_build_query($base, '', '&', PHP_QUERY_RFC3986);
+        foreach ($categories as $cat) {
+            $qs .= '&category=' . rawurlencode($cat);
+        }
+        return $qs;
+    }
 
-        $start = microtime(true);
-        do {
-            try {
-                $res = $client->get($endpoint, ['timeout' => 30]);
-                $data = json_decode((string) $res->getBody(), true);
+    // Gör ett PSI-anrop med valfria kategorier (korrekt serialiserade)
+    private function requestPsiWithCats(string $url, string $strategy, array $categories): array
+    {
+        $base = $this->baseQuery($url, $strategy);
+        $queryString = $this->buildQueryString($base, $categories);
+        $fullUrl = $this->psiEndpoint() . '?' . $queryString;
 
-                $state = strtolower((string) (Arr::get($data, 'state') ?? Arr::get($data, 'check.state', '')));
-                if (in_array($state, ['succeeded','failed','error'], true)) {
-                    Log::info('[SEO Audit] Lighthouse check klar', ['checkId' => $checkId, 'state' => $state]);
-                    return $data;
+        Log::info('[PSI] Request', ['url' => $fullUrl]);
+
+        $res = $this->psiClient()->get($fullUrl, ['timeout' => 60]);
+        return json_decode((string) $res->getBody(), true);
+    }
+
+    // Försök: 1) ett anrop för alla; 2) per-kategori för saknade; 3) fallback-strategi per saknad
+    private function fetchAllCategoriesMerged(string $url, string $primary, string $fallback): array
+    {
+        $cats = ['performance','accessibility','best-practices','seo'];
+
+        // 1) Alla på en gång
+        $data = $this->requestPsiWithCats($url, $primary, $cats);
+
+        // 2) Komplettera per saknad kategori (primär strategi)
+        foreach ($cats as $cat) {
+            if (Arr::get($data, "lighthouseResult.categories.$cat.score") === null) {
+                $single = $this->requestPsiWithCats($url, $primary, [$cat]);
+                $node = Arr::get($single, "lighthouseResult.categories.$cat");
+                if ($node !== null) {
+                    $data['lighthouseResult']['categories'][$cat] = $node;
                 }
-            } catch (\Throwable $e) {
-                Log::warning('[SEO Audit] Poll-fel', ['checkId' => $checkId, 'msg' => $e->getMessage()]);
             }
-            usleep($intervalMs * 1000);
-        } while ((microtime(true) - $start) < $timeoutSeconds);
+        }
 
-        throw new \RuntimeException('Timeout vid hämtning av Lighthouse-resultat.');
+        // 3) Fallback för kvarvarande saknade
+        foreach ($cats as $cat) {
+            if (Arr::get($data, "lighthouseResult.categories.$cat.score") === null) {
+                $single = $this->requestPsiWithCats($url, $fallback, [$cat]);
+                $node = Arr::get($single, "lighthouseResult.categories.$cat");
+                if ($node !== null) {
+                    $data['lighthouseResult']['categories'][$cat] = $node;
+                }
+            }
+        }
+
+        // Säkerställ struktur även om categories saknas helt
+        if (!isset($data['lighthouseResult']['categories'])) {
+            $data['lighthouseResult']['categories'] = [];
+        }
+
+        return $data;
+    }
+
+    private function score(?array $data, string $cat): ?int
+    {
+        if (!$data) return null;
+        $val = Arr::get($data, "lighthouseResult.categories.$cat.score");
+        return $val === null ? null : (int) round(((float) $val) * 100);
     }
 
     public function handle(): void
     {
         $site = Site::findOrFail($this->siteId);
-        Log::info('[SEO Audit] Start', ['site_id' => $site->id, 'url' => $site->url]);
+        Log::info('[SEO Audit] Start (PSI)', ['site_id' => $site->id, 'url' => $site->url]);
 
         $integration = WpIntegration::where('site_id', $site->id)->first();
 
@@ -118,7 +124,7 @@ class RunSeoAuditJob implements ShouldQueue
         $titleIssues = 0;
         $metaIssues = 0;
 
-        // WP-analys (oförändrad)
+        // 1) WP-analys (titlar/meta)
         if ($integration) {
             try {
                 $wp = WordPressClient::for($integration);
@@ -162,50 +168,35 @@ class RunSeoAuditJob implements ShouldQueue
             }
         }
 
-        // Lighthouse: create + poll
-        $lhPerf = 0; $lhAcc = 0; $lhBP = 0; $lhSEO = 0;
-        try {
-            $base = rtrim(config('services.lighthouse.url') ?? '', '/');
-            if ($base === '') {
-                throw new \RuntimeException('Lighthouse URL saknas i konfigurationen');
-            }
+        // 2) PSI – korrekt category-serialisering + fallback
+        $primary  = config('services.pagespeed.strategy', 'mobile');
+        $fallback = $primary === 'mobile' ? 'desktop' : 'mobile';
 
-            $checkId = $this->startLighthouseCheck($base, $site->url);
-            $result = $this->pollLighthouseCheck($base, $checkId, 120, 2000);
+        $data = $this->fetchAllCategoriesMerged($site->url, $primary, $fallback);
 
-            $run = Arr::first(Arr::get($result, 'runs', []), fn() => true) ?? [];
+        $perf = $this->score($data, 'performance');
+        $acc  = $this->score($data, 'accessibility');
+        $bp   = $this->score($data, 'best-practices');
+        $seo  = $this->score($data, 'seo');
 
-            $lhPerf = (int) ($run['performance'] ?? 0);
-            $lhAcc  = (int) ($run['accessibility'] ?? 0);
-            $lhBP   = (int) ($run['bestPractices'] ?? 0);
-            $lhSEO  = (int) ($run['seo'] ?? 0);
-        } catch (\Throwable $e) {
-            Log::error('[SEO Audit] Lighthouse fel', ['site_id' => $site->id, 'error' => $e->getMessage()]);
-            $audit->items()->create([
-                'type' => 'lighthouse',
-                'page_url' => $site->url,
-                'message' => 'Lighthouse misslyckades',
-                'severity' => 'high',
-                'data' => ['hint' => 'Sätt LIGHTHOUSE_API_REGIONS (kommaseparerat) i .env, t.ex. us-east4', 'details' => $e->getMessage()],
-            ]);
-        }
-
+        // 3) Spara
         $audit->update([
-            'lighthouse_performance' => $lhPerf,
-            'lighthouse_accessibility' => $lhAcc,
-            'lighthouse_best_practices' => $lhBP,
-            'lighthouse_seo' => $lhSEO,
-            'title_issues' => $titleIssues,
-            'meta_issues' => $metaIssues,
+            'lighthouse_performance'    => $perf,
+            'lighthouse_accessibility'  => $acc,
+            'lighthouse_best_practices' => $bp,
+            'lighthouse_seo'            => $seo,
+            'title_issues'              => $titleIssues,
+            'meta_issues'               => $metaIssues,
             'summary' => [
-                'checked_at' => now()->toIso8601String(),
-                'pages_sampled' => isset($posts) ? count($posts) : 0,
+                'checked_at'        => now()->toIso8601String(),
+                'strategy_primary'  => $primary,
+                'strategy_fallback' => $fallback,
             ],
         ]);
 
-        Log::info('[SEO Audit] Klar', [
+        Log::info('[SEO Audit] Klar (PSI)', [
             'site_id' => $site->id,
-            'perf' => $lhPerf, 'acc' => $lhAcc, 'bp' => $lhBP, 'seo' => $lhSEO,
+            'perf' => $perf, 'acc' => $acc, 'bp' => $bp, 'seo' => $seo,
             'title_issues' => $titleIssues, 'meta_issues' => $metaIssues,
         ]);
     }
