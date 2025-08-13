@@ -44,22 +44,22 @@
     <div class="space-y-3">
         @foreach($items as $it)
             <div class="border rounded p-3">
-                <div class="flex items-center justify-between">
-                    <div>
+                <div class="flex items-center justify-between gap-3">
+                    <div class="min-w-0">
                         <div class="text-xs text-gray-500 uppercase">{{ $it->type }}</div>
-                        <div class="text-sm">
+                        <div class="text-sm truncate">
                             <a href="{{ $it->page_url }}" class="text-indigo-600 hover:underline" target="_blank" rel="noopener">{{ $it->page_url }}</a>
                         </div>
                         <div class="mt-1">{{ $it->message }}</div>
                         @if($it->data)
-                            <pre class="mt-2 text-xs bg-gray-50 p-2 rounded border">{{ json_encode($it->data, JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE) }}</pre>
+                            <pre class="mt-2 text-xs bg-gray-50 p-2 rounded border overflow-auto">{{ json_encode($it->data, JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE) }}</pre>
                         @endif
                     </div>
 
                     @php $postId = $it->data['post_id'] ?? null; @endphp
                     @if($postId)
                         <div class="shrink-0">
-                            <a class="btn btn-sm" href="{{ route('wp.posts.meta', [$it->audit->site_id, 'postId' => $postId]) }}">Föreslå & applicera meta</a>
+                            <a class="btn btn-sm" href="{{ route('wp.posts.meta', [$it->audit->site_id, 'postId' => $postId]) }}">Apply meta i WP</a>
                         </div>
                     @endif
                 </div>

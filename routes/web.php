@@ -55,6 +55,21 @@ Route::middleware(['auth','verified','onboarded'])->group(function () {
         return back()->with('success', 'SEO audit startad. Uppdatera sidan om en stund.');
     })->name('seo.audit.run');
 
+    Route::post('/sites/{site}/seo/audit/run', function (\App\Models\Site $site) {
+        // auktorisera: admin eller tillhör aktiv kund
+        $user = auth()->user();
+        if (!$user->isAdmin()) {
+            abort_unless($user->customers()->whereKey($site->customer_id)->exists(), 403);
+        }
+
+        if (request()->boolean('sync')) {
+            dispatch_sync(new RunSeoAuditJob($site->id));
+        } else {
+            dispatch((new RunSeoAuditJob($site->id))->onQueue('seo'));
+        }
+
+        return back()->with('success', 'SEO audit startad för '.$site->name.'.');
+    })->name('sites.seo.audit.run');
 
     Route::get('/seo/audits', AuditHistory::class)->name('seo.audit.history');
     Route::get('/seo/audits/{auditId}', AuditDetail::class)->name('seo.audit.detail');

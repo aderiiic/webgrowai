@@ -36,4 +36,14 @@
             <div class="text-xs text-red-600">Fel: {{ $last_error }}</div>
         @endif
     </div>
+
+    <div class="border-t pt-4 mt-6">
+        <div class="flex items-center justify-between">
+            <div class="text-sm text-gray-600">Snabb: Kör SEO Audit för denna sajt</div>
+            <form method="POST" action="{{ route('sites.seo.audit.run', $site) }}">
+                @csrf
+                <button class="btn btn-sm">Kör audit</button>
+            </form>
+        </div>
+    </div>
 </div>
