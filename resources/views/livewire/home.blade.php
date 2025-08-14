@@ -6,4 +6,5 @@
         @livewire('dashboard.seo-health-card')
         @livewire('dashboard.sites-audit-chips')
     </div>
+    @livewire('dashboard.weekly-digest-history')
 </div>

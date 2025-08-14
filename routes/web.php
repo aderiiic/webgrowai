@@ -4,6 +4,7 @@ use App\Jobs\RunSeoAuditJob;
 use App\Livewire\Home;
 use App\Livewire\SEO\AuditDetail;
 use App\Livewire\SEO\AuditHistory;
+use App\Livewire\Settings\WeeklySettings;
 use App\Livewire\Sites\WordPressConnect;
 use App\Livewire\Wizard;
 use App\Livewire\Wp\MetaEditor;
@@ -81,6 +82,8 @@ Route::middleware(['auth','verified','onboarded'])->group(function () {
     Route::get('/ai', AiIndex::class)->name('ai.list');
     Route::get('/ai/compose', AiCompose::class)->name('ai.compose');
     Route::get('/ai/{id}', AiDetail::class)->name('ai.detail');
+
+    Route::get('/settings/weekly', WeeklySettings::class)->name('settings.weekly');
 });
 
 Route::middleware(['auth','verified','can:admin'])->prefix('admin')->name('admin.')->group(function () {

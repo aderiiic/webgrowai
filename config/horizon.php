@@ -88,6 +88,7 @@ return [
         'redis:ai' => 60,
         'redis:seo' => 60,
         'redis:publish' => 60,
+        'redis:mail' => 60,
     ],
 
     /*
@@ -235,6 +236,19 @@ return [
             'timeout' => 120,
             'nice' => 0,
         ],
+        'supervisor-mail' => [
+            'connection' => 'redis',
+            'queue' => ['mail'],
+            'balance' => 'auto',
+            'autoScalingStrategy' => 'time',
+            'maxProcesses' => 1,
+            'maxTime' => 0,
+            'maxJobs' => 0,
+            'memory' => 256,
+            'tries' => 2,
+            'timeout' => 120,
+            'nice' => 0,
+        ],
     ],
 
     'environments' => [
@@ -255,6 +269,11 @@ return [
                 'balanceCooldown' => 3,
             ],
             'supervisor-publish' => ['maxProcesses' => 5, 'balanceMaxShift' => 1, 'balanceCooldown' => 3],
+            'supervisor-mail' => [
+                'maxProcesses' => 5,
+                'balanceMaxShift' => 1,
+                'balanceCooldown' => 3,
+            ],
         ],
 
         'local' => [
@@ -268,6 +287,7 @@ return [
                 'maxProcesses' => 1,
             ],
             'supervisor-publish' => ['maxProcesses' => 1],
+            'supervisor-mail'    => ['maxProcesses' => 1],
         ],
     ],
 ];
