@@ -3,7 +3,10 @@
 namespace App\Livewire\AI;
 
 use App\Jobs\PublishAiContentToWpJob;
+use App\Jobs\PublishToFacebookJob;
+use App\Jobs\PublishToInstagramJob;
 use App\Models\AiContent;
+use App\Models\ContentPublication;
 use App\Support\CurrentCustomer;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
@@ -14,9 +17,14 @@ class Detail extends Component
 {
     public AiContent $content;
 
+    // WP publicering
     public ?int $publishSiteId = null;
     public string $publishStatus = 'draft'; // draft|publish|future
     public ?string $publishAt = null; // 'YYYY-MM-DDTHH:MM'
+
+    // Social publicering
+    public string $socialTarget = 'facebook'; // facebook|instagram
+    public ?string $socialScheduleAt = null;  // 'YYYY-MM-DDTHH:MM'
 
     public function mount(int $id, CurrentCustomer $current): void
     {
@@ -54,23 +62,45 @@ class Detail extends Component
             scheduleAtIso: $iso
         ))->onQueue('publish');
 
-        session()->flash('success', 'Publicering köad till WordPress.');
+        session()->flash('success', 'WP-publicering köad.');
     }
 
     public function quickDraft(CurrentCustomer $current): void
     {
-        // Snabb “Publicera som utkast”
         $this->publishStatus = 'draft';
         $this->publishAt = null;
         $this->publish($current);
     }
 
-    public function render(CurrentCustomer $current)
+    public function queueSocial(): void
     {
-        $sites = $current->get()?->sites()->orderBy('name')->get() ?? collect();
-        return view('livewire.ai.detail', [
-            'md' => $this->content->body_md,
-            'sites' => $sites,
+        Gate::authorize('update', $this->content);
+        $this->validate([
+            'socialTarget' => 'required|in:facebook,instagram',
+            'socialScheduleAt' => 'nullable|date',
         ]);
+
+        $scheduledAt = $this->socialScheduleAt ? \Illuminate\Support\Carbon::parse($this->socialScheduleAt) : null;
+
+        $pub = ContentPublication::create([
+            'ai_content_id' => $this->content->id,
+            'target'        => $this->socialTarget,
+            'status'        => 'queued',
+            'scheduled_at'  => $scheduledAt,
+            'message'       => null,
+            'payload'       => null,
+        ]);
+
+        // Kör direkt om ingen framtida tid
+        if (!$scheduledAt || $scheduledAt->isPast()) {
+            if ($this->socialTarget === 'facebook') {
+                dispatch(new PublishToFacebookJob($pub->id))->onQueue('social');
+            } else {
+                dispatch(new PublishToInstagramJob($pub->id))->onQueue('social');
+            }
+            session()->flash('success', ucfirst($this->socialTarget).' publicering startad.');
+        } else {
+            session()->flash('success', ucfirst($this->socialTarget)." schemalagd till {$scheduledAt->format('Y-m-d H:i')}.");
+        }
     }
 }

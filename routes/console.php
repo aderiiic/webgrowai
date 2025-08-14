@@ -37,3 +37,5 @@ Artisan::command('weekly:digest {tag=monday}', function (string $tag) {
 // Schemalägg ENDAST weekly:digest
 Schedule::command('weekly:digest monday')->mondays()->at('08:00');
 Schedule::command('weekly:digest friday')->fridays()->at('15:00');
+
+Schedule::job(new \App\Jobs\ProcessScheduledPublicationsJob())->everyMinute();

@@ -4,84 +4,16 @@ use Illuminate\Support\Str;
 
 return [
 
-    /*
-    |--------------------------------------------------------------------------
-    | Horizon Domain
-    |--------------------------------------------------------------------------
-    |
-    | This is the subdomain where Horizon will be accessible from. If this
-    | setting is null, Horizon will reside under the same domain as the
-    | application. Otherwise, this value will serve as the subdomain.
-    |
-    */
-
     'domain' => env('HORIZON_DOMAIN'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Horizon Path
-    |--------------------------------------------------------------------------
-    |
-    | This is the URI path where Horizon will be accessible from. Feel free
-    | to change this path to anything you like. Note that the URI will not
-    | affect the paths of its internal API that aren't exposed to users.
-    |
-    */
-
     'path' => env('HORIZON_PATH', 'horizon'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Horizon Redis Connection
-    |--------------------------------------------------------------------------
-    |
-    | This is the name of the Redis connection where Horizon will store the
-    | meta information required for it to function. It includes the list
-    | of supervisors, failed jobs, job metrics, and other information.
-    |
-    */
-
     'use' => 'default',
-
-    /*
-    |--------------------------------------------------------------------------
-    | Horizon Redis Prefix
-    |--------------------------------------------------------------------------
-    |
-    | This prefix will be used when storing all Horizon data in Redis. You
-    | may modify the prefix when you are running multiple installations
-    | of Horizon on the same server so that they don't have problems.
-    |
-    */
 
     'prefix' => env(
         'HORIZON_PREFIX',
         Str::slug(env('APP_NAME', 'laravel'), '_').'_horizon:'
     ),
 
-    /*
-    |--------------------------------------------------------------------------
-    | Horizon Route Middleware
-    |--------------------------------------------------------------------------
-    |
-    | These middleware will get attached onto each Horizon route, giving you
-    | the chance to add your own middleware to this list or change any of
-    | the existing middleware. Or, you can simply stick with this list.
-    |
-    */
-
     'middleware' => ['web'],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Queue Wait Time Thresholds
-    |--------------------------------------------------------------------------
-    |
-    | This option allows you to configure when the LongWaitDetected event
-    | will be fired. Every connection / queue combination may have its
-    | own, unique threshold (in seconds) before this event is fired.
-    |
-    */
 
     'waits' => [
         'redis:default' => 60,
@@ -89,6 +21,7 @@ return [
         'redis:seo' => 60,
         'redis:publish' => 60,
         'redis:mail' => 60,
+        'redis:social' => 60,
     ],
 
     /*
@@ -249,6 +182,19 @@ return [
             'timeout' => 120,
             'nice' => 0,
         ],
+        'supervisor-social' => [
+            'connection' => 'redis',
+            'queue' => ['social'],
+            'balance' => 'auto',
+            'autoScalingStrategy' => 'time',
+            'maxProcesses' => 1,
+            'maxTime' => 0,
+            'maxJobs' => 0,
+            'memory' => 256,
+            'tries' => 2,
+            'timeout' => 120,
+            'nice' => 0,
+        ],
     ],
 
     'environments' => [
@@ -274,6 +220,11 @@ return [
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
             ],
+            'supervisor-social' => [
+                'maxProcesses' => 5,
+                'balanceMaxShift' => 1,
+                'balanceCooldown' => 3,
+            ],
         ],
 
         'local' => [
@@ -288,6 +239,7 @@ return [
             ],
             'supervisor-publish' => ['maxProcesses' => 1],
             'supervisor-mail'    => ['maxProcesses' => 1],
+            'supervisor-social' => ['maxProcesses' => 1],
         ],
     ],
 ];

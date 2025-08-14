@@ -57,4 +57,28 @@ return [
         'scheme'   => 'https',
     ],
 
+    'facebook' => [
+        'client_id'     => env('FACEBOOK_APP_ID'),
+        'client_secret' => env('FACEBOOK_APP_SECRET'),
+        'redirect'      => env('FACEBOOK_REDIRECT_URI'),
+        // önskade scopes för sidor och IG
+        'scopes'        => [
+            'public_profile',
+            'pages_show_list',
+            'pages_read_engagement',
+            'pages_manage_posts',
+            'pages_manage_metadata',
+            'instagram_basic',
+            'instagram_content_publish',
+            'instagram_manage_insights',
+        ],
+    ],
+
+    'instagram' => [
+        'client_id'     => env('INSTAGRAM_APP_ID'),
+        'client_secret' => env('INSTAGRAM_APP_SECRET'),
+        'redirect'      => env('INSTAGRAM_REDIRECT_URI'),
+        // IG Basic Display/Graph – vi använder Graph via FB-login, scopes hanteras via facebook.scopes
+    ],
+
 ];

@@ -1,15 +1,19 @@
 <?php
 
+use App\Http\Controllers\SocialAuthController;
 use App\Jobs\RunSeoAuditJob;
+use App\Livewire\Dashboard\PublicationsIndex;
 use App\Livewire\Home;
 use App\Livewire\SEO\AuditDetail;
 use App\Livewire\SEO\AuditHistory;
+use App\Livewire\Settings\SocialSettings;
 use App\Livewire\Settings\WeeklySettings;
 use App\Livewire\Sites\WordPressConnect;
 use App\Livewire\Wizard;
 use App\Livewire\Wp\MetaEditor;
 use App\Livewire\Wp\PostEditor;
 use App\Livewire\Wp\PostsIndex;
+use App\Models\AiContent;
 use Illuminate\Support\Facades\Route;
 use App\Livewire\Sites\Index as SitesIndex;
 use App\Livewire\Sites\Create as SitesCreate;
@@ -76,6 +80,21 @@ Route::middleware(['auth','verified','onboarded'])->group(function () {
         return back()->with('success', 'SEO audit startad för '.$site->name.'.');
     })->name('sites.seo.audit.run');
 
+    Route::get('/ai/{id}/export', function (int $id) {
+        $content = AiContent::findOrFail($id);
+        // Policy/ägarskap (om du har policy aktiverad)
+        if (method_exists($content, 'customer')) {
+            abort_unless(auth()->user()?->isAdmin() || auth()->user()?->customers()->whereKey($content->customer_id)->exists(), 403);
+        }
+        $md = $content->body_md ?? '';
+        $name = \Illuminate\Support\Str::slug($content->title ?: 'ai-content').'.md';
+
+        return response($md, 200, [
+            'Content-Type' => 'text/markdown; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"$name\"",
+        ]);
+    })->name('ai.export');
+
     Route::get('/seo/audits', AuditHistory::class)->name('seo.audit.history');
     Route::get('/seo/audits/{auditId}', AuditDetail::class)->name('seo.audit.detail');
 
@@ -83,7 +102,17 @@ Route::middleware(['auth','verified','onboarded'])->group(function () {
     Route::get('/ai/compose', AiCompose::class)->name('ai.compose');
     Route::get('/ai/{id}', AiDetail::class)->name('ai.detail');
 
+    Route::get('/publications', PublicationsIndex::class)->name('publications.index');
+
     Route::get('/settings/weekly', WeeklySettings::class)->name('settings.weekly');
+    Route::get('/settings/social', SocialSettings::class)->name('settings.social');
+
+    Route::get('/auth/facebook/redirect', [SocialAuthController::class, 'facebookRedirect'])->name('auth.facebook.redirect');
+    Route::get('/auth/facebook/callback', [SocialAuthController::class, 'facebookCallback'])->name('auth.facebook.callback');
+
+    // Instagram-knappen triggar samma flöde genom Facebook OAuth
+    Route::get('/auth/instagram/redirect', [SocialAuthController::class, 'instagramRedirect'])->name('auth.instagram.redirect');
+    Route::get('/auth/instagram/callback', [SocialAuthController::class, 'instagramCallback'])->name('auth.instagram.callback');
 });
 
 Route::middleware(['auth','verified','can:admin'])->prefix('admin')->name('admin.')->group(function () {
