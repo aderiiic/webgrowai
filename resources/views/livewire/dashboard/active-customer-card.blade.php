@@ -1,7 +1,17 @@
 <div class="border rounded-lg p-4 bg-white shadow-sm">
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between flex-wrap gap-2">
         <h2 class="text-lg font-semibold">Aktiv kund</h2>
-        <a href="{{ url()->current() }}?customer=" class="text-xs text-gray-500 hover:text-gray-700" title="Rensa kundval">Rensa</a>
+
+        @if($customer)
+            <div class="flex items-center gap-2">
+        <span class="inline-flex items-center gap-2 border rounded-full px-3 py-1 text-xs bg-indigo-50 text-indigo-700 border-indigo-200">
+          Genereringar ({{ now()->format('Y-m') }}): <span class="font-semibold">{{ $monthGenerateTotal }}</span>
+        </span>
+                <span class="inline-flex items-center gap-2 border rounded-full px-3 py-1 text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
+          Publicerade till WP: <span class="font-semibold">{{ $monthPublishTotal }}</span>
+        </span>
+            </div>
+        @endif
     </div>
 
     @if($customer)

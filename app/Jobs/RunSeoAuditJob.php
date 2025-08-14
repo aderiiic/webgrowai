@@ -194,6 +194,12 @@ class RunSeoAuditJob implements ShouldQueue
             ],
         ]);
 
+        try {
+            $usage->increment($site->customer_id, 'seo.audit');
+        } catch (\Throwable $e) {
+            Log::warning('[Usage] increment seo.audit failed', ['site_id' => $site->id, 'error' => $e->getMessage()]);
+        }
+
         Log::info('[SEO Audit] Klar (PSI)', [
             'site_id' => $site->id,
             'perf' => $perf, 'acc' => $acc, 'bp' => $bp, 'seo' => $seo,

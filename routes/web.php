@@ -13,9 +13,13 @@ use Illuminate\Support\Facades\Route;
 use App\Livewire\Sites\Index as SitesIndex;
 use App\Livewire\Sites\Create as SitesCreate;
 use App\Livewire\Sites\Edit as SitesEdit;
+use App\Livewire\AI\Index as AiIndex;
+use App\Livewire\AI\Compose as AiCompose;
+use App\Livewire\AI\Detail as AiDetail;
 
 use App\Livewire\Admin\Plans\Index as AdminPlansIndex;
 use App\Livewire\Admin\Plans\Edit as AdminPlansEdit;
+use App\Livewire\Admin\Usage\Index as AdminUsageIndex;
 
 Route::get('/', function () {
     return view('welcome');
@@ -73,9 +77,15 @@ Route::middleware(['auth','verified','onboarded'])->group(function () {
 
     Route::get('/seo/audits', AuditHistory::class)->name('seo.audit.history');
     Route::get('/seo/audits/{auditId}', AuditDetail::class)->name('seo.audit.detail');
+
+    Route::get('/ai', AiIndex::class)->name('ai.list');
+    Route::get('/ai/compose', AiCompose::class)->name('ai.compose');
+    Route::get('/ai/{id}', AiDetail::class)->name('ai.detail');
 });
 
 Route::middleware(['auth','verified','can:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/plans', AdminPlansIndex::class)->name('plans.index');
     Route::get('/plans/{plan}/edit', AdminPlansEdit::class)->name('plans.edit');
+
+    Route::get('/usage', AdminUsageIndex::class)->name('usage.index');
 });

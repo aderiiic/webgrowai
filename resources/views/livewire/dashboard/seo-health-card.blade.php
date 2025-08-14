@@ -4,6 +4,18 @@
         <h2 class="text-lg font-semibold">SEO Health</h2>
 
         <div class="flex items-center gap-3 flex-wrap">
+            <!-- Månadsbadges (kundnivå) -->
+            <span class="inline-flex items-center gap-2 border rounded-full px-3 py-1 text-xs bg-indigo-50 text-indigo-700 border-indigo-200">
+        Genereringar ({{ now()->format('Y-m') }}): <span class="font-semibold">{{ $monthGenerateTotal }}</span>
+      </span>
+            <span class="inline-flex items-center gap-2 border rounded-full px-3 py-1 text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
+        Publicerade till WP: <span class="font-semibold">{{ $monthPublishTotal }}</span>
+      </span>
+            <span class="inline-flex items-center gap-2 border rounded-full px-3 py-1 text-xs bg-amber-50 text-amber-700 border-amber-200">
+        Audits: <span class="font-semibold">{{ $monthAuditTotal }}</span>
+      </span>
+
+            <!-- Site-väljare + åtgärder -->
             <div class="flex items-center gap-2">
                 <label class="text-xs text-gray-600">Sajt</label>
                 <select wire:model.live="siteId" class="select select-bordered select-sm">
@@ -15,11 +27,9 @@
 
             <button class="btn btn-sm" wire:click="runAudit">Kör audit</button>
             <button class="btn btn-sm" wire:click="runAuditAll">Kör alla sajter</button>
-
             @if($latest)
                 <a href="{{ route('seo.audit.detail', $latest->id) }}" class="btn btn-sm">Senaste detaljer</a>
             @endif
-
             <a href="{{ route('seo.audit.history') }}" class="btn btn-sm">Historik</a>
         </div>
     </div>
