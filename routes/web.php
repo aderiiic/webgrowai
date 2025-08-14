@@ -4,8 +4,11 @@ use App\Http\Controllers\SocialAuthController;
 use App\Jobs\RunSeoAuditJob;
 use App\Livewire\Dashboard\PublicationsIndex;
 use App\Livewire\Home;
+use App\Livewire\Marketing\MailchimpHistory;
+use App\Livewire\Marketing\NewsletterCompose;
 use App\Livewire\SEO\AuditDetail;
 use App\Livewire\SEO\AuditHistory;
+use App\Livewire\Settings\MailchimpSettings;
 use App\Livewire\Settings\SocialSettings;
 use App\Livewire\Settings\WeeklySettings;
 use App\Livewire\Sites\WordPressConnect;
@@ -106,6 +109,10 @@ Route::middleware(['auth','verified','onboarded'])->group(function () {
 
     Route::get('/settings/weekly', WeeklySettings::class)->name('settings.weekly');
     Route::get('/settings/social', SocialSettings::class)->name('settings.social');
+    Route::get('/settings/mailchimp', MailchimpSettings::class)->name('settings.mailchimp');
+
+    Route::get('/marketing/newsletter', NewsletterCompose::class)->name('marketing.newsletter');
+    Route::get('/marketing/mailchimp/history', MailchimpHistory::class)->name('marketing.mailchimp.history');
 
     Route::get('/auth/facebook/redirect', [SocialAuthController::class, 'facebookRedirect'])->name('auth.facebook.redirect');
     Route::get('/auth/facebook/callback', [SocialAuthController::class, 'facebookCallback'])->name('auth.facebook.callback');

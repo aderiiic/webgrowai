@@ -2,7 +2,7 @@
 
 namespace App\Support;
 
-use App\Models\UsageMetric;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class Usage
@@ -12,15 +12,12 @@ class Usage
         $period = $period ?: now()->format('Y-m');
 
         try {
-            $metric = UsageMetric::firstOrCreate([
-                'customer_id' => $customerId,
-                'period'      => $period,
-                'metric_key'  => $key,
-            ], [
-                'used_value'  => 0,
-            ]);
-
-            $metric->increment('used_value', $by);
+            DB::statement(
+                'INSERT INTO `usage_metrics` (`customer_id`, `period`, `metric_key`, `used_value`, `created_at`, `updated_at`)
+                 VALUES (?, ?, ?, ?, NOW(), NOW())
+                 ON DUPLICATE KEY UPDATE `used_value` = `used_value` + VALUES(`used_value`), `updated_at` = NOW()',
+                [$customerId, $period, $key, $by]
+            );
         } catch (\Throwable $e) {
             Log::error('[Usage] increment failed', [
                 'customer_id' => $customerId,

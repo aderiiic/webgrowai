@@ -4,12 +4,15 @@
 
         @if($customer)
             <div class="flex items-center gap-2">
-        <span class="inline-flex items-center gap-2 border rounded-full px-3 py-1 text-xs bg-indigo-50 text-indigo-700 border-indigo-200">
-          Genereringar ({{ now()->format('Y-m') }}): <span class="font-semibold">{{ $monthGenerateTotal }}</span>
-        </span>
+                <span class="inline-flex items-center gap-2 border rounded-full px-3 py-1 text-xs bg-indigo-50 text-indigo-700 border-indigo-200">
+                  Genereringar ({{ now()->format('Y-m') }}): <span class="font-semibold">{{ $monthGenerateTotal }}</span>
+                </span>
                 <span class="inline-flex items-center gap-2 border rounded-full px-3 py-1 text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
-          Publicerade till WP: <span class="font-semibold">{{ $monthPublishTotal }}</span>
-        </span>
+                  Publicerade till WP: <span class="font-semibold">{{ $monthPublishTotal }}</span>
+                </span>
+                <span class="inline-flex items-center gap-2 border rounded-full px-3 py-1 text-xs bg-amber-50 text-amber-700 border-amber-200">
+                  Mailchimp-kampanjer: <span class="font-semibold">{{ $monthMailchimpTotal }}</span>
+                </span>
             </div>
         @endif
     </div>

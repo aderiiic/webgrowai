@@ -81,4 +81,9 @@ return [
         // IG Basic Display/Graph – vi använder Graph via FB-login, scopes hanteras via facebook.scopes
     ],
 
+    'mailchimp' => [
+        'key'        => env('MAILCHIMP_API_KEY'),
+        'default_dc' => env('MAILCHIMP_DC', null), // valfritt: datacenter (t.ex. us21); lämna tomt så parse:ar vi från key
+    ],
+
 ];

@@ -11,6 +11,7 @@ class ActiveCustomerCard extends Component
 {
     public int $monthGenerateTotal = 0;
     public int $monthPublishTotal = 0;
+    public int $monthMailchimpTotal = 0;
 
     public function render(CurrentCustomer $current)
     {
@@ -31,16 +32,15 @@ class ActiveCustomerCard extends Component
                 ->where('period', $period)
                 ->where('metric_key', 'ai.publish.wp')
                 ->value('used_value') ?? 0);
+
+            $this->monthMailchimpTotal = (int) (UsageMetric::where('customer_id', $customer->id)->where('period', $period)->where('metric_key', 'mailchimp.campaign')->value('used_value') ?? 0);
         } else {
-            $this->monthGenerateTotal = 0;
-            $this->monthPublishTotal = 0;
+            $this->monthGenerateTotal = $this->monthPublishTotal = $this->monthMailchimpTotal = 0;
         }
 
         return view('livewire.dashboard.active-customer-card', [
             'customer' => $customer,
-            'sites'    => $customer?->sites ?? collect(),
-            'monthGenerateTotal' => $this->monthGenerateTotal,
-            'monthPublishTotal'  => $this->monthPublishTotal,
+            'sites' => $customer?->sites ?? collect(),
         ]);
     }
 }
