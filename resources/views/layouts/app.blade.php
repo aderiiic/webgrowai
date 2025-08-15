@@ -61,6 +61,7 @@
                 <a href="{{ route('settings.weekly') }}" class="block px-3 py-2 rounded {{ request()->routeIs('settings.weekly') ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-gray-50' }}">Veckodigest</a>
                 <a href="{{ route('settings.social') }}" class="block px-3 py-2 rounded {{ request()->routeIs('settings.social') ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-gray-50' }}">Sociala kanaler</a>
                 <a href="{{ route('settings.mailchimp') }}" class="block px-3 py-2 rounded {{ request()->routeIs('settings.mailchimp') ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-gray-50' }}">Mailchimp</a>
+                <a href="{{ route('account.upgrade') }}" class="block px-3 py-2 rounded {{ request()->routeIs('account.upgrade') ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-gray-50' }}">Uppgradera plan</a>
             </div>
 
             @can('admin')
@@ -77,6 +78,10 @@
     <div class="flex-1 flex flex-col">
         <!-- Topbar: återanvänd Jetstreams navigation-menu för snygg profilmeny -->
         @include('navigation-menu')
+
+        @auth
+            @livewire('partials.usage-banner')
+        @endauth
 
         <!-- Content -->
         <main class="max-w-7xl mx-auto w-full px-4 py-6">

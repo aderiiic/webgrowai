@@ -6,6 +6,7 @@ use App\Models\Lead;
 use App\Models\LeadEvent;
 use App\Models\LeadScore;
 use App\Models\Site;
+use App\Support\Usage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -67,6 +68,22 @@ class TrackController extends Controller
             'meta' => $eventMeta ?: null,
             'occurred_at' => \Carbon\Carbon::createFromTimestampMs($tsMs)->tz(config('app.timezone')),
         ]);
+
+        try {
+            // Mappa till kund: ex via site_id i payload eller domän
+            $siteId = $request->integer('site_id');
+            $site = $siteId ? Site::find($siteId) : null;
+
+            if (!$site && $request->has('domain')) {
+                $site = Site::where('url', 'like', '%'.$request->get('domain').'%')->first();
+            }
+
+            if ($site && $site->customer_id) {
+                app(Usage::class)->increment($site->customer_id, 'leads.events', now()->format('Y-m'), 1);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('[Track] usage increment failed', ['error' => $e->getMessage()]);
+        }
 
         return response()->json(['ok' => true]);
     }

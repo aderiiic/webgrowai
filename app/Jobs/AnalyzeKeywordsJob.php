@@ -2,15 +2,18 @@
 
 namespace App\Jobs;
 
+use App\Support\Usage;
 use App\Models\KeywordSuggestion;
 use App\Models\RankingSnapshot;
 use App\Models\Site;
 use App\Models\WpIntegration;
 use App\Services\AI\AiProviderManager;
+use App\Services\Billing\QuotaGuard;
 use App\Services\WordPressClient;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class AnalyzeKeywordsJob implements ShouldQueue
@@ -22,9 +25,11 @@ class AnalyzeKeywordsJob implements ShouldQueue
         $this->onQueue('ai');
     }
 
-    public function handle(AiProviderManager $manager): void
+    public function handle(AiProviderManager $manager, QuotaGuard $quota, Usage $usage): void
     {
-        $site = Site::findOrFail($this->siteId);
+        $site = Site::with('customer')->findOrFail($this->siteId);
+        $customer = $site->customer;
+
         $integration = WpIntegration::where('site_id', $site->id)->firstOrFail();
         $wp = WordPressClient::for($integration);
         $prov = $manager->choose(null, 'short');
@@ -33,6 +38,18 @@ class AnalyzeKeywordsJob implements ShouldQueue
             ->latest('checked_at')->get()->groupBy('wp_post_id');
 
         foreach ($rankings as $pid => $list) {
+            try {
+                $quota->checkOrFail($customer, 'ai.generate');
+            } catch (\Throwable $e) {
+                Log::warning('[AnalyzeKeywords] blocked by quota', [
+                    'customer_id' => $customer->id,
+                    'site_id' => $site->id,
+                    'post_id' => $pid,
+                    'error' => $e->getMessage(),
+                ]);
+                break; // avbryt vidare genereringar denna körning
+            }
+
             $ptype = Arr::get($list->first(), 'wp_type', 'page');
 
             // Använd rätt endpoint baserat på typslag
@@ -86,6 +103,8 @@ class AnalyzeKeywordsJob implements ShouldQueue
                     'status' => 'new',
                 ]
             );
+
+            $usage->increment($customer->id, 'ai.generate', now()->format('Y-m'), 1);
         }
     }
 }

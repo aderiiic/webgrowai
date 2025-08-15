@@ -4,6 +4,17 @@
         <a href="{{ route('sites.create') }}" class="btn btn-primary">Lägg till sajt</a>
     </div>
 
+    @if(session('success'))
+        <div class="mt-3 text-sm text-green-700 bg-green-50 border border-green-200 rounded px-3 py-2">
+            {{ session('success') }}
+        </div>
+    @endif
+    @if(session('error'))
+        <div class="mt-3 text-sm text-white bg-red-600 border border-red-700 rounded px-3 py-2">
+            {{ session('error') }}
+        </div>
+    @endif
+
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         @forelse($sites as $site)
             @php $latest = $latestBySite[$site->id] ?? null; @endphp
