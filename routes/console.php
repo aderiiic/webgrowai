@@ -39,3 +39,4 @@ Schedule::command('weekly:digest monday')->mondays()->at('08:00');
 Schedule::command('weekly:digest friday')->fridays()->at('15:00');
 
 Schedule::job(new \App\Jobs\ProcessScheduledPublicationsJob())->everyMinute();
+Schedule::job(new \App\Jobs\RecalculateLeadScoresJob())->cron('0 */6 * * *');

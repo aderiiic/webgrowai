@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\SocialAuthController;
+use App\Http\Controllers\TrackController;
 use App\Jobs\RunSeoAuditJob;
 use App\Livewire\Dashboard\PublicationsIndex;
 use App\Livewire\Home;
@@ -24,6 +25,8 @@ use App\Livewire\Sites\Edit as SitesEdit;
 use App\Livewire\AI\Index as AiIndex;
 use App\Livewire\AI\Compose as AiCompose;
 use App\Livewire\AI\Detail as AiDetail;
+use App\Livewire\Leads\Index as LeadsIndex;
+use App\Livewire\Leads\Detail as LeadDetail;
 
 use App\Livewire\Admin\Plans\Index as AdminPlansIndex;
 use App\Livewire\Admin\Plans\Edit as AdminPlansEdit;
@@ -37,6 +40,15 @@ Route::middleware(['auth','verified'])->group(function () {
     Route::get('/dashboard', Home::class)->middleware('onboarded')->name('dashboard');
     Route::get('/onboarding', Wizard::class)->name('onboarding');
 });
+
+Route::middleware(['auth','verified','onboarded'])->get('/onboarding/tracker', \App\Livewire\Onboarding\Tracker::class)
+    ->name('onboarding.tracker');
+
+Route::middleware(['auth','verified','onboarded'])->get('/downloads/webbi-lead-tracker', function () {
+    $path = public_path('downloads/webbi-lead-tracker.zip'); // placera zip här
+    abort_unless(file_exists($path), 404);
+    return response()->download($path, 'webbi-lead-tracker.zip');
+})->name('downloads.webbi-lead-tracker');
 
 Route::middleware(['auth','verified','onboarded'])->group(function () {
     Route::get('/sites', SitesIndex::class)->name('sites.index');
@@ -120,6 +132,9 @@ Route::middleware(['auth','verified','onboarded'])->group(function () {
     // Instagram-knappen triggar samma flöde genom Facebook OAuth
     Route::get('/auth/instagram/redirect', [SocialAuthController::class, 'instagramRedirect'])->name('auth.instagram.redirect');
     Route::get('/auth/instagram/callback', [SocialAuthController::class, 'instagramCallback'])->name('auth.instagram.callback');
+
+    Route::get('/leads', LeadsIndex::class)->name('leads.index');
+    Route::get('/leads/{id}', LeadDetail::class)->name('leads.detail');
 });
 
 Route::middleware(['auth','verified','can:admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -128,3 +143,5 @@ Route::middleware(['auth','verified','can:admin'])->prefix('admin')->name('admin
 
     Route::get('/usage', AdminUsageIndex::class)->name('usage.index');
 });
+
+Route::middleware('throttle:60,1')->post('/track', [TrackController::class, 'store'])->name('track.store');
