@@ -45,7 +45,7 @@ use App\Livewire\Admin\Blog\Edit as AdminBlogEdit;
 
 Route::get('/', function () {
     return view('welcome');
-});
+})->name('welcome');
 Route::get('/news', function () {
     $posts = Post::whereNotNull('published_at')->latest('published_at')->paginate(12);
     return view('news.index', compact('posts'));
