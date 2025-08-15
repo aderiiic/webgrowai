@@ -2,8 +2,9 @@
 
 namespace App\Livewire\Sites;
 
+use App\Models\Site;
+use App\Services\Billing\PlanService;
 use App\Support\CurrentCustomer;
-use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -13,31 +14,49 @@ class Create extends Component
     public string $name = '';
     public string $url = '';
 
-    public function save(CurrentCustomer $current)
+    public function mount(CurrentCustomer $current, PlanService $plans): void
     {
-        $this->validate([
-            'name' => 'required|string|min:2|max:150',
-            'url'  => 'required|url|max:255',
-        ]);
-
         $customer = $current->get();
         abort_unless($customer, 403);
 
-        if ($customer->sites()->where('url', rtrim($this->url, '/'))->exists()) {
-            $this->addError('url', 'Denna URL finns redan i din kund.');
-            return;
+        $quota = $plans->getQuota($customer, 'sites');
+        if ($quota !== null) {
+            $count = $customer->sites()->count();
+            if ($count >= $quota) {
+                session()->flash('error', 'Du har uppnått max antal sajter för din plan. Uppgradera för att lägga till fler.');
+                $this->redirectRoute('sites.index');
+            }
+        }
+    }
+
+    public function save(CurrentCustomer $current, PlanService $plans): void
+    {
+        $customer = $current->get();
+        abort_unless($customer, 403);
+
+        // För‑kontroll igen vid spara (race-säkerhet)
+        $quota = $plans->getQuota($customer, 'sites');
+        if ($quota !== null) {
+            $count = $customer->sites()->count();
+            if ($count >= $quota) {
+                session()->flash('error', 'Du har uppnått max antal sajter för din plan.');
+                return;
+            }
         }
 
-        $customer->sites()->create([
+        $this->validate([
+            'name' => 'required|string|max:120',
+            'url'  => 'required|url|max:1024',
+        ]);
+
+        Site::create([
+            'customer_id' => $customer->id,
             'name' => $this->name,
-            'url' => rtrim($this->url, '/'),
-            'public_key' => (string) \Str::uuid(),
-            'secret' => Str::random(32),
-            'status' => 'active',
+            'url'  => $this->url,
         ]);
 
         session()->flash('success', 'Sajt skapad.');
-        return $this->redirectRoute('sites.index');
+        $this->redirectRoute('sites.index');
     }
 
     public function render()

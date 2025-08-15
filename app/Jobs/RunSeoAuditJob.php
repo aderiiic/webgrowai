@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Services\Billing\QuotaGuard;
+use App\Support\Usage;
 use App\Models\{SeoAudit, Site, WpIntegration};
 use App\Services\WordPressClient;
 use GuzzleHttp\Client;
@@ -15,7 +17,9 @@ class RunSeoAuditJob implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(public int $siteId) {}
+    public function __construct(public int $siteId) {
+        $this->onQueue('seo');
+    }
 
     private function psiClient(): Client
     {
@@ -108,9 +112,22 @@ class RunSeoAuditJob implements ShouldQueue
         return $val === null ? null : (int) round(((float) $val) * 100);
     }
 
-    public function handle(): void
+    public function handle(QuotaGuard $quota, Usage $usage): void
     {
-        $site = Site::findOrFail($this->siteId);
+        $site = Site::with('customer')->findOrFail($this->siteId);
+        $customer = $site->customer;
+
+        try {
+            $quota->checkOrFail($customer, 'seo.audit');
+        } catch (\Throwable $e) {
+            Log::warning('[SEO Audit] blocked by quota', [
+                'customer_id' => $customer->id,
+                'site_id' => $site->id,
+                'error' => $e->getMessage(),
+            ]);
+            return;
+        }
+
         Log::info('[SEO Audit] Start (PSI)', ['site_id' => $site->id, 'url' => $site->url]);
 
         $integration = WpIntegration::where('site_id', $site->id)->first();
@@ -195,7 +212,7 @@ class RunSeoAuditJob implements ShouldQueue
         ]);
 
         try {
-            $usage->increment($site->customer_id, 'seo.audit');
+            $usage->increment($customer->id, 'seo.audit', now()->format('Y-m'), 1);
         } catch (\Throwable $e) {
             Log::warning('[Usage] increment seo.audit failed', ['site_id' => $site->id, 'error' => $e->getMessage()]);
         }

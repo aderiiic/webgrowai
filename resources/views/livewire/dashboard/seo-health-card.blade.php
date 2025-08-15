@@ -39,6 +39,11 @@
             {{ session('success') }}
         </div>
     @endif
+    @if(session('error'))
+        <div class="mt-3 text-sm text-white bg-red-600 border border-red-700 rounded px-3 py-2">
+            {{ session('error') }}
+        </div>
+    @endif
 
     <div wire:loading wire:target="siteId,loadLatest" class="mt-3 text-xs text-gray-500">
         Laddar data för vald sajt...

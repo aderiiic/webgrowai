@@ -22,7 +22,7 @@
 
                     <!-- Kundväxlare (Livewire) -->
                     <div class="me-3">
-                        @livewire('partials.customer-switcher')
+                        @livewire('partials.topbar-context-switcher')
                     </div>
                 @endauth
 

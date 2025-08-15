@@ -1,60 +1,98 @@
-<x-guest-layout>
-    <x-authentication-card>
-        <x-slot name="logo">
-            <x-authentication-card-logo />
-        </x-slot>
+@extends('layouts.guest', ['title' => 'Registrera – WebGrow AI'])
 
-        <x-validation-errors class="mb-4" />
+@section('content')
+    <div class="max-w-2xl mx-auto px-4 py-12">
+        <h1 class="text-2xl font-semibold mb-6">Skapa konto</h1>
 
-        <form method="POST" action="{{ route('register') }}">
+        <form method="POST" action="{{ route('register') }}" class="space-y-4">
             @csrf
 
-            <div>
-                <x-label for="name" value="{{ __('Name') }}" />
-                <x-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
-            </div>
-
-            <div class="mt-4">
-                <x-label for="email" value="{{ __('Email') }}" />
-                <x-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autocomplete="username" />
-            </div>
-
-            <div class="mt-4">
-                <x-label for="password" value="{{ __('Password') }}" />
-                <x-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="new-password" />
-            </div>
-
-            <div class="mt-4">
-                <x-label for="password_confirmation" value="{{ __('Confirm Password') }}" />
-                <x-input id="password_confirmation" class="block mt-1 w-full" type="password" name="password_confirmation" required autocomplete="new-password" />
-            </div>
-
-            @if (Laravel\Jetstream\Jetstream::hasTermsAndPrivacyPolicyFeature())
-                <div class="mt-4">
-                    <x-label for="terms">
-                        <div class="flex items-center">
-                            <x-checkbox name="terms" id="terms" required />
-
-                            <div class="ms-2">
-                                {!! __('I agree to the :terms_of_service and :privacy_policy', [
-                                        'terms_of_service' => '<a target="_blank" href="'.route('terms.show').'" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">'.__('Terms of Service').'</a>',
-                                        'privacy_policy' => '<a target="_blank" href="'.route('policy.show').'" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">'.__('Privacy Policy').'</a>',
-                                ]) !!}
-                            </div>
-                        </div>
-                    </x-label>
+            <div class="border rounded p-4 bg-white space-y-3">
+                <div>
+                    <label class="block text-sm text-gray-600">Namn</label>
+                    <input name="name" type="text" class="input input-bordered w-full" value="{{ old('name') }}" required>
+                    @error('name')<div class="text-sm text-red-600">{{ $message }}</div>@enderror
                 </div>
-            @endif
+                <div>
+                    <label class="block text-sm text-gray-600">E‑post</label>
+                    <input name="email" type="email" class="input input-bordered w-full" value="{{ old('email') }}" required>
+                    @error('email')<div class="text-sm text-red-600">{{ $message }}</div>@enderror
+                </div>
+                <div class="grid md:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm text-gray-600">Lösenord</label>
+                        <input name="password" type="password" class="input input-bordered w-full" required>
+                        @error('password')<div class="text-sm text-red-600">{{ $message }}</div>@enderror
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600">Bekräfta lösenord</label>
+                        <input name="password_confirmation" type="password" class="input input-bordered w-full" required>
+                    </div>
+                </div>
+            </div>
 
-            <div class="flex items-center justify-end mt-4">
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('login') }}">
-                    {{ __('Already registered?') }}
-                </a>
+            <div class="border rounded p-4 bg-white space-y-3">
+                <h2 class="text-sm font-medium text-gray-700">Företagsuppgifter</h2>
+                <div>
+                    <label class="block text-sm text-gray-600">Företagsnamn</label>
+                    <input name="company_name" type="text" class="input input-bordered w-full" value="{{ old('company_name') }}" required>
+                    @error('company_name')<div class="text-sm text-red-600">{{ $message }}</div>@enderror
+                </div>
+                <div class="grid md:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm text-gray-600">Org.nr (valfritt)</label>
+                        <input name="org_nr" type="text" class="input input-bordered w-full" value="{{ old('org_nr') }}">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600">Momsnr / VAT (valfritt)</label>
+                        <input name="vat_nr" type="text" class="input input-bordered w-full" value="{{ old('vat_nr') }}">
+                    </div>
+                </div>
+                <div class="grid md:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm text-gray-600">Kontaktperson</label>
+                        <input name="contact_name" type="text" class="input input-bordered w-full" value="{{ old('contact_name') }}" required>
+                        @error('contact_name')<div class="text-sm text-red-600">{{ $message }}</div>@enderror
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600">Telefon (valfritt)</label>
+                        <input name="contact_phone" type="text" class="input input-bordered w-full" value="{{ old('contact_phone') }}">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600">Faktura e‑post</label>
+                    <input name="billing_email" type="email" class="input input-bordered w-full" value="{{ old('billing_email', old('email')) }}" required>
+                    @error('billing_email')<div class="text-sm text-red-600">{{ $message }}</div>@enderror
+                </div>
+                <div class="grid md:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm text-gray-600">Fakturaadress</label>
+                        <input name="billing_address" type="text" class="input input-bordered w-full" value="{{ old('billing_address') }}" required>
+                        @error('billing_address')<div class="text-sm text-red-600">{{ $message }}</div>@enderror
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600">Postnummer</label>
+                        <input name="billing_zip" type="text" class="input input-bordered w-full" value="{{ old('billing_zip') }}" required>
+                        @error('billing_zip')<div class="text-sm text-red-600">{{ $message }}</div>@enderror
+                    </div>
+                </div>
+                <div class="grid md:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm text-gray-600">Ort</label>
+                        <input name="billing_city" type="text" class="input input-bordered w-full" value="{{ old('billing_city') }}" required>
+                        @error('billing_city')<div class="text-sm text-red-600">{{ $message }}</div>@enderror
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600">Land (ISO‑2)</label>
+                        <input name="billing_country" type="text" maxlength="2" class="input input-bordered w-full" value="{{ old('billing_country','SE') }}" required>
+                        @error('billing_country')<div class="text-sm text-red-600">{{ $message }}</div>@enderror
+                    </div>
+                </div>
+            </div>
 
-                <x-button class="ms-4">
-                    {{ __('Register') }}
-                </x-button>
+            <div class="flex items-center justify-end">
+                <button class="btn btn-primary">Skapa konto</button>
             </div>
         </form>
-    </x-authentication-card>
-</x-guest-layout>
+    </div>
+@endsection

@@ -2,14 +2,17 @@
 
 namespace App\Jobs;
 
+use App\Support\Usage;
 use App\Models\ConversionSuggestion;
 use App\Models\Site;
 use App\Models\WpIntegration;
 use App\Services\AI\AiProviderManager;
+use App\Services\Billing\QuotaGuard;
 use App\Services\WordPressClient;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class AnalyzeConversionJob implements ShouldQueue
@@ -21,9 +24,11 @@ class AnalyzeConversionJob implements ShouldQueue
         $this->onQueue('default');
     }
 
-    public function handle(AiProviderManager $manager): void
+    public function handle(AiProviderManager $manager, QuotaGuard $quota, Usage $usage): void
     {
-        $site = Site::findOrFail($this->siteId);
+        $site = Site::with('customer')->findOrFail($this->siteId);
+        $customer = $site->customer;
+
         $integration = WpIntegration::where('site_id', $site->id)->firstOrFail();
 
         $wp = WordPressClient::for($integration);
@@ -36,6 +41,18 @@ class AnalyzeConversionJob implements ShouldQueue
         $guidelines = "Du är en svensk CRO-specialist. Ge konkreta förbättringar utan meta-kommentarer, inga emojis.";
 
         foreach ($pages as $p) {
+            try {
+                $quota->checkOrFail($customer, 'ai.generate');
+            } catch (\Throwable $e) {
+                Log::warning('[AnalyzeConversion] blocked by quota', [
+                    'customer_id' => $customer->id,
+                    'site_id' => $site->id,
+                    'page_id' => $p['id'] ?? null,
+                    'error' => $e->getMessage(),
+                ]);
+                break;
+            }
+
             $pid = (int)($p['id'] ?? 0);
             $url = (string)($p['link'] ?? $site->url);
             $title = trim(strip_tags(Arr::get($p, 'title.rendered', '')));
@@ -79,6 +96,8 @@ class AnalyzeConversionJob implements ShouldQueue
                     'status' => 'new',
                 ]
             );
+
+            $usage->increment($customer->id, 'ai.generate', now()->format('Y-m'), 1);
         }
     }
 }

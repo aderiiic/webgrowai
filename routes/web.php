@@ -1,6 +1,8 @@
 <?php
 
+use App\Models\Invoice;
 use App\Models\Post;
+use App\Services\Billing\InvoicePdf;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\TrackController;
@@ -36,12 +38,19 @@ use App\Jobs\FetchRankingsJob;
 use App\Jobs\AnalyzeKeywordsJob;
 use App\Livewire\SEO\KeywordSuggestionsIndex;
 use App\Livewire\SEO\KeywordSuggestionDetail;
+use App\Livewire\Account\Usage as AccountUsage;
+use App\Livewire\Account\Upgrade as AccountUpgrade;
 
+use App\Livewire\Admin\Customers\Show as AdminCustomerShow;
 use App\Livewire\Admin\Plans\Index as AdminPlansIndex;
 use App\Livewire\Admin\Plans\Edit as AdminPlansEdit;
 use App\Livewire\Admin\Usage\Index as AdminUsageIndex;
 use App\Livewire\Admin\Blog\Index as AdminBlogIndex;
 use App\Livewire\Admin\Blog\Edit as AdminBlogEdit;
+use App\Livewire\Admin\Invoices\Index as AdminInvoicesIndex;
+use App\Livewire\Admin\Invoices\Show as AdminInvoicesShow;
+use App\Livewire\Admin\Subscriptions\RequestsIndex as AdminSubRequests;
+use App\Livewire\Admin\Customers\Index as AdminCustomersIndex;
 
 Route::get('/', function () {
     return view('welcome');
@@ -87,7 +96,10 @@ Route::middleware(['auth','verified'])->get('/downloads/webbi-lead-tracker', fun
     return response()->download($path, 'webbi-lead-tracker.zip');
 })->name('downloads.webbi-lead-tracker');
 
-Route::middleware(['auth','verified','onboarded'])->group(function () {
+Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(function () {
+    Route::get('/account/usage', AccountUsage::class)->name('account.usage');
+    Route::get('/account/upgrade', AccountUpgrade::class)->name('account.upgrade');
+
     Route::get('/sites', SitesIndex::class)->name('sites.index');
     Route::get('/sites/create', SitesCreate::class)->name('sites.create');
     Route::get('/sites/{site}/edit', SitesEdit::class)->name('sites.edit')->whereNumber('site');
@@ -226,6 +238,22 @@ Route::middleware(['auth','verified','can:admin'])->prefix('admin')->name('admin
     Route::get('/blog/{id}', AdminBlogEdit::class)->whereNumber('id')->name('blog.edit');
 
     Route::get('/usage', AdminUsageIndex::class)->name('usage.index');
+    Route::get('/customers/{id}', AdminCustomerShow::class)->whereNumber('id')->name('customers.show');
+
+    Route::get('/customers', AdminCustomersIndex::class)->name('customers.index');
+
+    Route::get('/invoices', AdminInvoicesIndex::class)->name('invoices.index');
+    Route::get('/invoices/{id}', AdminInvoicesShow::class)->whereNumber('id')->name('invoices.show');
+
+    Route::get('/subscription-requests', AdminSubRequests::class)->name('subscription.requests');
+    Route::get('/admin/invoices/{id}/download', function (int $id, InvoicePdf $pdf) {
+        $inv = Invoice::with('customer')->findOrFail($id);
+        $doc = $pdf->render($inv);
+        return response($doc['content'], 200, [
+            'Content-Type' => $doc['contentType'],
+            'Content-Disposition' => 'attachment; filename="'.$doc['filename'].'"',
+        ]);
+    })->name('admin.invoices.download');
 });
 
 // Tracking-endpoint
