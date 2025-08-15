@@ -2,7 +2,11 @@
 
 use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\TrackController;
+use App\Jobs\AnalyzeConversionJob;
 use App\Jobs\RunSeoAuditJob;
+use App\Livewire\CRO\SuggestionDetail;
+use App\Livewire\CRO\SuggestionIndex;
+use App\Livewire\CRO\SuggestionsIndex;
 use App\Livewire\Dashboard\PublicationsIndex;
 use App\Livewire\Home;
 use App\Livewire\Marketing\MailchimpHistory;
@@ -135,6 +139,29 @@ Route::middleware(['auth','verified','onboarded'])->group(function () {
 
     Route::get('/leads', LeadsIndex::class)->name('leads.index');
     Route::get('/leads/{id}', LeadDetail::class)->name('leads.detail');
+
+    Route::get('/cro/suggestions', SuggestionIndex::class)->name('cro.suggestions.index');
+    Route::get('/cro/suggestions/{id}', SuggestionDetail::class)->name('cro.suggestion.detail');
+
+    Route::get('/cro/analyze/run', function () {
+        $customer = app(\App\Support\CurrentCustomer::class)->get();
+        abort_unless($customer, 403);
+        $siteId = $customer->sites()->value('id');
+        abort_unless($siteId, 404, 'Ingen sajt.');
+        dispatch(new AnalyzeConversionJob($siteId))->onQueue('default');
+        return back()->with('success', 'Analys köad. Uppdatera sidan om en stund.');
+    })->name('cro.analyze.run');
+
+    Route::post('/sites/{site}/cro/analyze', function (\App\Models\Site $site) {
+        $user = auth()->user();
+        if (!$user->isAdmin()) {
+            abort_unless($user->customers()->whereKey($site->customer_id)->exists(), 403);
+        }
+
+        dispatch(new AnalyzeConversionJob($site->id))->onQueue('default');
+
+        return back()->with('success', 'CRO-analys köad för '.$site->name.'. Uppdatera om en stund.');
+    })->name('sites.cro.analyze');
 });
 
 Route::middleware(['auth','verified','can:admin'])->prefix('admin')->name('admin.')->group(function () {

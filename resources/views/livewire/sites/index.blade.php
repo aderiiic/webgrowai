@@ -15,6 +15,13 @@
                     Site Key: <span class="font-mono">{{ $site->public_key }}</span>
                 </div>
 
+                <div class="flex gap-2 pt-2 flex-wrap">
+                    <form method="POST" action="{{ route('sites.cro.analyze', $site) }}">
+                        @csrf
+                        <button class="btn btn-sm">Kör CRO-analys</button>
+                    </form>
+                </div>
+
                 <div class="text-xs text-gray-700 mt-2 flex items-center justify-between">
                     <div>
                         Senaste audit:

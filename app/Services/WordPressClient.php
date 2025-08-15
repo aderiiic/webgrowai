@@ -55,4 +55,17 @@ class WordPressClient
         $res = $this->client->get("/wp-json/wp/v2/posts/{$id}");
         return json_decode((string) $res->getBody(), true);
     }
+
+    public function getPages(array $params = []): array
+    {
+        $query = array_merge(['per_page' => 10, 'status' => 'publish', 'orderby' => 'date', 'order' => 'desc'], $params);
+        $res = $this->client->get('/wp-json/wp/v2/pages', ['query' => $query]);
+        return json_decode((string) $res->getBody(), true);
+    }
+
+    public function updatePage(int $id, array $payload): array
+    {
+        $res = $this->client->post("/wp-json/wp/v2/pages/{$id}", ['json' => $payload]);
+        return json_decode((string) $res->getBody(), true);
+    }
 }
