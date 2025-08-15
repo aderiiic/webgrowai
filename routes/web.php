@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Post;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\TrackController;
@@ -39,20 +40,48 @@ use App\Livewire\SEO\KeywordSuggestionDetail;
 use App\Livewire\Admin\Plans\Index as AdminPlansIndex;
 use App\Livewire\Admin\Plans\Edit as AdminPlansEdit;
 use App\Livewire\Admin\Usage\Index as AdminUsageIndex;
+use App\Livewire\Admin\Blog\Index as AdminBlogIndex;
+use App\Livewire\Admin\Blog\Edit as AdminBlogEdit;
 
 Route::get('/', function () {
     return view('welcome');
 });
+Route::get('/news', function () {
+    $posts = Post::whereNotNull('published_at')->latest('published_at')->paginate(12);
+    return view('news.index', compact('posts'));
+})->name('news.index');
+
+Route::get('/news/{slug}', function (string $slug) {
+    $post = Post::where('slug', $slug)->whereNotNull('published_at')->firstOrFail();
+    return view('news.show', compact('post'));
+})->name('news.show');
+
+// Prissida
+Route::get('/pricing', function () {
+    return view('pricing');
+})->name('pricing');
+
+Route::post('/demo-request', function (\Illuminate\Http\Request $request) {
+    $data = $request->validate([
+        'name' => 'required|string|max:120',
+        'email' => 'required|email|max:255',
+        'company' => 'nullable|string|max:180',
+        'notes' => 'nullable|string|max:2000',
+    ]);
+    \App\Models\DemoRequest::create($data);
+    return back()->with('success', 'Tack! Vi återkommer snarast för att boka en demo.');
+})->name('demo.request');
+
 
 Route::middleware(['auth','verified'])->group(function () {
     Route::get('/dashboard', Home::class)->middleware('onboarded')->name('dashboard');
     Route::get('/onboarding', Wizard::class)->name('onboarding');
 });
 
-Route::middleware(['auth','verified','onboarded'])->get('/onboarding/tracker', \App\Livewire\Onboarding\Tracker::class)
+Route::middleware(['auth','verified'])->get('/onboarding/tracker', \App\Livewire\Onboarding\Tracker::class)
     ->name('onboarding.tracker');
 
-Route::middleware(['auth','verified','onboarded'])->get('/downloads/webbi-lead-tracker', function () {
+Route::middleware(['auth','verified'])->get('/downloads/webbi-lead-tracker', function () {
     $path = public_path('downloads/webbi-lead-tracker.zip'); // placera zip här
     abort_unless(file_exists($path), 404);
     return response()->download($path, 'webbi-lead-tracker.zip');
@@ -192,6 +221,9 @@ Route::middleware(['auth','verified','onboarded'])->group(function () {
 Route::middleware(['auth','verified','can:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/plans', AdminPlansIndex::class)->name('plans.index');
     Route::get('/plans/{plan}/edit', AdminPlansEdit::class)->name('plans.edit')->whereNumber('plan');
+
+    Route::get('/blog', AdminBlogIndex::class)->name('blog.index');
+    Route::get('/blog/{id}', AdminBlogEdit::class)->whereNumber('id')->name('blog.edit');
 
     Route::get('/usage', AdminUsageIndex::class)->name('usage.index');
 });
