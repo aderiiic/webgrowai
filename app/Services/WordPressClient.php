@@ -63,6 +63,12 @@ class WordPressClient
         return json_decode((string) $res->getBody(), true);
     }
 
+    public function getPage(int $id): array
+    {
+        $res = $this->client->get("/wp-json/wp/v2/pages/{$id}");
+        return json_decode((string) $res->getBody(), true);
+    }
+
     public function updatePage(int $id, array $payload): array
     {
         $res = $this->client->post("/wp-json/wp/v2/pages/{$id}", ['json' => $payload]);

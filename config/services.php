@@ -86,4 +86,7 @@ return [
         'default_dc' => env('MAILCHIMP_DC', null), // valfritt: datacenter (t.ex. us21); lämna tomt så parse:ar vi från key
     ],
 
+    'serpapi' => [
+        'key' => env('SERPAPI_API_KEY'),
+    ],
 ];

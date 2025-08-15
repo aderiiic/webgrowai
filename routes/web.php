@@ -1,12 +1,12 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\TrackController;
 use App\Jobs\AnalyzeConversionJob;
 use App\Jobs\RunSeoAuditJob;
 use App\Livewire\CRO\SuggestionDetail;
 use App\Livewire\CRO\SuggestionIndex;
-use App\Livewire\CRO\SuggestionsIndex;
 use App\Livewire\Dashboard\PublicationsIndex;
 use App\Livewire\Home;
 use App\Livewire\Marketing\MailchimpHistory;
@@ -22,7 +22,7 @@ use App\Livewire\Wp\MetaEditor;
 use App\Livewire\Wp\PostEditor;
 use App\Livewire\Wp\PostsIndex;
 use App\Models\AiContent;
-use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Artisan;
 use App\Livewire\Sites\Index as SitesIndex;
 use App\Livewire\Sites\Create as SitesCreate;
 use App\Livewire\Sites\Edit as SitesEdit;
@@ -31,6 +31,10 @@ use App\Livewire\AI\Compose as AiCompose;
 use App\Livewire\AI\Detail as AiDetail;
 use App\Livewire\Leads\Index as LeadsIndex;
 use App\Livewire\Leads\Detail as LeadDetail;
+use App\Jobs\FetchRankingsJob;
+use App\Jobs\AnalyzeKeywordsJob;
+use App\Livewire\SEO\KeywordSuggestionsIndex;
+use App\Livewire\SEO\KeywordSuggestionDetail;
 
 use App\Livewire\Admin\Plans\Index as AdminPlansIndex;
 use App\Livewire\Admin\Plans\Edit as AdminPlansEdit;
@@ -57,15 +61,15 @@ Route::middleware(['auth','verified','onboarded'])->get('/downloads/webbi-lead-t
 Route::middleware(['auth','verified','onboarded'])->group(function () {
     Route::get('/sites', SitesIndex::class)->name('sites.index');
     Route::get('/sites/create', SitesCreate::class)->name('sites.create');
-    Route::get('/sites/{site}/edit', SitesEdit::class)->name('sites.edit');
+    Route::get('/sites/{site}/edit', SitesEdit::class)->name('sites.edit')->whereNumber('site');
 
-    Route::get('/sites/{site}/wordpress', WordPressConnect::class)->name('sites.wordpress');
+    Route::get('/sites/{site}/wordpress', WordPressConnect::class)->name('sites.wordpress')->whereNumber('site');
 
-    Route::get('/sites/{site}/wp/posts', PostsIndex::class)->name('wp.posts.index');
-    Route::get('/sites/{site}/wp/posts/create', PostEditor::class)->name('wp.posts.create');
-    Route::get('/sites/{site}/wp/posts/{postId}/edit', PostEditor::class)->name('wp.posts.edit');
+    Route::get('/sites/{site}/wp/posts', PostsIndex::class)->name('wp.posts.index')->whereNumber('site');
+    Route::get('/sites/{site}/wp/posts/create', PostEditor::class)->name('wp.posts.create')->whereNumber('site');
+    Route::get('/sites/{site}/wp/posts/{postId}/edit', PostEditor::class)->name('wp.posts.edit')->whereNumber('site')->whereNumber('postId');
 
-    Route::get('/sites/{site}/wp/posts/{postId}/meta', MetaEditor::class)->name('wp.posts.meta');
+    Route::get('/sites/{site}/wp/posts/{postId}/meta', MetaEditor::class)->name('wp.posts.meta')->whereNumber('site')->whereNumber('postId');
 
     Route::get('/seo/audit/run', function () {
         $customer = app(\App\Support\CurrentCustomer::class)->get();
@@ -84,7 +88,6 @@ Route::middleware(['auth','verified','onboarded'])->group(function () {
     })->name('seo.audit.run');
 
     Route::post('/sites/{site}/seo/audit/run', function (\App\Models\Site $site) {
-        // auktorisera: admin eller tillhör aktiv kund
         $user = auth()->user();
         if (!$user->isAdmin()) {
             abort_unless($user->customers()->whereKey($site->customer_id)->exists(), 403);
@@ -97,11 +100,10 @@ Route::middleware(['auth','verified','onboarded'])->group(function () {
         }
 
         return back()->with('success', 'SEO audit startad för '.$site->name.'.');
-    })->name('sites.seo.audit.run');
+    })->name('sites.seo.audit.run')->whereNumber('site');
 
     Route::get('/ai/{id}/export', function (int $id) {
         $content = AiContent::findOrFail($id);
-        // Policy/ägarskap (om du har policy aktiverad)
         if (method_exists($content, 'customer')) {
             abort_unless(auth()->user()?->isAdmin() || auth()->user()?->customers()->whereKey($content->customer_id)->exists(), 403);
         }
@@ -112,14 +114,14 @@ Route::middleware(['auth','verified','onboarded'])->group(function () {
             'Content-Type' => 'text/markdown; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"$name\"",
         ]);
-    })->name('ai.export');
+    })->name('ai.export')->whereNumber('id');
 
     Route::get('/seo/audits', AuditHistory::class)->name('seo.audit.history');
-    Route::get('/seo/audits/{auditId}', AuditDetail::class)->name('seo.audit.detail');
+    Route::get('/seo/audits/{auditId}', AuditDetail::class)->name('seo.audit.detail')->whereNumber('auditId');
 
     Route::get('/ai', AiIndex::class)->name('ai.list');
     Route::get('/ai/compose', AiCompose::class)->name('ai.compose');
-    Route::get('/ai/{id}', AiDetail::class)->name('ai.detail');
+    Route::get('/ai/{id}', AiDetail::class)->name('ai.detail')->whereNumber('id');
 
     Route::get('/publications', PublicationsIndex::class)->name('publications.index');
 
@@ -133,15 +135,38 @@ Route::middleware(['auth','verified','onboarded'])->group(function () {
     Route::get('/auth/facebook/redirect', [SocialAuthController::class, 'facebookRedirect'])->name('auth.facebook.redirect');
     Route::get('/auth/facebook/callback', [SocialAuthController::class, 'facebookCallback'])->name('auth.facebook.callback');
 
-    // Instagram-knappen triggar samma flöde genom Facebook OAuth
     Route::get('/auth/instagram/redirect', [SocialAuthController::class, 'instagramRedirect'])->name('auth.instagram.redirect');
     Route::get('/auth/instagram/callback', [SocialAuthController::class, 'instagramCallback'])->name('auth.instagram.callback');
 
     Route::get('/leads', LeadsIndex::class)->name('leads.index');
-    Route::get('/leads/{id}', LeadDetail::class)->name('leads.detail');
+    Route::get('/leads/{id}', LeadDetail::class)->name('leads.detail')->whereNumber('id');
 
     Route::get('/cro/suggestions', SuggestionIndex::class)->name('cro.suggestions.index');
-    Route::get('/cro/suggestions/{id}', SuggestionDetail::class)->name('cro.suggestion.detail');
+
+    // Flytta knappar (fetch/analyze) före den parameteriserade routen för att undvika krockar
+    Route::get('/seo/keywords', KeywordSuggestionsIndex::class)->name('seo.keywords.index');
+
+    Route::get('/seo/keywords/fetch', function () {
+        $customer = app(\App\Support\CurrentCustomer::class)->get();
+        abort_unless($customer, 403);
+        $siteId = $customer->sites()->value('id');
+        abort_unless($siteId, 404, 'Ingen sajt.');
+        dispatch(new FetchRankingsJob($siteId))->onQueue('default');
+        return back()->with('success', 'Hämtning av rankingar köad.');
+    })->name('seo.keywords.fetch');
+
+    Route::get('/seo/keywords/analyze', function () {
+        $customer = app(\App\Support\CurrentCustomer::class)->get();
+        abort_unless($customer, 403);
+        $siteId = $customer->sites()->value('id');
+        abort_unless($siteId, 404, 'Ingen sajt.');
+        dispatch(new AnalyzeKeywordsJob($siteId))->onQueue('ai');
+        return back()->with('success', 'AI-analys köad.');
+    })->name('seo.keywords.analyze');
+
+    // Den parameteriserade routen kommer sist + begränsad till numeriskt id
+    Route::get('/cro/suggestions/{id}', SuggestionDetail::class)->name('cro.suggestion.detail')->whereNumber('id');
+    Route::get('/seo/keywords/{id}', KeywordSuggestionDetail::class)->name('seo.keywords.detail')->whereNumber('id');
 
     Route::get('/cro/analyze/run', function () {
         $customer = app(\App\Support\CurrentCustomer::class)->get();
@@ -161,14 +186,15 @@ Route::middleware(['auth','verified','onboarded'])->group(function () {
         dispatch(new AnalyzeConversionJob($site->id))->onQueue('default');
 
         return back()->with('success', 'CRO-analys köad för '.$site->name.'. Uppdatera om en stund.');
-    })->name('sites.cro.analyze');
+    })->name('sites.cro.analyze')->whereNumber('site');
 });
 
 Route::middleware(['auth','verified','can:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/plans', AdminPlansIndex::class)->name('plans.index');
-    Route::get('/plans/{plan}/edit', AdminPlansEdit::class)->name('plans.edit');
+    Route::get('/plans/{plan}/edit', AdminPlansEdit::class)->name('plans.edit')->whereNumber('plan');
 
     Route::get('/usage', AdminUsageIndex::class)->name('usage.index');
 });
 
+// Tracking-endpoint
 Route::middleware('throttle:60,1')->post('/track', [TrackController::class, 'store'])->name('track.store');
