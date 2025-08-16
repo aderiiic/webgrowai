@@ -43,7 +43,7 @@ class Index extends Component
             $this->monthPublishTotal = 0;
         }
 
-        return view('livewire.ai.index', [
+        return view('livewire.a-i.index', [
             'items' => $items,
             'monthGenerateTotal' => $this->monthGenerateTotal,
             'monthPublishTotal'  => $this->monthPublishTotal,

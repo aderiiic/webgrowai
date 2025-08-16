@@ -63,8 +63,8 @@
         <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 overflow-hidden">
             @if($mdReady)
                 <div class="p-8">
-                    <article class="prose prose-lg max-w-none prose-indigo prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-indigo-600 hover:prose-a:text-indigo-800 prose-strong:text-gray-900 prose-code:text-indigo-600 prose-code:bg-indigo-50 prose-pre:bg-gray-900 prose-pre:text-gray-100">
-                        {!! \Illuminate\Support\Str::of($md)->markdown() !!}
+                    <article class="prose prose-lg max-w-none prose-indigo prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-indigo-600 hover:prose-a:text-indigo-800 prose-strong:text-gray-900 prose-code:text-indigo-600 prose-pre:bg-gray-900 prose-pre:text-gray-100">
+                        {!! $html !!}
                     </article>
                 </div>
             @else

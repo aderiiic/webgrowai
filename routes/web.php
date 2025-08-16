@@ -2,6 +2,7 @@
 
 use App\Models\Invoice;
 use App\Models\Post;
+use App\Models\WpIntegration;
 use App\Services\Billing\InvoicePdf;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SocialAuthController;
@@ -201,6 +202,13 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
         abort_unless($customer, 403);
         $siteId = $customer->sites()->value('id');
         abort_unless($siteId, 404, 'Ingen sajt.');
+
+        // Nytt: kräver WP-koppling
+        $hasWp = WpIntegration::where('site_id', $siteId)->exists();
+        if (!$hasWp) {
+            return back()->with('success', 'Koppla din WordPress-sajt under “Sajter → WordPress” för att köra SEO‑analysen av nyckelord.');
+        }
+
         dispatch(new AnalyzeKeywordsJob($siteId))->onQueue('ai');
         return back()->with('success', 'AI-analys köad.');
     })->name('seo.keywords.analyze');
@@ -214,6 +222,13 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
         abort_unless($customer, 403);
         $siteId = $customer->sites()->value('id');
         abort_unless($siteId, 404, 'Ingen sajt.');
+
+        // Nytt: kontrollera WP-koppling innan vi köar
+        $hasWp = WpIntegration::where('site_id', $siteId)->exists();
+        if (!$hasWp) {
+            return back()->with('success', 'Koppla din WordPress-sajt under “Sajter → WordPress” för att köra CRO-analysen.');
+        }
+
         dispatch(new AnalyzeConversionJob($siteId))->onQueue('default');
         return back()->with('success', 'Analys köad. Uppdatera sidan om en stund.');
     })->name('cro.analyze.run');
@@ -222,6 +237,11 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
         $user = auth()->user();
         if (!$user->isAdmin()) {
             abort_unless($user->customers()->whereKey($site->customer_id)->exists(), 403);
+        }
+
+        $hasWp = WpIntegration::where('site_id', $site->id)->exists();
+        if (!$hasWp) {
+            return back()->with('success', 'Koppla din WordPress-sajt under “Sajter → WordPress” för att köra CRO-analysen.');
         }
 
         dispatch(new AnalyzeConversionJob($site->id))->onQueue('default');

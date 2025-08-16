@@ -31,9 +31,13 @@ class PublicationsIndex extends Component
         $pub->update(['status' => 'queued', 'message' => null]);
 
         if ($pub->target === 'wp') {
-            // WP publiceringen återskapas via PublishAiContentToWpJob kräver site/status i inputs/payload.
-            // För MVP: skicka som utkast.
-            dispatch(new PublishAiContentToWpJob($pub->ai_content_id, $pub->content->site_id ?? 0, 'draft'))->onQueue('publish');
+            dispatch(new PublishAiContentToWpJob(
+                aiContentId: $pub->ai_content_id,
+                siteId: $pub->content->site_id ?? 0,
+                status: 'draft',
+                scheduleAtIso: null,
+                publicationId: $pub->id
+            ))->onQueue('publish');
         } elseif ($pub->target === 'facebook') {
             dispatch(new PublishToFacebookJob($pub->id))->onQueue('social');
         } elseif ($pub->target === 'instagram') {

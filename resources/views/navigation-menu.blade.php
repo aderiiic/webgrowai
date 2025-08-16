@@ -1,6 +1,5 @@
-
 <div>
-    <nav x-data="{ open: false }" class="bg-white/90 backdrop-blur-lg border-b border-gray-200/50 shadow-sm">
+    <nav x-data="{ open: false }" class="bg-white/90 backdrop-blur-lg border-b border-gray-200/50 shadow-sm relative z-50">
         <!-- Primary Navigation Menu -->
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-end h-16">
@@ -19,14 +18,14 @@
                         @endif
 
                         <!-- Kundväxlare (Livewire) -->
-                        <div>
+                        <div class="relative z-50">
                             @livewire('partials.topbar-context-switcher')
                         </div>
                     @endauth
 
                     <!-- Teams Dropdown -->
                     @if (Laravel\Jetstream\Jetstream::hasTeamFeatures())
-                        <div class="relative">
+                        <div class="relative z-50">
                             <x-dropdown align="right" width="60">
                                 <x-slot name="trigger">
                                     <span class="inline-flex rounded-md">
@@ -77,7 +76,7 @@
                     @endif
 
                     <!-- Settings Dropdown -->
-                    <div class="relative">
+                    <div class="relative z-50">
                         <x-dropdown align="right" width="48">
                             <x-slot name="trigger">
                                 @if (Laravel\Jetstream\Jetstream::managesProfilePhotos())

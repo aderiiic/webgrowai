@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-
+use Illuminate\Notifications\Notifiable; // lägg till
 class User extends Authenticatable
 {
+    use Notifiable;
+
     protected $fillable = [
         'name', 'email', 'password', 'role', 'onboarding_step',
     ];

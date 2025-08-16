@@ -12,6 +12,7 @@ use App\Services\Billing\QuotaGuard;
 use App\Services\WordPressClient;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -30,12 +31,28 @@ class AnalyzeKeywordsJob implements ShouldQueue
         $site = Site::with('customer')->findOrFail($this->siteId);
         $customer = $site->customer;
 
-        $integration = WpIntegration::where('site_id', $site->id)->firstOrFail();
+        try {
+            $integration = WpIntegration::where('site_id', $site->id)->firstOrFail();
+        } catch (ModelNotFoundException $e) {
+            Log::warning('[AnalyzeKeywords] ingen WP-integration kopplad, hoppar över', [
+                'customer_id' => $customer?->id,
+                'site_id'     => $site->id,
+            ]);
+            return;
+        }
+
         $wp = WordPressClient::for($integration);
         $prov = $manager->choose(null, 'short');
 
         $rankings = RankingSnapshot::where('site_id', $site->id)
             ->latest('checked_at')->get()->groupBy('wp_post_id');
+
+        if ($rankings->isEmpty()) {
+            Log::info('[AnalyzeKeywords] inga ranking-snapshots hittades', [
+                'site_id' => $site->id,
+            ]);
+            return;
+        }
 
         foreach ($rankings as $pid => $list) {
             try {
@@ -53,9 +70,19 @@ class AnalyzeKeywordsJob implements ShouldQueue
             $ptype = Arr::get($list->first(), 'wp_type', 'page');
 
             // Använd rätt endpoint baserat på typslag
-            $data = $ptype === 'post'
-                ? $wp->getPost((int)$pid)
-                : $wp->getPage((int)$pid);
+            try {
+                $data = $ptype === 'post'
+                    ? $wp->getPost((int)$pid)
+                    : $wp->getPage((int)$pid);
+            } catch (\Throwable $e) {
+                Log::warning('[AnalyzeKeywords] kunde inte hämta resurs från WP', [
+                    'site_id' => $site->id,
+                    'post_id' => (int)$pid,
+                    'type'    => $ptype,
+                    'error'   => $e->getMessage(),
+                ]);
+                continue;
+            }
 
             if (!$data || !isset($data['id'])) {
                 continue;
@@ -83,7 +110,13 @@ class AnalyzeKeywordsJob implements ShouldQueue
             $json = trim(Str::of($out)->after('{')->beforeLast('}'));
             $json = '{'.$json.'}';
             $obj = json_decode($json, true);
-            if (!is_array($obj)) continue;
+            if (!is_array($obj)) {
+                Log::info('[AnalyzeKeywords] ogiltig JSON från AI, hoppar post', [
+                    'site_id' => $site->id,
+                    'post_id' => (int)$pid,
+                ]);
+                continue;
+            }
 
             KeywordSuggestion::updateOrCreate(
                 ['site_id' => $site->id, 'wp_post_id' => (int)$pid, 'wp_type' => $ptype],

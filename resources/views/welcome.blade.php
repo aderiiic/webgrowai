@@ -156,7 +156,12 @@
                     <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-4">Priser som växer med dig</h2>
                     <p class="text-xl text-slate-600 max-w-3xl mx-auto">Börja litet och skala upp. 14 dagar gratis, ingen bindningstid.</p>
                     <div class="inline-flex items-center mt-6 px-4 py-2 bg-gradient-to-r from-emerald-100 to-green-100 rounded-full">
-                        <span class="text-emerald-800 font-medium">🎉 10% rabatt vid årsprenumeration på alla planer</span>
+                        <span class="text-emerald-800 font-medium flex items-center">
+                            <svg class="w-4 h-4 mr-2 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                            </svg>
+                            15% rabatt vid årsprenumeration på alla planer
+                        </span>
                     </div>
                 </div>
 
@@ -166,8 +171,13 @@
                         <div class="text-center">
                             <h3 class="text-lg font-semibold text-slate-600 mb-2">Starter</h3>
                             <div class="mb-4">
-                                <span class="text-4xl font-bold text-slate-800">490 kr</span>
-                                <span class="text-slate-600">/mån</span>
+                                <div class="flex items-center justify-center gap-2 mb-2">
+                                    <span class="text-lg text-slate-400 line-through">1 290 kr</span>
+                                    <span class="text-4xl font-bold text-slate-800">790 kr</span>
+                                    <span class="text-slate-600">/mån</span>
+                                </div>
+                                <div class="text-xs text-orange-600 font-medium">Founders-pris första året</div>
+                                <div class="text-xs text-slate-500 mt-1">Sedan 1 290 kr/mån • 1 098 kr/mån (årlig)</div>
                             </div>
                             <p class="text-slate-600 mb-6">För mindre sajter som vill igång snabbt.</p>
                         </div>
@@ -213,15 +223,20 @@
                     <!-- Growth - Most Popular -->
                     <div class="relative bg-white rounded-2xl border-2 border-blue-500 shadow-2xl hover:shadow-3xl transition-all duration-300 p-8 scale-105">
                         <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                            <span class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-lg">
-                                Mest populär
-                            </span>
+                    <span class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-lg">
+                        Mest populär
+                    </span>
                         </div>
                         <div class="text-center">
                             <h3 class="text-lg font-semibold text-blue-600 mb-2">Growth</h3>
                             <div class="mb-4">
-                                <span class="text-4xl font-bold text-slate-800">1 490 kr</span>
-                                <span class="text-slate-600">/mån</span>
+                                <div class="flex items-center justify-center gap-2 mb-2">
+                                    <span class="text-lg text-slate-400 line-through">3 990 kr</span>
+                                    <span class="text-4xl font-bold text-slate-800">2 490 kr</span>
+                                    <span class="text-slate-600">/mån</span>
+                                </div>
+                                <div class="text-xs text-orange-600 font-medium">Founders-pris första året</div>
+                                <div class="text-xs text-slate-500 mt-1">Sedan 3 990 kr/mån • 3 392 kr/mån (årlig)</div>
                             </div>
                             <p class="text-slate-600 mb-6">För växande bolag med flera flöden.</p>
                         </div>
@@ -274,8 +289,13 @@
                         <div class="text-center">
                             <h3 class="text-lg font-semibold text-slate-600 mb-2">Pro</h3>
                             <div class="mb-4">
-                                <span class="text-4xl font-bold text-slate-800">3 990 kr</span>
-                                <span class="text-slate-600">/mån</span>
+                                <div class="flex items-center justify-center gap-2 mb-2">
+                                    <span class="text-lg text-slate-400 line-through">12 900 kr</span>
+                                    <span class="text-4xl font-bold text-slate-800">8 900 kr</span>
+                                    <span class="text-slate-600">/mån</span>
+                                </div>
+                                <div class="text-xs text-orange-600 font-medium">Founders-pris första året</div>
+                                <div class="text-xs text-slate-500 mt-1">Sedan 12 900 kr/mån • 10 965 kr/mån (årlig)</div>
                             </div>
                             <p class="text-slate-600 mb-6">För byråer och större team.</p>
                         </div>
@@ -317,11 +337,19 @@
                     </div>
                 </div>
 
-                <div class="max-w-4xl mx-auto mt-12 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-6">
+                <div class="max-w-4xl mx-auto mt-12 bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-2xl p-6">
                     <div class="text-center">
-                        <h3 class="text-lg font-bold text-amber-900 mb-2">🚀 Early adopter–erbjudande</h3>
-                        <p class="text-amber-800">
-                            50% rabatt i 3 månader + gratis onboarding (1h) för de första 20 kunderna. Nöjd–start garanti: avbryt inom 30 dagar → ingen debitering.
+                        <h3 class="text-lg font-bold text-orange-900 mb-2 flex items-center justify-center">
+                            <svg class="w-5 h-5 mr-2 text-orange-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                            </svg>
+                            Founders-erbjudande
+                        </h3>
+                        <p class="text-orange-800">
+                            <strong>Exklusivt för early adopters:</strong> Upp till 69% rabatt första året! Hjälp oss forma framtidens AI-marknadsföring.
+                            <span class="block mt-2 text-sm">
+                        Nöjd-kund-garanti: Inte nöjd inom 30 dagar? Ingen debitering.
+                    </span>
                         </p>
                     </div>
                 </div>

@@ -11,6 +11,7 @@ use App\Services\Billing\QuotaGuard;
 use App\Services\WordPressClient;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -29,13 +30,36 @@ class AnalyzeConversionJob implements ShouldQueue
         $site = Site::with('customer')->findOrFail($this->siteId);
         $customer = $site->customer;
 
-        $integration = WpIntegration::where('site_id', $site->id)->firstOrFail();
+        try {
+            $integration = WpIntegration::where('site_id', $site->id)->firstOrFail();
+        } catch (ModelNotFoundException $e) {
+            Log::warning('[AnalyzeConversion] ingen WP-integration kopplad, hoppar över', [
+                'customer_id' => $customer?->id,
+                'site_id'     => $site->id,
+            ]);
+            return;
+        }
 
         $wp = WordPressClient::for($integration);
 
         // 1) Hämta startsidan + landningssidor (enkelt: pages, publicerade, senast uppdaterade)
-        $pages = $wp->getPages(['per_page' => $this->limit, 'orderby' => 'modified']);
-        if (empty($pages)) return;
+        try {
+            $pages = $wp->getPages(['per_page' => $this->limit, 'orderby' => 'modified']);
+        } catch (\Throwable $e) {
+            Log::warning('[AnalyzeConversion] kunde inte hämta sidor från WP', [
+                'customer_id' => $customer?->id,
+                'site_id'     => $site->id,
+                'error'       => $e->getMessage(),
+            ]);
+            return;
+        }
+
+        if (empty($pages)) {
+            Log::info('[AnalyzeConversion] inga sidor hittades att analysera', [
+                'site_id' => $site->id,
+            ]);
+            return;
+        }
 
         $prov = $manager->choose(null, 'short');
         $guidelines = "Du är en svensk CRO-specialist. Ge konkreta förbättringar utan meta-kommentarer, inga emojis.";

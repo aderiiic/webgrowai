@@ -6,6 +6,7 @@ use App\Jobs\GenerateContentJob;
 use App\Models\AiContent;
 use App\Models\ContentTemplate;
 use App\Support\CurrentCustomer;
+use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -62,6 +63,6 @@ class Compose extends Component
         $templates = ContentTemplate::orderBy('name')->get();
         $sites = $current->get()?->sites()->orderBy('name')->get() ?? collect();
 
-        return view('livewire.ai.compose', compact('templates','sites'));
+        return view('livewire.a-i.compose', compact('templates','sites'));
     }
 }

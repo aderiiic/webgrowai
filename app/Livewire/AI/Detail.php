@@ -8,7 +8,9 @@ use App\Jobs\PublishToInstagramJob;
 use App\Models\AiContent;
 use App\Models\ContentPublication;
 use App\Support\CurrentCustomer;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -16,25 +18,25 @@ use Livewire\Component;
 class Detail extends Component
 {
     public AiContent $content;
+    public $sites;
 
-    // WP publicering
     public ?int $publishSiteId = null;
-    public string $publishStatus = 'draft'; // draft|publish|future
-    public ?string $publishAt = null; // 'YYYY-MM-DDTHH:MM'
+    public string $publishStatus = 'draft';
+    public ?string $publishAt = null;
 
-    // Social publicering
-    public string $socialTarget = 'facebook'; // facebook|instagram
-    public ?string $socialScheduleAt = null;  // 'YYYY-MM-DDTHH:MM'
+    public string $socialTarget = 'facebook';
+    public ?string $socialScheduleAt = null;
 
     public function mount(int $id, CurrentCustomer $current): void
     {
         $this->content = AiContent::with('template','site','customer')->findOrFail($id);
         Gate::authorize('view', $this->content);
 
+        $this->sites = $current->get()?->sites()->orderBy('name')->get() ?? collect();
         $this->publishSiteId = $this->content->site_id ?: ($current->get()?->sites()->orderBy('id')->value('id'));
     }
 
-    public function publish(CurrentCustomer $current): void
+    public function publish(): void
     {
         Gate::authorize('update', $this->content);
 
@@ -44,6 +46,7 @@ class Detail extends Component
             'publishAt'     => 'nullable|date',
         ]);
 
+        $current = app(CurrentCustomer::class);
         $user = auth()->user();
         if (!$user->isAdmin()) {
             $customer = $current->get();
@@ -55,21 +58,35 @@ class Detail extends Component
             $iso = \Illuminate\Support\Carbon::parse($this->publishAt)->toIso8601String();
         }
 
+        $pub = ContentPublication::create([
+            'ai_content_id' => $this->content->id,
+            'target'        => 'wp',
+            'status'        => 'queued',
+            'scheduled_at'  => $iso ? \Illuminate\Support\Carbon::parse($this->publishAt) : null,
+            'message'       => null,
+            'payload'       => [
+                'site_id' => $this->publishSiteId,
+                'status'  => $this->publishStatus,
+                'date'    => $iso,
+            ],
+        ]);
+
         dispatch(new PublishAiContentToWpJob(
             aiContentId: $this->content->id,
             siteId: $this->publishSiteId,
             status: $this->publishStatus,
-            scheduleAtIso: $iso
+            scheduleAtIso: $iso,
+            publicationId: $pub->id
         ))->onQueue('publish');
 
         session()->flash('success', 'WP-publicering köad.');
     }
 
-    public function quickDraft(CurrentCustomer $current): void
+    public function quickDraft(): void
     {
         $this->publishStatus = 'draft';
         $this->publishAt = null;
-        $this->publish($current);
+        $this->publish();
     }
 
     public function queueSocial(): void
@@ -91,7 +108,6 @@ class Detail extends Component
             'payload'       => null,
         ]);
 
-        // Kör direkt om ingen framtida tid
         if (!$scheduledAt || $scheduledAt->isPast()) {
             if ($this->socialTarget === 'facebook') {
                 dispatch(new PublishToFacebookJob($pub->id))->onQueue('social');
@@ -102,5 +118,67 @@ class Detail extends Component
         } else {
             session()->flash('success', ucfirst($this->socialTarget)." schemalagd till {$scheduledAt->format('Y-m-d H:i')}.");
         }
+    }
+
+    public function render(): View
+    {
+        $this->content->refresh();
+
+        $md = $this->content->body_md ?? '';
+        $normalized = $this->normalizeMd($md);
+        $html = $normalized !== '' ? Str::of($normalized)->markdown() : '';
+
+        return view('livewire.a-i.detail', [
+            'sites' => $this->sites,
+            'md'    => $normalized,
+            'html'  => $html,
+        ]);
+    }
+
+    /**
+     * Tar bort oavsiktlig indentering och inledande/avslutande kodstaket som gör att Markdown blir kodblock.
+     */
+    private function normalizeMd(string $md): string
+    {
+        if ($md === '') {
+            return $md;
+        }
+
+        // Normalisera radbrytningar
+        $md = str_replace(["\r\n", "\r"], "\n", $md);
+
+        // Trimma bort inledande och avslutande "```" om hela texten råkat hamna i kodstaket
+        $trimmed = trim($md);
+        if (str_starts_with($trimmed, '```') && str_ends_with($trimmed, '```')) {
+            $trimmed = preg_replace('/^```[a-zA-Z0-9_-]*\n?/','', $trimmed);
+            $trimmed = preg_replace("/\n?```$/", '', $trimmed);
+            $md = $trimmed;
+        }
+
+        // Ta bort gemensam minsta indentering (dedent) för att undvika att allt blir code block
+        $lines = explode("\n", $md);
+        $minIndent = null;
+        foreach ($lines as $line) {
+            if (trim($line) === '') {
+                continue;
+            }
+            preg_match('/^( +|\t+)/', $line, $m);
+            if (!empty($m[0])) {
+                $len = strlen(str_replace("\t", '    ', $m[0]));
+                $minIndent = $minIndent === null ? $len : min($minIndent, $len);
+            } else {
+                $minIndent = 0;
+                break;
+            }
+        }
+        if ($minIndent && $minIndent > 0) {
+            $md = implode("\n", array_map(function ($line) use ($minIndent) {
+                // ersätt tabs med 4 spaces för säker dedent
+                $line = str_replace("\t", '    ', $line);
+                return preg_replace('/^ {0,' . $minIndent . '}/', '', $line);
+            }, $lines));
+        }
+
+        return trim($md);
     }
 }
