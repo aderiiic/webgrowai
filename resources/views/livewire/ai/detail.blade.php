@@ -1,98 +1,224 @@
-<div class="max-w-5xl mx-auto py-10 space-y-6">
-    <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-semibold">{{ $content->title ?: 'AI Innehåll' }}</h1>
-        <div class="text-sm text-gray-500">Status: {{ strtoupper($content->status) }} • Provider: {{ $content->provider ?: '—' }}</div>
-    </div>
-
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-    @if($content->error)
-        <div class="alert alert-error text-sm">{{ $content->error }}</div>
-    @endif
-
-    @php $mdReady = !empty($md); @endphp
-
-    @if($mdReady)
-        <article class="prose max-w-none">
-            {!! \Illuminate\Support\Str::of($md)->markdown() !!}
-        </article>
-    @else
-        <div class="text-gray-600 text-sm">Innehåll genereras... uppdatera sidan om en stund.</div>
-    @endif
-
-    <!-- Exportera som utkast -->
-    <div class="border rounded p-4 bg-gray-50 space-y-3">
+<div>
+    <div class="max-w-6xl mx-auto space-y-8">
+        <!-- Header -->
         <div class="flex items-center justify-between">
-            <h2 class="text-lg font-medium">Exportera som utkast</h2>
-            <a href="{{ route('ai.export', $content->id) }}" class="btn btn-sm" @disabled(!$mdReady)>Ladda ner Markdown</a>
+            <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                <svg class="w-8 h-8 mr-3 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                {{ $content->title ?: 'AI Innehåll' }}
+            </h1>
+            <div class="flex items-center space-x-4">
+                @php
+                    $statusColors = [
+                        'completed' => ['bg' => 'from-green-50 to-emerald-50', 'border' => 'border-green-200/50', 'text' => 'text-green-800'],
+                        'processing' => ['bg' => 'from-blue-50 to-indigo-50', 'border' => 'border-blue-200/50', 'text' => 'text-blue-800'],
+                        'draft' => ['bg' => 'from-yellow-50 to-amber-50', 'border' => 'border-yellow-200/50', 'text' => 'text-yellow-800'],
+                        'error' => ['bg' => 'from-red-50 to-pink-50', 'border' => 'border-red-200/50', 'text' => 'text-red-800'],
+                    ];
+                    $colors = $statusColors[strtolower($content->status)] ?? ['bg' => 'from-gray-50 to-slate-50', 'border' => 'border-gray-200/50', 'text' => 'text-gray-800'];
+                @endphp
+                <div class="inline-flex items-center px-4 py-2 bg-gradient-to-r {{ $colors['bg'] }} {{ $colors['border'] }} border rounded-xl">
+                    <span class="text-sm font-medium {{ $colors['text'] }} uppercase">{{ $content->status }}</span>
+                    @if($content->provider)
+                        <span class="mx-2 text-gray-400">•</span>
+                        <span class="text-sm font-medium {{ $colors['text'] }}">{{ $content->provider }}</span>
+                    @endif
+                </div>
+                <a href="{{ route('ai.list') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 hover:border-gray-400 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 shadow-sm hover:shadow-md">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    Tillbaka
+                </a>
+            </div>
         </div>
-    </div>
 
-    <!-- WordPress publicering -->
-    <div class="border rounded p-4 bg-gray-50 space-y-3">
-        <div class="flex items-center justify-between">
-            <h2 class="text-lg font-medium">Publicera till WordPress</h2>
-            @if($mdReady && $publishSiteId)
-                <button class="btn btn-sm" wire:click="quickDraft">Publicera som utkast</button>
+        <!-- Success/Error notifications -->
+        @if(session('success'))
+            <div class="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl">
+                <div class="flex items-center space-x-3">
+                    <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <p class="text-sm font-medium text-emerald-800">{{ session('success') }}</p>
+                </div>
+            </div>
+        @endif
+
+        @if($content->error)
+            <div class="p-4 bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl">
+                <div class="flex items-center space-x-3">
+                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <p class="text-sm font-medium text-red-800">{{ $content->error }}</p>
+                </div>
+            </div>
+        @endif
+
+        @php $mdReady = !empty($md); @endphp
+
+            <!-- Content display -->
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 overflow-hidden">
+            @if($mdReady)
+                <div class="p-8">
+                    <article class="prose prose-lg max-w-none prose-indigo prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-indigo-600 hover:prose-a:text-indigo-800 prose-strong:text-gray-900 prose-code:text-indigo-600 prose-code:bg-indigo-50 prose-pre:bg-gray-900 prose-pre:text-gray-100">
+                        {!! \Illuminate\Support\Str::of($md)->markdown() !!}
+                    </article>
+                </div>
+            @else
+                <div class="p-12 text-center">
+                    <div class="w-16 h-16 bg-gradient-to-br from-indigo-100 to-purple-200 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                        <svg class="w-8 h-8 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Innehåll genereras...</h3>
+                    <p class="text-gray-600">Detta kan ta upp till några minuter. Uppdatera sidan om en stund.</p>
+                </div>
             @endif
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div>
-                <label class="block text-sm text-gray-600">Sajt</label>
-                <select wire:model="publishSiteId" class="select select-bordered w-full">
-                    @foreach($sites as $s)
-                        <option value="{{ $s->id }}">{{ $s->name }}</option>
-                    @endforeach
-                </select>
+        <!-- Action sections -->
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            <!-- Export section -->
+            <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6">
+                <div class="flex items-center space-x-4 mb-6">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900">Exportera innehåll</h2>
+                        <p class="text-sm text-gray-600">Ladda ner som Markdown-fil för vidare bearbetning</p>
+                    </div>
+                </div>
+
+                <div class="flex justify-end">
+                    <a href="{{ route('ai.export', $content->id) }}" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl {{ !$mdReady ? 'opacity-50 cursor-not-allowed' : '' }}"
+                       @if(!$mdReady) onclick="return false;" @endif>
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Ladda ner Markdown
+                    </a>
+                </div>
             </div>
-            <div>
-                <label class="block text-sm text-gray-600">Status</label>
-                <select wire:model="publishStatus" class="select select-bordered w-full">
-                    <option value="draft">Utkast</option>
-                    <option value="publish">Publicera</option>
-                    <option value="future">Schemalägg</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm text-gray-600">Publiceringstid (vid schemaläggning)</label>
-                <input type="datetime-local" wire:model="publishAt" class="input input-bordered w-full">
+
+            <!-- WordPress publishing -->
+            <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6">
+                <div class="flex items-center space-x-4 mb-6">
+                    <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M21.469 6.825c.84 1.537 1.318 3.3 1.318 5.175 0 3.979-2.156 7.456-5.363 9.325l3.295-9.527c.615-1.54.82-2.771.82-3.864 0-.405-.026-.78-.07-1.11m-7.981.105c.647-.03 1.232-.105 1.232-.105.582-.075.514-.93-.067-.899 0 0-1.755.135-2.88.135-1.064 0-2.85-.15-2.85-.15-.584-.03-.661.854-.075.884 0 0 .54.061 1.125.09l1.68 4.605-2.37 7.08L5.354 6.9c.649-.03 1.234-.1 1.234-.1.585-.075.516-.93-.065-.896 0 0-1.746.138-2.874.138-.2 0-.438-.008-.69-.015C4.911 3.15 8.235 1.215 12 1.215c2.809 0 5.365 1.072 7.286 2.833-.046-.003-.091-.009-.141-.009-1.06 0-1.812.923-1.812 1.914 0 .89.513 1.643 1.06 2.531.411.72.89 1.643.89 2.977 0 .915-.354 1.994-.821 3.479l-1.075 3.585-3.9-11.61.001.014z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900">WordPress</h2>
+                        <p class="text-sm text-gray-600">Publicera direkt till din WordPress-sajt</p>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Sajt</label>
+                            <select wire:model="publishSiteId" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200">
+                                @foreach($sites as $s)
+                                    <option value="{{ $s->id }}">{{ $s->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                                <select wire:model="publishStatus" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200">
+                                    <option value="draft">Utkast</option>
+                                    <option value="publish">Publicera</option>
+                                    <option value="future">Schemalägg</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Publiceringstid</label>
+                                <input type="datetime-local" wire:model="publishAt" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center pt-4 border-t border-gray-200">
+                        @if($mdReady && $publishSiteId)
+                            <button wire:click="quickDraft" class="inline-flex items-center px-4 py-2 bg-emerald-100 text-emerald-800 font-medium rounded-lg hover:bg-emerald-200 transition-colors duration-200 text-sm">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                </svg>
+                                Snabb-utkast
+                            </button>
+                        @else
+                            <div></div>
+                        @endif
+
+                        <button wire:click="publish" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl hover:from-emerald-700 hover:to-teal-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl {{ !$mdReady ? 'opacity-50 cursor-not-allowed' : '' }}"
+                                @if(!$mdReady) disabled @endif>
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                            </svg>
+                            Köa publicering
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div>
-            <button class="btn btn-primary" wire:click="publish" @disabled(!$mdReady)">Köa publicering</button>
-            @unless($mdReady)
-                <span class="text-xs text-gray-500 ms-2">Innehållet är inte klart ännu.</span>
-            @endunless
-        </div>
-    </div>
-
-    <!-- Social publicering -->
-    <div class="border rounded p-4 bg-gray-50 space-y-3">
-        <h2 class="text-lg font-medium">Publicera till Sociala kanaler</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div>
-                <label class="block text-sm text-gray-600">Kanal</label>
-                <select wire:model="socialTarget" class="select select-bordered w-full">
-                    <option value="facebook">Facebook</option>
-                    <option value="instagram">Instagram</option>
-                </select>
+        <!-- Social media publishing -->
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6">
+            <div class="flex items-center space-x-4 mb-6">
+                <div class="w-12 h-12 bg-gradient-to-br from-pink-500 to-purple-600 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V1a1 1 0 011-1h2a1 1 0 011 1v2m0 0v2a1 1 0 01-1 1H8a1 1 0 01-1-1V4z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-gray-900">Sociala kanaler</h2>
+                    <p class="text-sm text-gray-600">Publicera till Facebook och Instagram</p>
+                </div>
             </div>
-            <div>
-                <label class="block text-sm text-gray-600">Publiceringstid (valfritt)</label>
-                <input type="datetime-local" wire:model="socialScheduleAt" class="input input-bordered w-full">
-                <p class="text-xs text-gray-500 mt-1">Lämna tomt för omedelbar publicering.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Kanal</label>
+                    <select wire:model="socialTarget" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200">
+                        <option value="facebook">Facebook</option>
+                        <option value="instagram">Instagram</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Publiceringstid (valfritt)</label>
+                    <input type="datetime-local" wire:model="socialScheduleAt" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200">
+                </div>
+            </div>
+
+            <div class="text-xs text-gray-600 mb-4 p-3 bg-gray-50 rounded-lg">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Lämna publiceringstid tom för omedelbar publicering.
+            </div>
+
+            <div class="flex justify-end">
+                <button wire:click="queueSocial" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-semibold rounded-xl hover:from-pink-700 hover:to-purple-700 focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl {{ !$mdReady ? 'opacity-50 cursor-not-allowed' : '' }}"
+                        @if(!$mdReady) disabled @endif>
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                    </svg>
+                    Köa till {{ ucfirst($socialTarget) }}
+                </button>
             </div>
         </div>
-
-        <div>
-            <button class="btn btn-primary" wire:click="queueSocial" @disabled(!$mdReady)">Köa till {{ ucfirst($socialTarget) }}</button>
-        </div>
-    </div>
-
-    <div class="flex gap-2">
-        <a href="{{ route('ai.list') }}" class="btn">Tillbaka</a>
     </div>
 </div>
