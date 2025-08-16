@@ -1,12 +1,12 @@
 <div>
     <div class="min-h-screen flex items-center justify-center px-4 py-8">
         <div class="w-full max-w-2xl">
-            <!-- Progress indicator -->
+            <!-- Progress: 1..7 -->
             <div class="mb-8">
                 <div class="flex items-center justify-center space-x-4">
-                    @for($i = 1; $i <= 3; $i++)
+                    @for($i = 1; $i <= 7; $i++)
                         <div class="flex items-center">
-                            <div class="flex items-center justify-center w-10 h-10 rounded-full {{ $step >= $i ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white' : 'bg-gray-200 text-gray-500' }} font-semibold">
+                            <div class="flex items-center justify-center w-10 h-10 rounded-2xl {{ $step >= $i ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md' : 'bg-gray-100 text-gray-500 border border-gray-200' }} font-semibold">
                                 @if($step > $i)
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -15,7 +15,7 @@
                                     {{ $i }}
                                 @endif
                             </div>
-                            @if($i < 3)
+                            @if($i < 7)
                                 <div class="w-16 h-0.5 {{ $step > $i ? 'bg-gradient-to-r from-indigo-600 to-purple-600' : 'bg-gray-200' }}"></div>
                             @endif
                         </div>
@@ -40,57 +40,83 @@
 
                 <!-- Content -->
                 <div class="px-8 py-8">
+                    <!-- Steg 1: Skapa första sajt -->
                     @if($step === 1)
                         <div class="space-y-6">
                             <div class="text-center">
-                                <h2 class="text-2xl font-bold text-gray-900 mb-2">Steg 1: Skapa kundkonto</h2>
-                                <p class="text-gray-600">Börja med att skapa ett konto för ditt företag</p>
+                                <h2 class="text-2xl font-bold text-gray-900 mb-2">Steg 1: Lägg till första sajten</h2>
+                                <p class="text-gray-600">Registrera din webbplats för att komma igång</p>
                             </div>
 
-                            <div class="space-y-4">
+                            @if($sitesQuotaExceeded)
+                                <div class="p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-800">
+                                    Du har nått din sajtkvot ({{ $sitesUsed }}/{{ $sitesLimit }}). Uppgradera plan eller ta bort en sajt för att fortsätta.
+                                </div>
+                            @endif
+
+                            <div class="space-y-5">
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                        Företagsnamn *
-                                    </label>
-                                    <input
-                                        type="text"
-                                        wire:model.defer="customer_name"
-                                        class="modern-input"
-                                        placeholder="Ange ditt företagsnamn"
-                                    >
-                                    @error('customer_name')
-                                    <p class="mt-2 text-sm text-red-600 flex items-center">
-                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                        </svg>
-                                        {{ $message }}
-                                    </p>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Sajtnamn *</label>
+                                    <div class="relative">
+                                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M5 7v10a2 2 0 002 2h10a2 2 0 002-2V7"/>
+                                            </svg>
+                                        </span>
+                                        <input
+                                            type="text"
+                                            wire:model.defer="site_name"
+                                            class="w-full pl-10 pr-4 py-3 rounded-2xl border border-gray-300 bg-white/80 shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400 transition"
+                                            placeholder="Min Webbplats"
+                                            @disabled($sitesQuotaExceeded)
+                                        >
+                                    </div>
+                                    @error('site_name')
+                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                                     @enderror
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                        Kontaktmail <span class="text-gray-400 font-normal">(valfritt)</span>
-                                    </label>
-                                    <input
-                                        type="email"
-                                        wire:model.defer="customer_email"
-                                        class="modern-input"
-                                        placeholder="namn@företag.se"
-                                    >
-                                    @error('customer_email')
-                                    <p class="mt-2 text-sm text-red-600 flex items-center">
-                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                        </svg>
-                                        {{ $message }}
-                                    </p>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">URL *</label>
+                                    <div class="relative">
+                                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9"/>
+                                            </svg>
+                                        </span>
+                                        <input
+                                            type="url"
+                                            wire:model.defer="site_url"
+                                            class="w-full pl-10 pr-4 py-3 rounded-2xl border border-gray-300 bg-white/80 shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400 transition"
+                                            placeholder="https://example.com"
+                                            @disabled($sitesQuotaExceeded)
+                                        >
+                                    </div>
+                                    @error('site_url')
+                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                                     @enderror
                                 </div>
                             </div>
 
-                            <div class="pt-4">
-                                <button wire:click="createCustomer" class="modern-btn-primary w-full">
+                            <div class="pt-2 flex items-center justify-between">
+                                <button
+                                    wire:click="prev"
+                                    class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 hover:border-gray-400 transition"
+                                    @disabled($step === 1)
+                                >
+                                    Tillbaka
+                                </button>
+
+                                <button
+                                    wire:click="createSite"
+                                    class="inline-flex items-center justify-center px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-lg hover:from-indigo-700 hover:to-purple-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                                    wire:loading.attr="disabled"
+                                    wire:target="createSite"
+                                    @disabled($sitesQuotaExceeded)
+                                >
+                                    <svg class="w-5 h-5 mr-2 hidden" wire:loading.class.remove="hidden" wire:target="createSite" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path class="animate-spin origin-center" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v2m4.95 1.05l-1.414 1.414M20 12h-2m-1.05 4.95l-1.414-1.414M12 20v-2m-4.95-1.05l1.414-1.414M4 12h2m1.05-4.95l1.414 1.414"/>
+                                    </svg>
                                     <span>Fortsätt</span>
                                     <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -100,63 +126,67 @@
                         </div>
 
                     @elseif($step === 2)
+                        <div class="text-center space-y-6">
+                            <div class="mx-auto flex items-center justify-center w-20 h-20 bg-gradient-to-br from-indigo-400 to-purple-600 rounded-full">
+                                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="text-2xl font-bold text-gray-900 mb-2">Bra jobbat!</h2>
+                                <p class="text-gray-600">Nu kopplar vi upp dina integrationer.</p>
+                            </div>
+                            <div class="pt-2">
+                                <button wire:click="next" class="modern-btn-primary">
+                                    <span>Fortsätt till WordPress‑koppling</span>
+                                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Steg 3: WordPress -->
+                    @elseif($step === 3)
                         <div class="space-y-6">
                             <div class="text-center">
-                                <h2 class="text-2xl font-bold text-gray-900 mb-2">Steg 2: Lägg till första sajten</h2>
-                                <p class="text-gray-600">Registrera din webbplats för att komma igång</p>
+                                <h2 class="text-2xl font-bold text-gray-900 mb-2">Steg 3: Koppla WordPress</h2>
+                                <p class="text-gray-600">Koppla din sajt för att kunna publicera innehåll och köra analyser</p>
                             </div>
 
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                        Sajtnamn *
-                                    </label>
-                                    <input
-                                        type="text"
-                                        wire:model.defer="site_name"
-                                        class="modern-input"
-                                        placeholder="Min Webbplats"
-                                    >
-                                    @error('site_name')
-                                    <p class="mt-2 text-sm text-red-600 flex items-center">
-                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                        </svg>
-                                        {{ $message }}
-                                    </p>
-                                    @enderror
-                                </div>
-
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                        URL *
-                                    </label>
-                                    <div class="relative">
-                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9"/>
-                                            </svg>
+                            <div class="p-4 rounded-xl border {{ $wpConnected ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200' }}">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-3 h-3 rounded-full {{ $wpConnected ? 'bg-emerald-500' : 'bg-amber-500' }}"></div>
+                                        <div class="text-sm {{ $wpConnected ? 'text-emerald-800' : 'text-amber-800' }}">
+                                            {{ $wpConnected ? 'WordPress är kopplat' : 'WordPress är inte kopplat ännu' }}
                                         </div>
-                                        <input
-                                            type="url"
-                                            wire:model.defer="site_url"
-                                            class="modern-input pl-10"
-                                            placeholder="https://example.com"
-                                        >
                                     </div>
-                                    @error('site_url')
-                                    <p class="mt-2 text-sm text-red-600 flex items-center">
-                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                        </svg>
-                                        {{ $message }}
-                                    </p>
-                                    @enderror
+                                    <div class="flex items-center space-x-3">
+                                        @if($primarySiteId)
+                                            <a href="{{ route('sites.wordpress', $primarySiteId) }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50">
+                                                Öppna WP-koppling
+                                            </a>
+                                        @endif
+                                        <button wire:click="refreshStatus" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50">
+                                            Uppdatera status
+                                        </button>
+                                    </div>
                                 </div>
+                                @error('wpConnected')
+                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
                             </div>
 
-                            <div class="pt-4">
-                                <button wire:click="createSite" class="modern-btn-primary w-full">
+                            <div class="pt-4 flex items-center justify-between">
+                                <button wire:click="prev" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50">
+                                    Tillbaka
+                                </button>
+                                <button
+                                    wire:click="next"
+                                    class="modern-btn-primary"
+                                    @disabled(!$wpConnected)
+                                >
                                     <span>Fortsätt</span>
                                     <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -165,29 +195,181 @@
                             </div>
                         </div>
 
-                    @elseif($step === 3)
-                        <div class="text-center space-y-6">
-                            <!-- Success Icon -->
-                            <div class="mx-auto flex items-center justify-center w-20 h-20 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-full">
-                                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
+                        <!-- Steg 4: Lead tracker -->
+                    @elseif($step === 4)
+                        <div class="space-y-6">
+                            <div class="text-center">
+                                <h2 class="text-2xl font-bold text-gray-900 mb-2">Steg 4: Installera lead tracking</h2>
+                                <p class="text-gray-600">Installera plugin eller script och bekräfta</p>
                             </div>
 
-                            <div>
-                                <h2 class="text-3xl font-bold text-gray-900 mb-4">Klart!</h2>
-                                <p class="text-lg text-gray-600 mb-2">Fantastiskt! Du är nu redo att börja.</p>
-                                <p class="text-gray-500">Du kan nu gå till din dashboard och börja använda WebGrow AI för att optimera din webbplats.</p>
+                            <div class="space-y-4">
+                                <div class="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200/50">
+                                    <div class="flex flex-wrap gap-3">
+                                        <a href="{{ route('downloads.webbi-lead-tracker') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700">
+                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
+                                            </svg>
+                                            Ladda ner WP‑plugin
+                                        </a>
+                                        <a href="{{ route('onboarding.tracker') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-800 rounded-xl hover:bg-gray-50">
+                                            Öppna installationsguide
+                                        </a>
+                                        <button wire:click="markLeadTrackerReady" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700">
+                                            Markera som klart
+                                        </button>
+                                        <button wire:click="refreshStatus" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-800 rounded-xl hover:bg-gray-50">
+                                            Uppdatera status
+                                        </button>
+                                    </div>
+                                    <div class="mt-3 text-sm {{ $leadTrackerReady ? 'text-emerald-700' : 'text-amber-700' }}">
+                                        Status: {{ $leadTrackerReady ? 'Klar' : 'Ej klar' }}
+                                    </div>
+                                    @error('leadTrackerReady')
+                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
                             </div>
 
-                            <div class="pt-4">
-                                <a href="{{ route('dashboard') }}" wire:click.prevent="finish" class="modern-btn-success">
-                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v4H8V5z"/>
+                            <div class="pt-4 flex items-center justify-between">
+                                <button wire:click="prev" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50">
+                                    Tillbaka
+                                </button>
+                                <button wire:click="next" class="modern-btn-primary">
+                                    <span>Fortsätt</span>
+                                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                     </svg>
-                                    <span>Gå till Dashboard</span>
-                                </a>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Steg 5: Sociala medier (valfritt) -->
+                    @elseif($step === 5)
+                        <div class="space-y-6">
+                            <div class="text-center">
+                                <h2 class="text-2xl font-bold text-gray-900 mb-2">Steg 5: Koppla sociala medier (valfritt)</h2>
+                                <p class="text-gray-600">Koppla Facebook/Instagram för att kunna publicera</p>
+                            </div>
+
+                            <div class="p-4 bg-gradient-to-r from-pink-50 to-purple-50 rounded-xl border border-pink-200/50">
+                                <div class="flex flex-wrap gap-3">
+                                    <a href="{{ route('settings.social') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-800 rounded-xl hover:bg-gray-50">
+                                        Öppna sociala inställningar
+                                    </a>
+                                    <button wire:click="markSocialConnected" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700">
+                                        Markera som klart
+                                    </button>
+                                </div>
+                                <div class="mt-3 text-sm {{ $socialConnected ? 'text-emerald-700' : 'text-gray-700' }}">
+                                    Status: {{ $socialConnected ? 'Klar' : 'Valfritt (kan hoppas över)' }}
+                                </div>
+                            </div>
+
+                            <div class="pt-4 flex items-center justify-between">
+                                <button wire:click="prev" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50">
+                                    Tillbaka
+                                </button>
+                                <div class="flex items-center gap-3">
+                                    <button wire:click="skip" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50">
+                                        Hoppa över
+                                    </button>
+                                    <button wire:click="next" class="modern-btn-primary">
+                                        <span>Fortsätt</span>
+                                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Steg 6: Mailchimp (valfritt) -->
+                    @elseif($step === 6)
+                        <div class="space-y-6">
+                            <div class="text-center">
+                                <h2 class="text-2xl font-bold text-gray-900 mb-2">Steg 6: Koppla Mailchimp (valfritt)</h2>
+                                <p class="text-gray-600">Koppla ditt nyhetsbrev för att kunna skicka kampanjer</p>
+                            </div>
+
+                            <div class="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl border border-yellow-200/50">
+                                <div class="flex flex-wrap gap-3">
+                                    <a href="{{ route('settings.mailchimp') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-800 rounded-xl hover:bg-gray-50">
+                                        Öppna Mailchimp-inställningar
+                                    </a>
+                                    <button wire:click="markMailchimpConnected" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700">
+                                        Markera som klart
+                                    </button>
+                                </div>
+                                <div class="mt-3 text-sm {{ $mailchimpConnected ? 'text-emerald-700' : 'text-gray-700' }}">
+                                    Status: {{ $mailchimpConnected ? 'Klar' : 'Valfritt (kan hoppas över)' }}
+                                </div>
+                            </div>
+
+                            <div class="pt-4 flex items-center justify-between">
+                                <button wire:click="prev" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50">
+                                    Tillbaka
+                                </button>
+                                <div class="flex items-center gap-3">
+                                    <button wire:click="skip" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50">
+                                        Hoppa över
+                                    </button>
+                                    <button wire:click="next" class="modern-btn-primary">
+                                        <span>Fortsätt</span>
+                                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Steg 7: Weekly Digest -->
+                    @elseif($step === 7)
+                        <div class="space-y-6">
+                            <div class="text-center">
+                                <h2 class="text-2xl font-bold text-gray-900 mb-2">Steg 7: Veckodigest</h2>
+                                <p class="text-gray-600">Konfigurera veckosammanfattning (kan hoppas över)</p>
+                            </div>
+
+                            <div class="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200/50">
+                                <div class="flex flex-wrap gap-3">
+                                    <a href="{{ route('settings.weekly') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-800 rounded-xl hover:bg-gray-50">
+                                        Öppna inställningar
+                                    </a>
+                                    <button wire:click="markWeeklyConfigured" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700">
+                                        Markera som klart
+                                    </button>
+                                </div>
+                                <div class="mt-3 text-sm {{ $weeklyConfigured ? 'text-emerald-700' : 'text-gray-700' }}">
+                                    Status: {{ $weeklyConfigured ? 'Klar' : 'Valfritt (kan hoppas över)' }}
+                                </div>
+                                @error('weeklyConfigured')
+                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div class="pt-4 flex items-center justify-between">
+                                <button wire:click="prev" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 hover:border-gray-400 transition">
+                                    Tillbaka
+                                </button>
+                                <div class="flex items-center gap-3">
+                                    <button
+                                        wire:click="goDashboard"
+                                        class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 hover:border-gray-400 transition"
+                                    >
+                                        Hoppa över och gå till Dashboard
+                                    </button>
+                                    <button
+                                        wire:click="complete"
+                                        class="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-lg hover:from-emerald-700 hover:to-teal-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition"
+                                    >
+                                        <span>Slutför och gå till Dashboard</span>
+                                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     @endif
@@ -195,18 +377,4 @@
             </div>
         </div>
     </div>
-
-    <style>
-        .modern-input {
-            @apply w-full px-4 py-3 border border-gray-300 rounded-xl bg-white/70 backdrop-blur-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 placeholder-gray-400;
-        }
-
-        .modern-btn-primary {
-            @apply inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transform hover:scale-[1.02] transition-all duration-200 shadow-lg hover:shadow-xl;
-        }
-
-        .modern-btn-success {
-            @apply inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl hover:from-emerald-700 hover:to-teal-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transform hover:scale-[1.02] transition-all duration-200 shadow-lg hover:shadow-xl;
-        }
-    </style>
 </div>

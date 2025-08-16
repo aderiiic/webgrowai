@@ -11,9 +11,16 @@ class EnsureOnboardingCompleted
     {
         $user = $request->user();
 
-        if ($user && $user->onboarding_step < 3 && !$request->routeIs('onboarding')) {
-            return redirect()->route('onboarding');
+        if ($user && $user->onboarding_step < 8) {
+            if (
+                !$request->routeIs('onboarding') &&
+                !$request->routeIs('sites.wordpress*') &&
+                !$request->routeIs('settings.social*')
+            ) {
+                return redirect()->route('onboarding');
+            }
         }
+
         return $next($request);
     }
 }
