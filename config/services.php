@@ -95,11 +95,7 @@ return [
         'client_secret' => env('LINKEDIN_CLIENT_SECRET'),
         'redirect' => env('LINKEDIN_REDIRECT_URI'),
         'scopes' => [
-            'r_liteprofile',
             'w_member_social',
-            'r_organization_social',
-            'w_organization_social',
-            // ev. 'r_emailaddress' om du behöver e‑post senare
         ],
     ],
 ];
