@@ -26,30 +26,26 @@ class SocialAuthController extends Controller
     public function facebookCallback(Request $req, CurrentCustomer $current)
     {
         $customer = $current->get();
+        Log::info('[FB] Callback', ['customer' => $customer]);
         abort_unless($customer, 403);
+        Log::info('[FB] Callback', ['customer' => $customer]);
 
         $code = $req->query('code');
         abort_unless($code, 400, 'Saknar code');
 
+        Log::info($code . ' Saknar code');
+
         $client = new Client(['timeout' => 30]);
 
         // 1) Byt code -> User access token
-
-        try {
-            $tokenRes = $client->get('https://graph.facebook.com/v19.0/oauth/access_token', [
-                'query' => [
-                    'client_id'     => config('services.facebook.client_id'),
-                    'client_secret' => config('services.facebook.client_secret'),
-                    'redirect_uri'  => config('services.facebook.redirect'),
-                    'code'          => $code,
-                ],
-            ]);
-        } catch (\GuzzleHttp\Exception\ClientException $e) {
-            Log::error('Facebook token error', [
-                'response' => (string) $e->getResponse()->getBody(),
-            ]);
-            throw $e;
-        }
+        $tokenRes = $client->get('https://graph.facebook.com/v19.0/oauth/access_token', [
+            'query' => [
+                'client_id'     => config('services.facebook.client_id'),
+                'client_secret' => config('services.facebook.client_secret'),
+                'redirect_uri'  => config('services.facebook.redirect'),
+                'code'          => $code,
+            ],
+        ]);
         $token = json_decode((string) $tokenRes->getBody(), true);
         $userAccessToken = $token['access_token'] ?? null;
         abort_unless($userAccessToken, 400, 'Kunde inte hämta user access token');
