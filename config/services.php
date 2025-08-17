@@ -95,8 +95,10 @@ return [
         'client_secret' => env('LINKEDIN_CLIENT_SECRET'),
         'redirect_uri' => env('LINKEDIN_REDIRECT_URI'),
         'scopes' => [
-            'r_liteprofile',
+            'openid',
             'w_member_social',
+            'profile',
+            'email'
         ],
     ],
 ];
