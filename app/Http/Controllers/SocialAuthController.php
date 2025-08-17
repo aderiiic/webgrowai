@@ -62,10 +62,14 @@ class SocialAuthController extends Controller
         ]);
         $pages = json_decode((string) $pagesRes->getBody(), true);
         $firstPage = $pages['data'][0] ?? null;
+
+        Log::info('First page', ['firstPage' => $firstPage]);
         abort_unless($firstPage, 400, 'Inga sidor hittades på kontot');
 
         $pageId = $firstPage['id'];
         $pageAccessToken = $firstPage['access_token'];
+
+        Log::info('Page id', ['pageId' => $pageId]);
 
         // 3) Spara facebook-integration
         SocialIntegration::updateOrCreate(
