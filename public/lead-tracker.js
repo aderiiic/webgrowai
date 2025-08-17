@@ -1,85 +1,40 @@
-/* Lead tracker (enhanced, self-config) */
+/* Lead tracker (debug-friendly) */
 (function () {
     try {
         var STARTED = false;
+        var DEBUG = true; // Sätt till false när allt funkar
 
-        function parseBool(v) {
-            if (typeof v === 'boolean') return v;
-            if (typeof v !== 'string') return false;
-            v = v.toLowerCase();
-            return v === '1' || v === 'true' || v === 'yes';
-        }
+        function log() { if (DEBUG && window.console) console.log.apply(console, ['[lead-tracker]'].concat([].slice.call(arguments))); }
+        function warn() { if (window.console) console.warn.apply(console, ['[lead-tracker]'].concat([].slice.call(arguments))); }
 
-        function getScriptEl() {
-            // currentScript funkar i moderna browsers
-            if (document.currentScript) return document.currentScript;
-            // fallback: hitta sista script vars src innehåller "lead-tracker.js"
-            var scripts = document.getElementsByTagName('script');
-            for (var i = scripts.length - 1; i >= 0; i--) {
-                var s = scripts[i];
-                if ((s.src || '').indexOf('lead-tracker.js') !== -1) return s;
-            }
-            return null;
-        }
-
-        var scriptEl = getScriptEl();
-
-        // Läs konfig i priority-ordning: global -> data-attribut -> querystring -> fallback
+        // Läs config från window
         var SITE_KEY = window.WEBBI_SITE_KEY || '';
-        var TRACK_BASE = (window.WEBBI_TRACK_URL || '').replace(/\/+$/, '');
+        var TRACK_BASE = (window.WEBBI_TRACK_URL || '').replace(/\/+$/, ''); // utan trailing slash
         var REQUIRE_CONSENT = !!window.WEBBI_REQUIRE_CONSENT;
-        var DEBUG = !!window.WEBBI_DEBUG;
 
-        // Från data-attribut på script-taggen
-        if (scriptEl) {
-            SITE_KEY = SITE_KEY || (scriptEl.getAttribute('data-site-key') || '');
-            TRACK_BASE = TRACK_BASE || (scriptEl.getAttribute('data-track-url') || '');
-            if (!window.WEBBI_REQUIRE_CONSENT && scriptEl.hasAttribute('data-require-consent')) {
-                REQUIRE_CONSENT = parseBool(scriptEl.getAttribute('data-require-consent'));
-            }
-            if (!window.WEBBI_DEBUG && scriptEl.hasAttribute('data-debug')) {
-                DEBUG = parseBool(scriptEl.getAttribute('data-debug'));
-            }
-        }
-
-        // Från querystring på script-src
+        // Fallback: om TRACK_BASE saknas, använd scriptets origin (om tillåtet)
         try {
-            if (scriptEl && scriptEl.src) {
-                var u = new URL(scriptEl.src, window.location.origin);
-                var qsSite = u.searchParams.get('siteKey');
-                var qsTrack = u.searchParams.get('trackUrl');
-                var qsConsent = u.searchParams.get('requireConsent');
-                var qsDebug = u.searchParams.get('debug');
-                if (!SITE_KEY && qsSite) SITE_KEY = qsSite;
-                if (!TRACK_BASE && qsTrack) TRACK_BASE = qsTrack;
-                if (!window.WEBBI_REQUIRE_CONSENT && qsConsent != null) REQUIRE_CONSENT = parseBool(qsConsent);
-                if (!window.WEBBI_DEBUG && qsDebug != null) DEBUG = parseBool(qsDebug);
+            if (!TRACK_BASE && document.currentScript && document.currentScript.src) {
+                var u = new URL(document.currentScript.src, window.location.origin);
+                TRACK_BASE = u.origin;
             }
         } catch (e) {}
 
-        // Fallback för TRACK_BASE: använd scriptets origin (så POST går till samma backend som hostar scriptet)
-        try {
-            if (!TRACK_BASE && scriptEl && scriptEl.src) {
-                var sUrl = new URL(scriptEl.src, window.location.origin);
-                TRACK_BASE = sUrl.origin;
-            }
-        } catch (e) {}
+        // Bygg API
+        var API = (TRACK_BASE ? TRACK_BASE : window.location.origin) + '/track';
 
-        // Om SITE_KEY saknas: varna men fortsätt (skicka "__missing__" så du ser POST i Network)
-        if (!SITE_KEY && window.console) {
-            console.warn('[lead-tracker] WEBBI_SITE_KEY saknas – skickar ändå för felsökning');
-        }
+        log('Config:', { SITE_KEY: SITE_KEY ? '(set)' : '(missing)', TRACK_BASE: TRACK_BASE || '(none)', API: API, REQUIRE_CONSENT: REQUIRE_CONSENT });
 
-        var API = (TRACK_BASE || window.location.origin).replace(/\/+$/, '') + '/track';
+        if (!SITE_KEY) warn('Saknar WEBBI_SITE_KEY (skickar ändå för felsökning)');
 
-        // Bestäm om vi är same-origin (för sendBeacon)
+        // Same-origin check
         var sameOrigin = false;
         try {
             var a = document.createElement('a'); a.href = API;
             sameOrigin = (a.origin === window.location.origin);
         } catch (e) {}
 
-        // Generera/hämta visitor-id
+        // Visitor-id
         var VID_KEY = 'wb_vid';
         var vid = null;
         try {
@@ -90,13 +45,13 @@
                 localStorage.setItem(VID_KEY, vid);
             }
         } catch (e) {
-            // localStorage kan vara blockerad
             vid = 'anon_' + Date.now();
         }
+        log('VID:', vid);
 
-        // Respektera DNT
+        // DNT
         if (navigator.doNotTrack === '1') {
-            if (DEBUG) console.log('[lead-tracker] DNT aktivt – avbryter tracking');
+            log('DNT aktivt – tracking avbryts');
             return;
         }
 
@@ -107,36 +62,37 @@
                     vid: vid,
                     ts: Date.now()
                 });
-
-                if (DEBUG) console.log('[lead-tracker] POST', API, payload);
+                log('POST =>', API, payload);
 
                 if (sameOrigin && navigator.sendBeacon) {
                     var blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-                    navigator.sendBeacon(API, blob);
+                    var ok = navigator.sendBeacon(API, blob);
+                    log('sendBeacon (same-origin):', ok);
                 } else {
                     fetch(API, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                         body: JSON.stringify(payload),
                         keepalive: true,
                         credentials: 'omit',
                         mode: 'cors'
-                    }).catch(function(){});
+                    }).then(function (r) {
+                        log('fetch status:', r.status);
+                    }).catch(function (e) {
+                        warn('fetch error:', e && e.message ? e.message : e);
+                    });
                 }
             } catch (e) {
-                if (DEBUG) console.log('[lead-tracker] post error', e);
+                warn('post error:', e && e.message ? e.message : e);
             }
         }
 
         function startTracking() {
-            if (STARTED) return;
+            if (STARTED) { log('startTracking: redan startad'); return; }
             STARTED = true;
-            if (DEBUG) console.log('[lead-tracker] startTracking');
+            log('startTracking');
 
-            // Pageview
+            // Pageview direkt
             post({ type: 'pageview', url: location.href, ref: document.referrer || null });
 
             // Heartbeat var 15s när sidan är synlig
@@ -160,7 +116,7 @@
                     id: el.getAttribute('data-lead-cta'),
                     text: (el.innerText || '').trim().slice(0, 200)
                 });
-                // Obs: vi stoppar aldrig navigationen
+                // Vi stoppar aldrig navigationen
             }, { passive: true });
 
             // Form-submit (generisk)
@@ -175,31 +131,22 @@
             });
         }
 
-        // Exponera manuell start för tema/plugin och konsol
-        window.Webbi = window.Webbi || {};
-        window.Webbi.start = function () { startTracking(); };
-
-        // Event-baserad start (om plugin triggar)
+        // Lyssna på boot-eventet du skickar från WP
         window.addEventListener('webbi:start', function () {
+            log('event webbi:start');
             startTracking();
         }, { once: true });
 
-        // Auto-start beroende på consent
-        if (REQUIRE_CONSENT) {
-            // Pollar en global flagga tills samtycke givits
-            var check = function () {
-                if (window.WebbiConsent === true) startTracking();
-                else setTimeout(check, 300);
-            };
-            check();
+        // Om consent inte krävs och event inte kommer av någon anledning – starta ändå
+        if (!REQUIRE_CONSENT) {
+            setTimeout(function () {
+                log('auto-boot (no consent required)');
+                startTracking();
+            }, 0);
         } else {
-            // Starta omgående
-            setTimeout(function () { startTracking(); }, 0);
+            log('invantar consent via WebbiConsent=true eller webbi:start-event');
         }
     } catch (e) {
-        // tyst felhantering
-        if (window && window.console && console.debug) {
-            console.debug('[lead-tracker] silent error', e);
-        }
+        if (window && window.console) console.debug('[lead-tracker] fatal error (silenced):', e);
     }
 })();
