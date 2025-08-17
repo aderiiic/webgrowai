@@ -26,6 +26,11 @@ class SocialSettings extends Component
     public ?string $ig_status = null;
     public ?string $ig_message = null;
 
+    public string $li_owner_urn = '';   // t.ex. urn:li:person:... eller urn:li:organization:...
+    public string $li_access_token = ''; // tomt om redan finns
+    public ?string $li_status = null;
+    public ?string $li_message = null;
+
     public function mount(CurrentCustomer $current): void
     {
         $customer = $current->get();
@@ -43,6 +48,11 @@ class SocialSettings extends Component
         if ($ig) {
             $this->ig_user_id = (string) ($ig->ig_user_id ?? '');
             $this->ig_status = $ig->status;
+        }
+
+        if ($li = SocialIntegration::where('customer_id', $customer->id)->where('provider','linkedin')->first()) {
+            $this->li_owner_urn = (string) ($li->page_id ?? ''); // owner URN
+            $this->li_status = $li->status;
         }
     }
 
@@ -137,6 +147,70 @@ class SocialSettings extends Component
         } catch (\Throwable $e) {
             $this->ig_message = 'Fel: '.$e->getMessage();
             $this->ig_status = 'error';
+        }
+    }
+
+    public function saveLinkedIn(): void
+    {
+        $this->validate([
+            'li_owner_urn' => 'required|string',
+            'li_access_token' => 'nullable|string',
+        ]);
+
+        $rec = SocialIntegration::firstOrNew([
+            'customer_id' => $this->customerId,
+            'provider'    => 'linkedin',
+        ]);
+        $rec->page_id = $this->li_owner_urn;
+
+        if ($this->li_access_token !== '') {
+            $rec->access_token = $this->li_access_token;
+        } elseif (!$rec->exists) {
+            $this->addError('li_access_token', 'Access token krävs första gången.');
+            return;
+        }
+
+        $rec->status = 'active';
+        $rec->save();
+
+        $this->li_status = $rec->status;
+        $this->li_message = 'LinkedIn-inställningar sparade.';
+        session()->flash('success', 'LinkedIn sparad.');
+    }
+
+    public function testLinkedIn(): void
+    {
+        $this->li_message = null;
+        try {
+            $rec = SocialIntegration::where('customer_id', $this->customerId)->where('provider','linkedin')->firstOrFail();
+            $http = new Client(['base_uri' => 'https://api.linkedin.com/v2/', 'timeout' => 20]);
+
+            $owner = (string) ($rec->page_id ?? '');
+            $token = $rec->access_token;
+
+            if (str_starts_with($owner, 'urn:li:organization:')) {
+                $orgId = substr($owner, strlen('urn:li:organization:'));
+                $res = $http->get("organizations/{$orgId}", [
+                    'headers' => ['Authorization' => "Bearer {$token}"],
+                    'query' => ['projection' => '(localizedName)'],
+                ]);
+                $data = json_decode((string) $res->getBody(), true);
+                $name = $data['localizedName'] ?? $orgId;
+                $this->li_message = 'OK: ' . $name . ' (' . $orgId . ')';
+            } else {
+                // Person
+                $res = $http->get('me', [
+                    'headers' => ['Authorization' => "Bearer {$token}"],
+                ]);
+                $data = json_decode((string) $res->getBody(), true);
+                $id = $data['id'] ?? 'unknown';
+                $this->li_message = 'OK: Person (' . $id . ')';
+            }
+
+            $this->li_status = 'active';
+        } catch (\Throwable $e) {
+            $this->li_message = 'Fel: ' . $e->getMessage();
+            $this->li_status = 'error';
         }
     }
 
