@@ -96,7 +96,6 @@ return [
         'redirect' => env('LINKEDIN_REDIRECT_URI'),
         'scopes' => [
             'w_member_social',
-            'r_liteprofile',
         ],
     ],
 ];
