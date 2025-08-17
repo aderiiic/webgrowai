@@ -100,6 +100,7 @@ class SocialAuthController extends Controller
 
     public function linkedinRedirect(Request $req)
     {
+        Log::info('[LinkedIn] Redirecting');
         $scopes = config('services.linkedin.scopes', []);
         $params = [
             'response_type' => 'code',
