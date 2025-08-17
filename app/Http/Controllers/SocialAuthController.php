@@ -142,35 +142,39 @@ class SocialAuthController extends Controller
 
         // 2) Hämta person-id
         $api = new Client([
-            'base_uri' => 'https://api.linkedin.com/v2/',
+            'base_uri' => 'https://api.linkedin.com/',
             'timeout'  => 30,
-            'headers'  => ['Authorization' => "Bearer {$accessToken}"],
+            'headers'  => [
+                'Authorization' => "Bearer {$accessToken}",
+                'X-Restli-Protocol-Version' => '2.0.0',
+            ],
         ]);
 
-        $meRes = $api->get('me');
-        $me = json_decode((string) $meRes->getBody(), true);
-        $personId = $me['id'] ?? null;
-        abort_unless($personId, 400, 'Kunde inte hämta profil');
+        $userinfoRes = $api->get('v2/userinfo');
+        $userinfo = json_decode((string) $userinfoRes->getBody(), true);
 
-        $personUrn = 'urn:li:person:' . $personId;
+        $personSub = $userinfo['sub'] ?? null;
+        abort_unless($personSub, 400, 'Kunde inte hämta userinfo');
+
+        $personUrn = 'urn:li:person:' . $personSub;
 
         // 3) Försök hitta första organisationen (om några) – annars postar vi som person
         $ownerUrn = $personUrn;
-        try {
-            $orgsRes = $api->get('organizationalEntityAcls', [
-                'query' => [
-                    'q' => 'roleAssignee',
-                    'projection' => '(elements*(organizationalTarget~(id,localizedName)))',
-                ],
-            ]);
-            $orgs = json_decode((string) $orgsRes->getBody(), true);
-            $first = $orgs['elements'][0]['organizationalTarget~']['id'] ?? null;
-            if ($first) {
-                $ownerUrn = 'urn:li:organization:' . $first;
-            }
-        } catch (\Throwable $e) {
-            Log::info('[LinkedIn] Inga organisationer eller fel', ['error' => $e->getMessage()]);
-        }
+//        try {
+//            $orgsRes = $api->get('organizationalEntityAcls', [
+//                'query' => [
+//                    'q' => 'roleAssignee',
+//                    'projection' => '(elements*(organizationalTarget~(id,localizedName)))',
+//                ],
+//            ]);
+//            $orgs = json_decode((string) $orgsRes->getBody(), true);
+//            $first = $orgs['elements'][0]['organizationalTarget~']['id'] ?? null;
+//            if ($first) {
+//                $ownerUrn = 'urn:li:organization:' . $first;
+//            }
+//        } catch (\Throwable $e) {
+//            Log::info('[LinkedIn] Inga organisationer eller fel', ['error' => $e->getMessage()]);
+//        }
 
         // 4) Spara/uppdatera social_integrations för LinkedIn
         // Vi återanvänder page_id för att lagra "owner URN" (person eller org).
