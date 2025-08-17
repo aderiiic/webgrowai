@@ -34,14 +34,22 @@ class SocialAuthController extends Controller
         $client = new Client(['timeout' => 30]);
 
         // 1) Byt code -> User access token
-        $tokenRes = $client->get('https://graph.facebook.com/v19.0/oauth/access_token', [
-            'query' => [
-                'client_id'     => config('services.facebook.client_id'),
-                'client_secret' => config('services.facebook.client_secret'),
-                'redirect_uri'  => config('services.facebook.redirect'),
-                'code'          => $code,
-            ],
-        ]);
+
+        try {
+            $tokenRes = $client->get('https://graph.facebook.com/v19.0/oauth/access_token', [
+                'query' => [
+                    'client_id'     => config('services.facebook.client_id'),
+                    'client_secret' => config('services.facebook.client_secret'),
+                    'redirect_uri'  => config('services.facebook.redirect'),
+                    'code'          => $code,
+                ],
+            ]);
+        } catch (\GuzzleHttp\Exception\ClientException $e) {
+            Log::error('Facebook token error', [
+                'response' => (string) $e->getResponse()->getBody(),
+            ]);
+            throw $e;
+        }
         $token = json_decode((string) $tokenRes->getBody(), true);
         $userAccessToken = $token['access_token'] ?? null;
         abort_unless($userAccessToken, 400, 'Kunde inte hämta user access token');
