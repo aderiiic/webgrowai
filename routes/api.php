@@ -8,4 +8,7 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::middleware('throttle:60,1')->post('/track', [TrackController::class, 'store'])->name('track.store');
+Route::middleware('throttle:60,1')->group(function () {
+    Route::post('/track', [TrackController::class, 'store'])->name('track.store');
+    Route::post('/wb/ingest', [TrackController::class, 'store'])->name('track.ingest'); // alternativ väg
+});

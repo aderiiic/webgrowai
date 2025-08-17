@@ -4,12 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Lead;
 use App\Models\LeadEvent;
-use App\Models\LeadScore;
 use App\Models\Site;
 use App\Support\Usage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Support\Carbon;
 
 class TrackController extends Controller
 {
@@ -18,10 +18,10 @@ class TrackController extends Controller
         $payload = $request->json()->all();
 
         $siteKey = (string)($payload['siteKey'] ?? '');
-        $vid = (string)($payload['vid'] ?? '');
-        $type = (string)($payload['type'] ?? '');
-        $url  = (string)($payload['url'] ?? '');
-        $tsMs = (int)($payload['ts'] ?? (int)(microtime(true)*1000));
+        $vid     = (string)($payload['vid'] ?? '');
+        $type    = (string)($payload['type'] ?? '');
+        $url     = (string)($payload['url'] ?? '');
+        $tsMs    = (int)($payload['ts'] ?? (int)(microtime(true) * 1000));
 
         if ($siteKey === '' || $vid === '' || $type === '') {
             return response()->json(['ok' => false], 422);
@@ -33,24 +33,37 @@ class TrackController extends Controller
         }
 
         // Anonymisera IP/User-Agent
-        $ipHash  = hash('sha256', (string)$request->ip().($site->id));
-        $uaHash  = hash('sha256', (string)$request->userAgent());
+        $ipHash = hash('sha256', (string)$request->ip() . ($site->id));
+        $uaHash = hash('sha256', (string)$request->userAgent());
 
         // Hitta/skap lead
         $lead = Lead::firstOrCreate(
             ['site_id' => $site->id, 'visitor_id' => $vid],
-            ['first_seen' => now(), 'last_seen' => now(), 'sessions' => 1, 'last_ip_hash' => $ipHash, 'user_agent_hash' => $uaHash]
+            [
+                'first_seen'     => now(),
+                'last_seen'      => now(),
+                'sessions'       => 1,
+                'last_ip_hash'   => $ipHash,
+                'user_agent_hash'=> $uaHash
+            ]
         );
 
-        // Uppdatera last_seen, sessions (enkel heuristik: ny session om >30min sedan)
-        if ($lead->last_seen === null || $lead->last_seen->diffInMinutes(now()) > 30) {
-            $lead->sessions = (int)$lead->sessions + 1;
+        // Uppdatera last_seen, sessions (ny session om >30 min sedan)
+        $lastSeen = $lead->last_seen;
+        if (!($lastSeen instanceof Carbon) && !empty($lastSeen)) {
+            // Om cast saknas eller värdet är sträng i DB, parsa defensivt
+            try { $lastSeen = Carbon::parse($lastSeen); } catch (\Throwable $e) { $lastSeen = null; }
         }
+
+        if ($lastSeen === null || $lastSeen->diffInMinutes(now()) > 30) {
+            $lead->sessions = (int) $lead->sessions + 1;
+        }
+
         $lead->last_seen = now();
         $lead->last_ip_hash = $ipHash;
         $lead->user_agent_hash = $uaHash;
 
-        // Försök associera email från event (om tillåtet)
+        // Associera ev. email
         $email = trim((string)($payload['email'] ?? ''));
         if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $lead->email = $lead->email ?: $email;
@@ -60,25 +73,19 @@ class TrackController extends Controller
         // Spara event
         $eventMeta = $payload;
         unset($eventMeta['siteKey'],$eventMeta['vid'],$eventMeta['ts'],$eventMeta['type'],$eventMeta['url']);
+
         LeadEvent::create([
-            'site_id' => $site->id,
-            'lead_id' => $lead->id,
-            'type' => $type,
-            'url'  => Str::limit($url, 1024, ''),
-            'meta' => $eventMeta ?: null,
-            'occurred_at' => \Carbon\Carbon::createFromTimestampMs($tsMs)->tz(config('app.timezone')),
+            'site_id'     => $site->id,
+            'lead_id'     => $lead->id,
+            'type'        => $type,
+            'url'         => Str::limit($url, 1024, ''),
+            'meta'        => $eventMeta ?: null,
+            'occurred_at' => Carbon::createFromTimestampMs($tsMs)->tz(config('app.timezone')),
         ]);
 
         try {
-            // Mappa till kund: ex via site_id i payload eller domän
-            $siteId = $request->integer('site_id');
-            $site = $siteId ? Site::find($siteId) : null;
-
-            if (!$site && $request->has('domain')) {
-                $site = Site::where('url', 'like', '%'.$request->get('domain').'%')->first();
-            }
-
-            if ($site && $site->customer_id) {
+            // Usage-inkrement (om ni har kundlänkning på site)
+            if ($site->customer_id) {
                 app(Usage::class)->increment($site->customer_id, 'leads.events', now()->format('Y-m'), 1);
             }
         } catch (\Throwable $e) {

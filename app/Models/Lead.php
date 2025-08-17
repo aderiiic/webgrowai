@@ -12,7 +12,11 @@ class Lead extends Model
         'site_id','visitor_id','email','first_seen','last_seen','sessions','last_ip_hash','user_agent_hash'
     ];
 
-    protected $dates = ['first_seen','last_seen'];
+    protected $casts = [
+        'first_seen' => 'datetime',
+        'last_seen'  => 'datetime',
+        'sessions'   => 'integer',
+    ];
 
     public function site(): BelongsTo { return $this->belongsTo(Site::class); }
     public function events(): HasMany { return $this->hasMany(LeadEvent::class); }
