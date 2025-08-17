@@ -82,6 +82,13 @@ Route::post('/demo-request', function (\Illuminate\Http\Request $request) {
     return back()->with('success', 'Tack! Vi återkommer snarast för att boka en demo.');
 })->name('demo.request');
 
+Route::get('/integritet', function () {
+    return view('policy');
+})->name('privacy');
+Route::get('/villkor', function () {
+    return view('terms');
+})->name('terms');
+
 
 Route::middleware(['auth','verified'])->group(function () {
     Route::get('/dashboard', Home::class)->middleware('onboarded')->name('dashboard');
