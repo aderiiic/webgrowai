@@ -1,4 +1,3 @@
-
 <div>
     <div class="max-w-7xl mx-auto space-y-8">
         <!-- Header -->
@@ -21,6 +20,7 @@
                         <option value="wp">WordPress</option>
                         <option value="facebook">Facebook</option>
                         <option value="instagram">Instagram</option>
+                        <option value="linkedin">LinkedIn</option>
                     </select>
                 </div>
                 <div>
@@ -60,6 +60,7 @@
                                     @if($p->target === 'wp') bg-blue-100 text-blue-800 border border-blue-200
                                     @elseif($p->target === 'facebook') bg-blue-100 text-blue-800 border border-blue-200
                                     @elseif($p->target === 'instagram') bg-pink-100 text-pink-800 border border-pink-200
+                                    @elseif($p->target === 'linkedin') bg-sky-100 text-sky-800 border border-sky-200
                                     @else bg-gray-100 text-gray-800 border border-gray-200 @endif">
                                     @if($p->target === 'wp')
                                         <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
@@ -72,6 +73,10 @@
                                     @elseif($p->target === 'instagram')
                                         <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
                                             <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                                        </svg>
+                                    @elseif($p->target === 'linkedin')
+                                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M4.98 3.5C4.98 4.88 3.86 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1s2.48 1.12 2.48 2.5zM.5 8h4V24h-4V8zm7.5 0h3.8v2.2h.1c.5-1 1.7-2.2 3.6-2.2 3.8 0 4.5 2.5 4.5 5.8V24h-4V14.7c0-2.2 0-5-3-5s-3.4 2.3-3.4 4.9V24H8V8z"/>
                                         </svg>
                                     @endif
                                     {{ strtoupper($p->target) }}
@@ -137,12 +142,19 @@
                                 </div>
                             </div>
 
-                            <!-- Message -->
-                            @if($p->message)
+                            <!-- Message / payload -->
+                            @if($p->message || $p->payload)
                                 <div class="p-3 rounded-xl text-sm
                                     @if($p->status === 'failed') bg-red-50 text-red-700 border border-red-200
                                     @else bg-gray-50 text-gray-700 border border-gray-200 @endif">
-                                    {{ $p->message }}
+                                    @if($p->message)
+                                        <div class="mb-1">{{ $p->message }}</div>
+                                    @endif
+                                    @if($p->payload && isset($p->payload['text']))
+                                        <div class="text-gray-600 line-clamp-2">
+                                            <span class="font-medium">Text:</span> {{ $p->payload['text'] }}
+                                        </div>
+                                    @endif
                                 </div>
                             @endif
                         </div>
