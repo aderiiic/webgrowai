@@ -1,38 +1,55 @@
-/* Lead tracker (debug-friendly) */
+/* Lead tracker (resilient + fallback paths) */
 (function () {
     try {
         var STARTED = false;
-        var DEBUG = true; // Sätt till false när allt funkar
+        var DEBUG = true; // sätt till false när allt är grönt
 
         function log() { if (DEBUG && window.console) console.log.apply(console, ['[lead-tracker]'].concat([].slice.call(arguments))); }
         function warn() { if (window.console) console.warn.apply(console, ['[lead-tracker]'].concat([].slice.call(arguments))); }
 
-        // Läs config från window
+        // Hämta konfig
         var SITE_KEY = window.WEBBI_SITE_KEY || '';
-        var TRACK_BASE = (window.WEBBI_TRACK_URL || '').replace(/\/+$/, ''); // utan trailing slash
+        var TRACK_BASE = (window.WEBBI_TRACK_URL || '').replace(/\/+$/, '');
         var REQUIRE_CONSENT = !!window.WEBBI_REQUIRE_CONSENT;
 
-        // Fallback: om TRACK_BASE saknas, använd scriptets origin (om tillåtet)
-        try {
-            if (!TRACK_BASE && document.currentScript && document.currentScript.src) {
-                var u = new URL(document.currentScript.src, window.location.origin);
-                TRACK_BASE = u.origin;
-            }
-        } catch (e) {}
+        // Läs extra från script-taggen (trackPath/debug)
+        var scriptEl = document.currentScript || (function () {
+            var s = document.getElementsByTagName('script'); return s[s.length - 1];
+        })();
 
-        // Bygg API
-        var API = (TRACK_BASE ? TRACK_BASE : window.location.origin) + '/track';
+        var TRACK_PATH = (scriptEl && (scriptEl.getAttribute('data-track-path') || '')) || '';
+        var qs;
+        try { qs = new URL(scriptEl.src, location.origin).searchParams; } catch (e) { qs = null; }
+        if (!TRACK_PATH && qs) TRACK_PATH = qs.get('trackPath') || '';
 
-        log('Config:', { SITE_KEY: SITE_KEY ? '(set)' : '(missing)', TRACK_BASE: TRACK_BASE || '(none)', API: API, REQUIRE_CONSENT: REQUIRE_CONSENT });
+        if (!TRACK_BASE && scriptEl && scriptEl.src) {
+            try { TRACK_BASE = new URL(scriptEl.src, window.location.origin).origin; } catch (e) {}
+        }
 
-        if (!SITE_KEY) warn('Saknar WEBBI_SITE_KEY (skickar ändå för felsökning)');
+        if (!SITE_KEY) warn('SITE_KEY saknas – skickar ändå för felsökning');
 
-        // Same-origin check
+        // Bygg kandidat-URLer (prisordning)
+        // 1) ev. explicit TRACK_PATH, t.ex. /custom-track
+        // 2) standard /track
+        // 3) fallback /api/track
+        // 4) anti-adblock: /t/track
+        var candidates = [];
+        var base = (TRACK_BASE || window.location.origin).replace(/\/+$/, '');
+        if (TRACK_PATH) candidates.push(base + '/' + TRACK_PATH.replace(/^\/+/, ''));
+        candidates.push(base + '/track');
+        candidates.push(base + '/api/track');
+        candidates.push(base + '/t/track');
+
+        log('Config:', {
+            SITE_KEY: SITE_KEY ? '(set)' : '(missing)',
+            TRACK_BASE: base,
+            CANDIDATES: candidates,
+            REQUIRE_CONSENT: REQUIRE_CONSENT
+        });
+
+        // Same-origin (endast info; vi använder fetch korsdomän)
         var sameOrigin = false;
-        try {
-            var a = document.createElement('a'); a.href = API;
-            sameOrigin = (a.origin === window.location.origin);
-        } catch (e) {}
+        try { sameOrigin = (new URL(candidates[0], location.origin).origin === location.origin); } catch (e) {}
 
         // Visitor-id
         var VID_KEY = 'wb_vid';
@@ -44,63 +61,115 @@
                     : (Date.now() + '_' + Math.random().toString(16).slice(2));
                 localStorage.setItem(VID_KEY, vid);
             }
-        } catch (e) {
-            vid = 'anon_' + Date.now();
-        }
+        } catch (e) { vid = 'anon_' + Date.now(); }
         log('VID:', vid);
 
-        // DNT
+        // Respektera DNT
         if (navigator.doNotTrack === '1') {
-            log('DNT aktivt – tracking avbryts');
+            log('DNT aktiv – avbryter');
             return;
         }
 
-        function post(evt) {
-            try {
+        // Enkel kö + flush
+        var queue = [];
+        var flushing = false;
+
+        function enqueue(evt) {
+            queue.push(evt);
+            if (queue.length >= 5) flush(); // flush tidigt om många events snabbt
+        }
+
+        function sendOnce(url, payload) {
+            return fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Track-Site-Key': SITE_KEY || '__missing__'
+                },
+                body: JSON.stringify(payload),
+                keepalive: true,
+                credentials: 'omit',
+                mode: 'cors',
+            }).then(function (r) {
+                log('POST', url, 'status:', r.status);
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r;
+            });
+        }
+
+        function tryCandidates(payload) {
+            // prova i turordning tills en lyckas
+            var i = 0;
+            return new Promise(function (resolve, reject) {
+                function next() {
+                    if (i >= candidates.length) return reject(new Error('Alla endpoints misslyckades'));
+                    var url = candidates[i++];
+                    sendOnce(url, payload).then(resolve).catch(function (e) {
+                        log('Fail på', url, e.message || e);
+                        next();
+                    });
+                }
+                next();
+            });
+        }
+
+        function flush() {
+            if (flushing || queue.length === 0) return;
+            flushing = true;
+
+            var toSend = queue.splice(0, queue.length);
+            // Bunta events eller skicka ett och ett – här skickar vi ett och ett för tydlig logg
+            (function sendNext() {
+                if (toSend.length === 0) { flushing = false; return; }
+                var evt = toSend.shift();
                 var payload = Object.assign({}, evt, {
                     siteKey: SITE_KEY || '__missing__',
                     vid: vid,
-                    ts: Date.now()
+                    ts: evt.ts || Date.now()
                 });
-                log('POST =>', API, payload);
+                log('POST =>', candidates[0], payload);
 
-                if (sameOrigin && navigator.sendBeacon) {
-                    var blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-                    var ok = navigator.sendBeacon(API, blob);
-                    log('sendBeacon (same-origin):', ok);
-                } else {
-                    fetch(API, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                        body: JSON.stringify(payload),
-                        keepalive: true,
-                        credentials: 'omit',
-                        mode: 'cors'
-                    }).then(function (r) {
-                        log('fetch status:', r.status);
-                    }).catch(function (e) {
-                        warn('fetch error:', e && e.message ? e.message : e);
-                    });
-                }
-            } catch (e) {
-                warn('post error:', e && e.message ? e.message : e);
-            }
+                tryCandidates(payload).finally(function () {
+                    // fortsätt oavsett utfall; loggen visar status
+                    sendNext();
+                });
+            })();
         }
+
+        // Skicka något vid sidbyte
+        function sendBeaconIfPossible() {
+            if (!navigator.sendBeacon || queue.length === 0) return;
+            try {
+                var payload = queue.map(function (evt) {
+                    return Object.assign({}, evt, { siteKey: SITE_KEY || '__missing__', vid: vid, ts: evt.ts || Date.now() });
+                });
+                var blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+                // använd första kandidat – om den 404:ar hinner vi inte fallbacka på pagehide, men bättre än inget
+                navigator.sendBeacon(candidates[0], blob);
+                log('sendBeacon batch size:', payload.length);
+                queue = [];
+            } catch (e) {}
+        }
+
+        window.addEventListener('pagehide', sendBeaconIfPossible);
+        window.addEventListener('beforeunload', sendBeaconIfPossible);
 
         function startTracking() {
             if (STARTED) { log('startTracking: redan startad'); return; }
             STARTED = true;
             log('startTracking');
 
-            // Pageview direkt
-            post({ type: 'pageview', url: location.href, ref: document.referrer || null });
+            // Pageview
+            enqueue({ type: 'pageview', url: location.href, ref: document.referrer || null });
 
             // Heartbeat var 15s när sidan är synlig
             var start = Date.now();
             setInterval(function () {
                 if (document.visibilityState === 'visible') {
                     var seconds = Math.round((Date.now() - start) / 1000);
-                    post({ type: 'heartbeat', url: location.href, seconds: seconds });
+                    enqueue({ type: 'heartbeat', url: location.href, seconds: seconds });
+                    flush();
                 }
             }, 15000);
 
@@ -109,14 +178,15 @@
                 var el = e.target && e.target.closest ? e.target.closest('[data-lead-cta]') : null;
                 if (!el) return;
                 var targetHref = (el.tagName === 'A' && el.href) ? el.href : null;
-                post({
+                enqueue({
                     type: 'cta',
                     url: location.href,
                     target: targetHref,
                     id: el.getAttribute('data-lead-cta'),
                     text: (el.innerText || '').trim().slice(0, 200)
                 });
-                // Vi stoppar aldrig navigationen
+                // låt navigationen ske
+                flush();
             }, { passive: true });
 
             // Form-submit (generisk)
@@ -126,27 +196,31 @@
                     var emailEl = f.querySelector('input[type="email"],input[name*="email" i]');
                     var email = emailEl ? (emailEl.value || '').trim() : null;
                     var formId = f.id || null;
-                    post({ type: 'form_submit', url: location.href, formId: formId, email: email || null });
+                    enqueue({ type: 'form_submit', url: location.href, formId: formId, email: email || null });
+                    flush();
                 } catch (e2) {}
             });
+
+            // kicka igång första flushen
+            setTimeout(flush, 0);
         }
 
-        // Lyssna på boot-eventet du skickar från WP
+        // Start via event
         window.addEventListener('webbi:start', function () {
             log('event webbi:start');
             startTracking();
         }, { once: true });
 
-        // Om consent inte krävs och event inte kommer av någon anledning – starta ändå
+        // Auto-start om inget samtycke krävs
         if (!REQUIRE_CONSENT) {
             setTimeout(function () {
                 log('auto-boot (no consent required)');
                 startTracking();
             }, 0);
         } else {
-            log('invantar consent via WebbiConsent=true eller webbi:start-event');
+            log('väntar consent (WebbiConsent=true eller webbi:start)');
         }
     } catch (e) {
-        if (window && window.console) console.debug('[lead-tracker] fatal error (silenced):', e);
+        if (window && window.console) console.debug('[lead-tracker] fatal (silenced):', e);
     }
 })();
