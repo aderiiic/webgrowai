@@ -183,14 +183,14 @@ class SocialSettings extends Component
         $this->li_message = null;
         try {
             $rec = SocialIntegration::where('customer_id', $this->customerId)->where('provider','linkedin')->firstOrFail();
-            $http = new Client(['base_uri' => 'https://api.linkedin.com/v2/', 'timeout' => 20]);
+            $http = new Client(['base_uri' => 'https://api.linkedin.com/', 'timeout' => 20]);
 
             $owner = (string) ($rec->page_id ?? '');
             $token = $rec->access_token;
 
             if (str_starts_with($owner, 'urn:li:organization:')) {
                 $orgId = substr($owner, strlen('urn:li:organization:'));
-                $res = $http->get("organizations/{$orgId}", [
+                $res = $http->get("v2/organizations/{$orgId}", [
                     'headers' => ['Authorization' => "Bearer {$token}"],
                     'query' => ['projection' => '(localizedName)'],
                 ]);
@@ -198,16 +198,17 @@ class SocialSettings extends Component
                 $name = $data['localizedName'] ?? $orgId;
                 $this->li_message = 'OK: ' . $name . ' (' . $orgId . ')';
             } else {
-                // Person
-                $res = $http->get('me', [
+                // Person via OIDC userinfo (matchar openid/profile/email)
+                $res = $http->get('v2/userinfo', [
                     'headers' => ['Authorization' => "Bearer {$token}"],
                 ]);
                 $data = json_decode((string) $res->getBody(), true);
-                $id = $data['id'] ?? 'unknown';
-                $this->li_message = 'OK: Person (' . $id . ')';
+                $sub = $data['sub'] ?? 'unknown';
+                $this->li_message = 'OK: Person (' . $sub . ')';
             }
 
             $this->li_status = 'active';
+
         } catch (\Throwable $e) {
             $this->li_message = 'Fel: ' . $e->getMessage();
             $this->li_status = 'error';

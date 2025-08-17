@@ -294,3 +294,14 @@ Route::middleware(['auth','verified','can:admin'])->prefix('admin')->name('admin
 
 // Tracking-endpoint
 Route::middleware('throttle:60,1')->post('/track', [TrackController::class, 'store'])->name('track.store');
+
+Route::middleware('web')->group(function() {
+    Route::get('/auth/facebook/redirect', [SocialAuthController::class, 'facebookRedirect'])->name('auth.facebook.redirect');
+    Route::get('/auth/facebook/callback', [SocialAuthController::class, 'facebookCallback'])->name('auth.facebook.callback');
+
+    Route::get('/auth/linkedin/redirect', [SocialAuthController::class, 'linkedinRedirect'])->name('auth.linkedin.redirect');
+    Route::get('/auth/linkedin/callback', [SocialAuthController::class, 'linkedinCallback'])->name('auth.linkedin.callback');
+
+    Route::get('/auth/instagram/redirect', [SocialAuthController::class, 'instagramRedirect'])->name('auth.instagram.redirect');
+    Route::get('/auth/instagram/callback', [SocialAuthController::class, 'instagramCallback'])->name('auth.instagram.callback');
+});
