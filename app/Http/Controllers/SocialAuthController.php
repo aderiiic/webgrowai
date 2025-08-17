@@ -103,18 +103,16 @@ class SocialAuthController extends Controller
         Log::info('[LinkedIn] Redirecting');
         $scopes = config('services.linkedin.scopes', []);
         Log::info('[LinkedIn] Scopes', ['scopes' => $scopes]);
-
         $params = [
             'response_type' => 'code',
             'client_id'     => config('services.linkedin.client_id'),
-            'redirect_uri'  => config('services.linkedin.redirect'),
+            'redirect_uri'  => config('services.linkedin.redirect_uri'),
+            'state'         => csrf_token(),
             'scope'         => implode(' ', $scopes),
         ];
-
+        Log::info('[LinkedIn] Params', ['params' => $params]);
         $url = 'https://www.linkedin.com/oauth/v2/authorization?' . http_build_query($params);
-
         Log::info('[LinkedIn] URL', ['url' => $url]);
-
         return redirect()->away($url);
     }
 
