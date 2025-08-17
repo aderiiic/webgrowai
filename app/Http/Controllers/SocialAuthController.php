@@ -106,7 +106,7 @@ class SocialAuthController extends Controller
         $params = [
             'response_type' => 'code',
             'client_id'     => config('services.linkedin.client_id'),
-            'redirect_uri'  => config('services.linkedin.redirect'),
+            'redirect_uri'  => config('services.linkedin.redirect_uri'),
             'state'         => csrf_token(),
             'scope'         => implode(' ', $scopes),
         ];
@@ -131,7 +131,7 @@ class SocialAuthController extends Controller
             'form_params' => [
                 'grant_type'    => 'authorization_code',
                 'code'          => $code,
-                'redirect_uri'  => config('services.linkedin.redirect'),
+                'redirect_uri'  => config('services.linkedin.redirect_uri'),
                 'client_id'     => config('services.linkedin.client_id'),
                 'client_secret' => config('services.linkedin.client_secret'),
             ],
