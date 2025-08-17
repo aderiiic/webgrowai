@@ -12,19 +12,28 @@ class SocialAuthController extends Controller
 {
     public function facebookRedirect(Request $req)
     {
+        $scopes = config('services.facebook.scopes', []);
+
+        $state = bin2hex(random_bytes(16));
+        session(['facebook_state' => $state]);
+
         $params = [
             'client_id'     => config('services.facebook.client_id'),
             'redirect_uri'  => config('services.facebook.redirect'),
             'response_type' => 'code',
-            'scope'         => implode(',', config('services.facebook.scopes', [])),
-            'state'         => csrf_token(),
+            'scope'         => implode(',', $scopes),
+            'state'         => $state,
         ];
-        $url = 'https://www.facebook.com/v19.0/dialog/oauth?'.http_build_query($params);
+
+        $url = 'https://www.facebook.com/v19.0/dialog/oauth?' . http_build_query($params);
         return redirect()->away($url);
     }
 
     public function facebookCallback(Request $req, CurrentCustomer $current)
     {
+        $savedState = session('facebook_state');
+        abort_unless($req->query('state') === $savedState, 400, 'Ogiltig state');
+
         $customer = $current->get();
         Log::info('[FB] Callback', ['customer' => $customer]);
         abort_unless($customer, 403);
