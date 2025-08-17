@@ -95,7 +95,7 @@
     </div>
 
     <!-- Historik och snabblänkar -->
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 xl:grid-cols-1 gap-6">
         <!-- Veckodigest historik -->
         <div class="dashboard-card">
             @livewire('dashboard.weekly-digest-history')
@@ -103,80 +103,105 @@
 
         <!-- Snabblänkar -->
         <div class="dashboard-card">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
-                </svg>
-                Snabblänkar
-            </h2>
-            <div class="space-y-3">
-                <a href="{{ route('seo.keywords.index') }}" class="quick-link group">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                    </svg>
+                    Snabblänkar
+                </h2>
+                <button class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">Visa alla</button>
+            </div>
+
+            <!-- Grid layout för bättre organisation -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <a href="{{ route('seo.keywords.index') }}" class="enhanced-quick-link group">
                     <div class="flex items-center space-x-3">
                         <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
                             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1721 9z"/>
                             </svg>
                         </div>
-                        <div>
-                            <p class="font-medium text-gray-900 group-hover:text-indigo-600">Nyckelordsförslag</p>
-                            <p class="text-sm text-gray-500">Hitta nya keyword-möjligheter</p>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-medium text-gray-900 group-hover:text-indigo-600 truncate">Nyckelordsförslag</p>
+                            <p class="text-sm text-gray-500 truncate">Hitta nya keyword-möjligheter</p>
                         </div>
                     </div>
-                    <svg class="w-5 h-5 text-gray-400 group-hover:text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                    </svg>
+                    <div class="flex items-center space-x-1">
+                        <span class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full">SEO</span>
+                        <svg class="w-4 h-4 text-gray-400 group-hover:text-indigo-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </div>
                 </a>
 
-                <a href="{{ route('cro.suggestions.index') }}" class="quick-link group">
+                <a href="{{ route('cro.suggestions.index') }}" class="enhanced-quick-link group">
                     <div class="flex items-center space-x-3">
                         <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
                             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                             </svg>
                         </div>
-                        <div>
-                            <p class="font-medium text-gray-900 group-hover:text-emerald-600">CRO-förslag</p>
-                            <p class="text-sm text-gray-500">Optimera din konverteringsgrad</p>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-medium text-gray-900 group-hover:text-emerald-600 truncate">CRO-förslag</p>
+                            <p class="text-sm text-gray-500 truncate">Optimera din konverteringsgrad</p>
                         </div>
                     </div>
-                    <svg class="w-5 h-5 text-gray-400 group-hover:text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                    </svg>
+                    <div class="flex items-center space-x-1">
+                        <span class="inline-flex items-center px-2 py-1 bg-emerald-50 text-emerald-700 text-xs font-medium rounded-full">CRO</span>
+                        <svg class="w-4 h-4 text-gray-400 group-hover:text-emerald-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </div>
                 </a>
 
-                <a href="{{ route('leads.index') }}" class="quick-link group">
+                <a href="{{ route('leads.index') }}" class="enhanced-quick-link group">
                     <div class="flex items-center space-x-3">
                         <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
                             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                             </svg>
                         </div>
-                        <div>
-                            <p class="font-medium text-gray-900 group-hover:text-purple-600">Leadlista</p>
-                            <p class="text-sm text-gray-500">Hantera dina leads</p>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-medium text-gray-900 group-hover:text-purple-600 truncate">Leadlista</p>
+                            <p class="text-sm text-gray-500 truncate">Hantera dina leads</p>
                         </div>
                     </div>
-                    <svg class="w-5 h-5 text-gray-400 group-hover:text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                    </svg>
+                    <div class="flex items-center space-x-1">
+                        <span class="inline-flex items-center px-2 py-1 bg-purple-50 text-purple-700 text-xs font-medium rounded-full">LEADS</span>
+                        <svg class="w-4 h-4 text-gray-400 group-hover:text-purple-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </div>
                 </a>
 
-                <a href="{{ route('publications.index') }}" class="quick-link group">
+                <a href="{{ route('publications.index') }}" class="enhanced-quick-link group">
                     <div class="flex items-center space-x-3">
                         <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
                             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                             </svg>
                         </div>
-                        <div>
-                            <p class="font-medium text-gray-900 group-hover:text-orange-600">Publiceringar</p>
-                            <p class="text-sm text-gray-500">Hantera ditt innehåll</p>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-medium text-gray-900 group-hover:text-orange-600 truncate">Publiceringar</p>
+                            <p class="text-sm text-gray-500 truncate">Hantera ditt innehåll</p>
                         </div>
                     </div>
-                    <svg class="w-5 h-5 text-gray-400 group-hover:text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                    </svg>
+                    <div class="flex items-center space-x-1">
+                        <span class="inline-flex items-center px-2 py-1 bg-orange-50 text-orange-700 text-xs font-medium rounded-full">CONTENT</span>
+                        <svg class="w-4 h-4 text-gray-400 group-hover:text-orange-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </div>
                 </a>
+            </div>
+
+            <!-- Kompakt footer med stats -->
+            <div class="mt-6 pt-4 border-t border-gray-100">
+                <div class="flex items-center justify-between text-xs text-gray-500">
+                    <span>Senast uppdaterad: just nu</span>
+                    <button class="text-indigo-600 hover:text-indigo-800 font-medium">Anpassa länkar</button>
+                </div>
             </div>
         </div>
     </div>

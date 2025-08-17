@@ -97,4 +97,84 @@ class SocialAuthController extends Controller
         // Reuse FB callback – det löser IG också om sidan kopplad
         return $this->facebookCallback($req, $current);
     }
+
+    public function linkedinRedirect(Request $req)
+    {
+        $scopes = config('services.linkedin.scopes', []);
+        $params = [
+            'response_type' => 'code',
+            'client_id'     => config('services.linkedin.client_id'),
+            'redirect_uri'  => config('services.linkedin.redirect'),
+            'state'         => csrf_token(),
+            'scope'         => implode(' ', $scopes),
+        ];
+        $url = 'https://www.linkedin.com/oauth/v2/authorization?' . http_build_query($params);
+        return redirect()->away($url);
+    }
+
+    public function linkedinCallback(Request $req, CurrentCustomer $current)
+    {
+        $customer = $current->get();
+        abort_unless($customer, 403);
+
+        $code = $req->query('code');
+        abort_unless($code, 400, 'Saknar code');
+
+        $client = new Client(['timeout' => 30]);
+
+        // 1) Byt code -> Access token
+        $tokenRes = $client->post('https://www.linkedin.com/oauth/v2/accessToken', [
+            'form_params' => [
+                'grant_type'    => 'authorization_code',
+                'code'          => $code,
+                'redirect_uri'  => config('services.linkedin.redirect'),
+                'client_id'     => config('services.linkedin.client_id'),
+                'client_secret' => config('services.linkedin.client_secret'),
+            ],
+        ]);
+        $token = json_decode((string) $tokenRes->getBody(), true);
+        $accessToken = $token['access_token'] ?? null;
+        abort_unless($accessToken, 400, 'Kunde inte hämta access token');
+
+        // 2) Hämta person-id
+        $api = new Client([
+            'base_uri' => 'https://api.linkedin.com/v2/',
+            'timeout'  => 30,
+            'headers'  => ['Authorization' => "Bearer {$accessToken}"],
+        ]);
+
+        $meRes = $api->get('me');
+        $me = json_decode((string) $meRes->getBody(), true);
+        $personId = $me['id'] ?? null;
+        abort_unless($personId, 400, 'Kunde inte hämta profil');
+
+        $personUrn = 'urn:li:person:' . $personId;
+
+        // 3) Försök hitta första organisationen (om några) – annars postar vi som person
+        $ownerUrn = $personUrn;
+        try {
+            $orgsRes = $api->get('organizationalEntityAcls', [
+                'query' => [
+                    'q' => 'roleAssignee',
+                    'projection' => '(elements*(organizationalTarget~(id,localizedName)))',
+                ],
+            ]);
+            $orgs = json_decode((string) $orgsRes->getBody(), true);
+            $first = $orgs['elements'][0]['organizationalTarget~']['id'] ?? null;
+            if ($first) {
+                $ownerUrn = 'urn:li:organization:' . $first;
+            }
+        } catch (\Throwable $e) {
+            Log::info('[LinkedIn] Inga organisationer eller fel', ['error' => $e->getMessage()]);
+        }
+
+        // 4) Spara/uppdatera social_integrations för LinkedIn
+        // Vi återanvänder page_id för att lagra "owner URN" (person eller org).
+        SocialIntegration::updateOrCreate(
+            ['customer_id' => $customer->id, 'provider' => 'linkedin'],
+            ['page_id' => $ownerUrn, 'access_token' => $accessToken, 'status' => 'active']
+        );
+
+        return redirect()->route('settings.social')->with('success', 'LinkedIn ansluten.');
+    }
 }

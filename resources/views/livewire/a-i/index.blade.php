@@ -1,5 +1,25 @@
 <div>
     <div class="max-w-7xl mx-auto space-y-8">
+        <div id="li-modal" class="hidden fixed inset-0 z-[9999]">
+            <div class="absolute inset-0 bg-black/40"></div>
+            <div class="relative max-w-2xl mx-auto mt-20 bg-white rounded-2xl shadow-2xl border border-gray-200">
+                <div class="p-4 border-b flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900">Förhandsgranskning</h3>
+                    <button id="li-modal-close" class="p-2 rounded hover:bg-gray-100">
+                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="p-6">
+                    <pre id="li-modal-body" class="whitespace-pre-wrap text-sm text-gray-800"></pre>
+                </div>
+                <div class="p-4 border-t flex justify-end">
+                    <button id="li-modal-close-2" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">Stäng</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Header -->
         <div class="flex items-center justify-between">
             <h1 class="text-3xl font-bold text-gray-900 flex items-center">
@@ -14,6 +34,36 @@
                 </svg>
                 Nytt innehåll
             </a>
+        </div>
+
+        <!-- LinkedIn: snabbgenerator av inläggsförslag -->
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-sky-600 to-blue-700 rounded-xl flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M4.98 3.5C4.98 4.88 3.86 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1s2.48 1.12 2.48 2.5zM.5 8h4V24h-4V8zm7.5 0h3.8v2.2h.1c.5-1 1.7-2.2 3.6-2.2 3.8 0 4.5 2.5 4.5 5.8V24h-4V14.7c0-2.2 0-5-3-5s-3.4 2.3-3.4 4.9V24H8V8z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-900">LinkedIn – Förslag & snabbpublicering</h2>
+                        <p class="text-sm text-gray-600">Förslag visas i max 5 dagar och rensas automatiskt</p>
+                    </div>
+                </div>
+                <button id="li-refresh" class="inline-flex items-center px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50">
+                    Uppdatera lista
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <input type="text" id="li-topic" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm" placeholder="Ämne (t.ex. CRM-tips)">
+                <input type="text" id="li-tone" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm" placeholder="Tonalitet (valfritt)">
+                <button id="li-generate" class="inline-flex items-center justify-center px-4 py-2 bg-sky-600 text-white font-medium rounded-lg hover:bg-sky-700 transition-colors text-sm">
+                    Generera förslag
+                </button>
+            </div>
+
+            <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3" id="li-suggestions"></div>
         </div>
 
         <!-- Stats cards -->
@@ -143,3 +193,130 @@
         @endif
     </div>
 </div>
+
+@push('scripts')
+    <script>
+        (function() {
+            const apiIndex = "{{ route('linkedin.suggestions.index') }}";
+            const apiStore = "{{ route('linkedin.suggestions.store') }}";
+            const apiPublish = "{{ route('linkedin.publish') }}";
+            const csrf = "{{ csrf_token() }}";
+
+            const modal = document.getElementById('li-modal');
+            const modalBody = document.getElementById('li-modal-body');
+            function openModal(text) {
+                modalBody.textContent = text || '';
+                modal.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+            }
+            function closeModal() {
+                modal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            }
+            document.getElementById('li-modal-close')?.addEventListener('click', closeModal);
+            document.getElementById('li-modal-close-2')?.addEventListener('click', closeModal);
+            modal?.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
+
+            function escapeHtml(str) {
+                return (str || '').replace(/[&<>"']/g, function(m) {
+                    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]);
+                });
+            }
+
+            async function loadSuggestions() {
+                const wrap = document.getElementById('li-suggestions');
+                if (!wrap) return;
+                wrap.innerHTML = '<div class="text-sm text-gray-500">Laddar...</div>';
+                try {
+                    const res = await fetch(apiIndex, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                    const data = await res.json();
+                    wrap.innerHTML = '';
+                    const items = (data && data.data) ? data.data : [];
+                    if (!items.length) {
+                        wrap.innerHTML = '<div class="text-sm text-gray-500">Inga aktiva förslag just nu.</div>';
+                        return;
+                    }
+                    items.forEach(function(sug) {
+                        const leftMs = new Date(sug.expires_at).getTime() - Date.now();
+                        const leftDays = Math.max(0, Math.floor(leftMs / (1000*60*60*24)));
+                        const full = sug.content || '';
+                        const preview = full.length > 220 ? full.slice(0, 220) + '…' : full;
+
+                        const card = document.createElement('div');
+                        card.className = 'p-4 bg-gray-50 rounded-xl border border-gray-200';
+
+                        const times = (sug.recommended_times || []).slice(0,3).map(function(t) {
+                            try { return new Date(t).toLocaleString(); } catch (_) { return t; }
+                        });
+
+                        card.innerHTML = `
+                    <div class="flex items-start justify-between">
+                        <div class="text-sm text-gray-800 whitespace-pre-wrap mr-3">${escapeHtml(preview)}</div>
+                        <div class="flex flex-col items-end gap-2">
+                            <button class="px-3 py-1 bg-white border border-gray-300 rounded text-xs view">Visa</button>
+                            <button class="px-3 py-1 bg-white border border-gray-300 rounded text-xs copy">Kopiera</button>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-xs text-gray-600">Försvinner om ${leftDays} dagar</div>
+                    <div class="mt-2 flex flex-wrap gap-2 text-xs">
+                        ${times.map(function(t){return `<span class="px-2 py-1 bg-white border rounded">${t}</span>`}).join('')}
+                    </div>
+                    <div class="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2">
+                        <input type="text" placeholder="Bildprompt (valfritt)" class="img-prompt md:col-span-2 px-2 py-1 border rounded text-xs">
+                        <input type="datetime-local" placeholder="Schemalägg" class="schedule md:col-span-1 px-2 py-1 border rounded text-xs">
+                        <button class="publish px-3 py-1 bg-sky-600 text-white rounded text-xs md:col-span-1">Publicera</button>
+                    </div>
+                `;
+                        wrap.appendChild(card);
+
+                        card.querySelector('.view').addEventListener('click', function() {
+                            openModal(full);
+                        });
+                        card.querySelector('.copy').addEventListener('click', function() {
+                            navigator.clipboard.writeText(full);
+                        });
+                        card.querySelector('.publish').addEventListener('click', async function() {
+                            const prompt = card.querySelector('.img-prompt').value || null;
+                            const sched = card.querySelector('.schedule').value || null;
+                            const body = {
+                                text: full,
+                                image_prompt: prompt,
+                                schedule_at: sched || null
+                            };
+                            const resp = await fetch(apiPublish, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+                                body: JSON.stringify(body)
+                            });
+                            const out = await resp.json();
+                            alert(out.message || 'Kölagd.');
+                        });
+                    });
+                } catch (e) {
+                    wrap.innerHTML = '<div class="text-sm text-red-600">Kunde inte ladda förslag.</div>';
+                }
+            }
+
+            document.getElementById('li-generate')?.addEventListener('click', async function() {
+                const topic = document.getElementById('li-topic').value.trim();
+                const tone  = document.getElementById('li-tone').value.trim();
+                if (!topic) { alert('Ange ett ämne'); return; }
+                const res = await fetch(apiStore, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+                    body: JSON.stringify({ topic: topic, tone: tone || null, count: 3 })
+                });
+                const out = await res.json();
+                alert(out.message || 'Kölagd.');
+                loadSuggestions();
+            });
+
+            document.getElementById('li-refresh')?.addEventListener('click', loadSuggestions);
+
+            // Auto-load
+            loadSuggestions();
+        })();
+    </script>
+@endpush

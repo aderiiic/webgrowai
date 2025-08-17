@@ -208,5 +208,93 @@
                 </div>
             @endif
         </div>
+
+        <!-- LinkedIn settings -->
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-8">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-sky-600 to-blue-700 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M4.98 3.5C4.98 4.88 3.86 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1s2.48 1.12 2.48 2.5zM.5 8h4V24h-4V8zm7.5 0h3.8v2.2h.1c.5-1 1.7-2.2 3.6-2.2 3.8 0 4.5 2.5 4.5 5.8V24h-4V14.7c0-2.2 0-5-3-5s-3.4 2.3-3.4 4.9V24H8V8z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900">LinkedIn</h2>
+                        <p class="text-sm text-gray-600">Anslut ditt LinkedIn-konto eller företagssida</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    @php
+                        $liStatusColors = [
+                            'active' => ['bg' => 'from-green-50 to-emerald-50', 'border' => 'border-green-200/50', 'text' => 'text-green-800'],
+                            'error' => ['bg' => 'from-red-50 to-pink-50', 'border' => 'border-red-200/50', 'text' => 'text-red-800'],
+                        ];
+                        $liColors = $liStatusColors[$li_status] ?? ['bg' => 'from-gray-50 to-slate-50', 'border' => 'border-gray-200/50', 'text' => 'text-gray-800'];
+                    @endphp
+
+                    <div class="inline-flex items-center px-3 py-1 bg-gradient-to-r {{ $liColors['bg'] }} {{ $liColors['border'] }} border rounded-full">
+                        <span class="text-xs font-medium {{ $liColors['text'] }} uppercase">{{ $li_status ? ucfirst($li_status) : 'Ej ansluten' }}</span>
+                    </div>
+
+                    <a href="{{ route('auth.linkedin.redirect') }}" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-sky-600 to-blue-700 text-white font-semibold rounded-xl hover:from-sky-700 hover:to-blue-800 focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transform hover:scale-[1.02] transition-all duration-200 shadow-lg hover:shadow-xl">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                        </svg>
+                        Anslut LinkedIn
+                    </a>
+                </div>
+            </div>
+
+            <details class="group">
+                <summary class="cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900 flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+            <span class="flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                Avancerade inställningar (fyll i manuellt)
+            </span>
+                    <svg class="w-4 h-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </summary>
+
+                <div class="mt-4 space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Owner URN</label>
+                            <input type="text" wire:model.defer="li_owner_urn" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-all duration-200" placeholder="urn:li:person:... eller urn:li:organization:...">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Access Token</label>
+                            <input type="password" wire:model.defer="li_access_token" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-all duration-200" placeholder="••••••••••">
+                            <p class="text-xs text-gray-500 mt-1">Lämna tomt för att behålla nuvarande token</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-3 pt-4 border-t border-gray-200">
+                        <button wire:click="saveLinkedIn" class="inline-flex items-center px-4 py-2 bg-sky-600 text-white font-medium rounded-lg hover:bg-sky-700 transition-colors duration-200 text-sm">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h2m0 0h9a2 2 0 002-2V9a2 2 0 00-2-2H9m8 0V5a2 2 0 00-2-2H9a2 2 0 00-2 2v2"/>
+                            </svg>
+                            Spara LinkedIn
+                        </button>
+                        <button wire:click="testLinkedIn" class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors duration-200 text-sm">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Testa anslutning
+                        </button>
+                    </div>
+                </div>
+            </details>
+
+            @if($li_message)
+                <div class="mt-4 p-3 rounded-lg {{ str_starts_with($li_message, 'OK') ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200' }}">
+                    <p class="text-sm {{ str_starts_with($li_message, 'OK') ? 'text-emerald-700' : 'text-red-700' }}">{{ $li_message }}</p>
+                </div>
+            @endif
+        </div>
     </div>
 </div>

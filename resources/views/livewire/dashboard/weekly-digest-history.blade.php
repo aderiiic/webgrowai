@@ -1,3 +1,4 @@
+
 <div>
     <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6 h-full flex flex-col">
         <div class="flex items-center justify-between mb-6">
@@ -17,59 +18,80 @@
             </div>
         </div>
 
-        <div class="flex-1 overflow-y-auto">
+        <div class="flex-1 overflow-y-auto max-h-96 custom-scrollbar">
             @forelse($plans as $plan)
-                <div class="mb-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-200/50 p-4 hover:border-gray-300/50 hover:shadow-md transition-all duration-200">
-                    <!-- Header -->
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center space-x-3">
-                            <div class="inline-flex items-center px-3 py-1 bg-gradient-to-r
-                                @if($plan->run_tag === 'monday') from-blue-50 to-indigo-50 text-blue-700 border border-blue-200/50
-                                @elseif($plan->run_tag === 'friday') from-purple-50 to-pink-50 text-purple-700 border border-purple-200/50
-                                @else from-gray-50 to-gray-100 text-gray-700 border border-gray-200/50 @endif
-                                rounded-full text-xs font-medium">
-                                @if($plan->run_tag === 'monday')
-                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"/>
-                                    </svg>
-                                @elseif($plan->run_tag === 'friday')
-                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"/>
-                                    </svg>
-                                @endif
-                                {{ ucfirst($plan->run_tag) }}
-                            </div>
-
-                            <div class="text-sm text-gray-600">
-                                {{ $plan->run_date->format('Y-m-d') }}
-                            </div>
-
-                            <div class="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium">
-                                {{ $plan->type }}
-                            </div>
-
-                            @if($plan->emailed_at)
-                                <div class="inline-flex items-center px-2 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-medium">
-                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
-                                        <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
-                                    </svg>
-                                    Mailad
+                <div class="mb-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-200/50 hover:border-gray-300/50 hover:shadow-md transition-all duration-200 overflow-hidden">
+                    <!-- Header - alltid synlig -->
+                    <div class="p-4 border-b border-gray-100/50">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-3 flex-wrap">
+                                <div class="inline-flex items-center px-3 py-1 bg-gradient-to-r
+                                    @if($plan->run_tag === 'monday') from-blue-50 to-indigo-50 text-blue-700 border border-blue-200/50
+                                    @elseif($plan->run_tag === 'friday') from-purple-50 to-pink-50 text-purple-700 border border-purple-200/50
+                                    @else from-gray-50 to-gray-100 text-gray-700 border border-gray-200/50 @endif
+                                    rounded-full text-xs font-medium">
+                                    @if($plan->run_tag === 'monday')
+                                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"/>
+                                        </svg>
+                                    @elseif($plan->run_tag === 'friday')
+                                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"/>
+                                        </svg>
+                                    @endif
+                                    {{ ucfirst($plan->run_tag) }}
                                 </div>
-                            @endif
+
+                                <div class="text-sm text-gray-600 font-medium">
+                                    {{ $plan->run_date->format('j M Y') }}
+                                </div>
+
+                                <div class="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium">
+                                    {{ $plan->type }}
+                                </div>
+
+                                @if($plan->emailed_at)
+                                    <div class="inline-flex items-center px-2 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-medium">
+                                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+                                            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+                                        </svg>
+                                        Mailad
+                                    </div>
+                                @endif
+                            </div>
+
+                            <!-- Expand/collapse knapp -->
+                            <button
+                                class="expand-btn flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 transition-all duration-200"
+                                onclick="toggleContent(this)"
+                            >
+                                <svg class="w-4 h-4 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
                         </div>
+
+                        <!-- Titel - alltid synlig -->
+                        <h3 class="font-semibold text-gray-900 text-sm leading-tight">{{ $plan->title }}</h3>
+
+                        <!-- Preview av innehåll -->
+                        <p class="text-xs text-gray-500 mt-1 line-clamp-2">
+                            {{ Str::limit(strip_tags($plan->content_md ?? ''), 120) }}
+                        </p>
                     </div>
 
-                    <!-- Title -->
-                    <h3 class="font-semibold text-gray-900 mb-3">{{ $plan->title }}</h3>
-
-                    <!-- Content -->
-                    <div class="prose prose-sm max-w-none text-gray-700 leading-relaxed">
-                        {!! \Illuminate\Support\Str::of($plan->content_md ?? '—')->markdown() !!}
+                    <!-- Expanderbart innehåll -->
+                    <div class="plan-content hidden">
+                        <div class="p-4">
+                            <div class="prose prose-sm max-w-none text-gray-700 leading-relaxed">
+                                {!! \Illuminate\Support\Str::of($plan->content_md ?? '—')->markdown() !!}
+                            </div>
+                        </div>
                     </div>
                 </div>
             @empty
-                <div class="text-center py-8">
+                <div class="text-center py-12">
                     <div class="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
                         <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -88,4 +110,50 @@
             </div>
         @endif
     </div>
+
+    <style>
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+
+    <script>
+        function toggleContent(button) {
+            const content = button.closest('.mb-4').querySelector('.plan-content');
+            const icon = button.querySelector('svg');
+
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.style.transform = 'rotate(180deg)';
+                button.classList.add('bg-indigo-100', 'text-indigo-700');
+                button.classList.remove('bg-gray-100', 'text-gray-600');
+            } else {
+                content.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
+                button.classList.remove('bg-indigo-100', 'text-indigo-700');
+                button.classList.add('bg-gray-100', 'text-gray-600');
+            }
+        }
+    </script>
 </div>

@@ -220,5 +220,34 @@
                 </button>
             </div>
         </div>
+
+        <div class="mt-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6">
+            <div class="flex items-center space-x-3 mb-4">
+                <div class="w-10 h-10 bg-gradient-to-br from-sky-600 to-blue-700 rounded-xl flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M4.98 3.5C4.98 4.88 3.86 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1s2.48 1.12 2.48 2.5zM.5 8h4V24h-4V8zm7.5 0h3.8v2.2h.1c.5-1 1.7-2.2 3.6-2.2 3.8 0 4.5 2.5 4.5 5.8V24h-4V14.7c0-2.2 0-5-3-5s-3.4 2.3-3.4 4.9V24H8V8z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Snabb publicering – LinkedIn</h3>
+                    <p class="text-sm text-gray-600">Använd titeln eller klistra in din text, välj ev. schemaläggning eller bildprompt.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <input type="text" wire:model.defer="liQuickText" class="md:col-span-3 w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm" placeholder="Inläggstext">
+                <input type="datetime-local" wire:model.defer="liQuickScheduleAt" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm" placeholder="Schemalägg (valfritt)">
+                <input type="text" wire:model.defer="liQuickImagePrompt" class="md:col-span-2 w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm" placeholder="Bildprompt (valfritt)">
+            </div>
+
+            <div class="mt-4 flex justify-end">
+                <button wire:click="queueLinkedInQuick" class="inline-flex items-center px-4 py-2 bg-sky-600 text-white font-semibold rounded-xl hover:bg-sky-700 focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition-all duration-200 shadow-md">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                    </svg>
+                    Publicera till LinkedIn
+                </button>
+            </div>
+        </div>
     </div>
 </div>

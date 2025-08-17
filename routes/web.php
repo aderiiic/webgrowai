@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\LinkedInSuggestionController;
 use App\Models\Invoice;
 use App\Models\Post;
 use App\Models\WpIntegration;
@@ -184,8 +185,16 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
     Route::get('/auth/facebook/redirect', [SocialAuthController::class, 'facebookRedirect'])->name('auth.facebook.redirect');
     Route::get('/auth/facebook/callback', [SocialAuthController::class, 'facebookCallback'])->name('auth.facebook.callback');
 
+    Route::get('/auth/linkedin/redirect', [SocialAuthController::class, 'linkedinRedirect'])->name('auth.linkedin.redirect');
+    Route::get('/auth/linkedin/callback', [SocialAuthController::class, 'linkedinCallback'])->name('auth.linkedin.callback');
+
     Route::get('/auth/instagram/redirect', [SocialAuthController::class, 'instagramRedirect'])->name('auth.instagram.redirect');
     Route::get('/auth/instagram/callback', [SocialAuthController::class, 'instagramCallback'])->name('auth.instagram.callback');
+
+    Route::get('/api/linkedin/suggestions', [LinkedInSuggestionController::class, 'index'])->name('linkedin.suggestions.index');
+    Route::post('/api/linkedin/suggestions', [LinkedInSuggestionController::class, 'store'])->name('linkedin.suggestions.store');
+    Route::delete('/api/linkedin/suggestions/{suggestion}', [LinkedInSuggestionController::class, 'destroy'])->name('linkedin.suggestions.destroy');
+    Route::post('/api/linkedin/publish', [LinkedInSuggestionController::class, 'publish'])->name('linkedin.publish');
 
     Route::get('/leads', LeadsIndex::class)->name('leads.index');
     Route::get('/leads/{id}', LeadDetail::class)->name('leads.detail')->whereNumber('id');

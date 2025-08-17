@@ -5,10 +5,12 @@ namespace App\Livewire\AI;
 use App\Jobs\PublishAiContentToWpJob;
 use App\Jobs\PublishToFacebookJob;
 use App\Jobs\PublishToInstagramJob;
+use App\Jobs\PublishToLinkedInJob;
 use App\Models\AiContent;
 use App\Models\ContentPublication;
 use App\Support\CurrentCustomer;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
@@ -24,8 +26,12 @@ class Detail extends Component
     public string $publishStatus = 'draft';
     public ?string $publishAt = null;
 
-    public string $socialTarget = 'facebook';
+    public string $socialTarget = '';
     public ?string $socialScheduleAt = null;
+
+    public string $liQuickText = '';
+    public ?string $liQuickScheduleAt = null;
+    public string $liQuickImagePrompt = '';
 
     public function mount(int $id, CurrentCustomer $current): void
     {
@@ -93,7 +99,7 @@ class Detail extends Component
     {
         Gate::authorize('update', $this->content);
         $this->validate([
-            'socialTarget' => 'required|in:facebook,instagram',
+            'socialTarget' => 'required|in:facebook,instagram,linkedin',
             'socialScheduleAt' => 'nullable|date',
         ]);
 
@@ -111,12 +117,46 @@ class Detail extends Component
         if (!$scheduledAt || $scheduledAt->isPast()) {
             if ($this->socialTarget === 'facebook') {
                 dispatch(new PublishToFacebookJob($pub->id))->onQueue('social');
-            } else {
+            } elseif ($this->socialTarget === 'instagram') {
                 dispatch(new PublishToInstagramJob($pub->id))->onQueue('social');
+            } else {
+                dispatch(new PublishToLinkedInJob($pub->id))->onQueue('social');
             }
             session()->flash('success', ucfirst($this->socialTarget).' publicering startad.');
         } else {
             session()->flash('success', ucfirst($this->socialTarget)." schemalagd till {$scheduledAt->format('Y-m-d H:i')}.");
+        }
+    }
+
+    public function queueLinkedInQuick(): void
+    {
+        Gate::authorize('update', $this->content);
+
+        $this->validate([
+            'liQuickText' => 'required|string',
+            'liQuickScheduleAt' => 'nullable|date',
+            'liQuickImagePrompt' => 'nullable|string|max:500',
+        ]);
+
+        $scheduledAt = $this->liQuickScheduleAt ? Carbon::parse($this->liQuickScheduleAt) : null;
+
+        $pub = ContentPublication::create([
+            'ai_content_id' => $this->content->id,
+            'target'        => 'linkedin',
+            'status'        => 'queued',
+            'scheduled_at'  => $scheduledAt,
+            'message'       => null,
+            'payload'       => [
+                'text' => $this->liQuickText,
+                'image_prompt' => $this->liQuickImagePrompt ?: null,
+            ],
+        ]);
+
+        if (!$scheduledAt || $scheduledAt->isPast()) {
+            dispatch(new PublishToLinkedInJob($pub->id))->onQueue('social');
+            session()->flash('success', 'LinkedIn publicering startad.');
+        } else {
+            session()->flash('success', "LinkedIn schemalagd till {$scheduledAt->format('Y-m-d H:i')}.");
         }
     }
 
