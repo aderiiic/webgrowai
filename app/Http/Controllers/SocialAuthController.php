@@ -37,6 +37,8 @@ class SocialAuthController extends Controller
 
         $client = new Client(['timeout' => 30]);
 
+        Log::info('Working');
+
         // 1) Byt code -> User access token
         $tokenRes = $client->get('https://graph.facebook.com/v19.0/oauth/access_token', [
             'query' => [
@@ -46,9 +48,13 @@ class SocialAuthController extends Controller
                 'code'          => $code,
             ],
         ]);
+
+        Log::info('Token res', ['tokenRes' => $tokenRes]);
         $token = json_decode((string) $tokenRes->getBody(), true);
         $userAccessToken = $token['access_token'] ?? null;
         abort_unless($userAccessToken, 400, 'Kunde inte hämta user access token');
+
+        Log::info('User access token', ['userAccessToken' => $userAccessToken]);
 
         // 2) Hämta sidor för användaren
         $pagesRes = $client->get('https://graph.facebook.com/v19.0/me/accounts', [
