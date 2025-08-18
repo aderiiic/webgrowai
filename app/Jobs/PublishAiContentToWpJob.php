@@ -5,11 +5,13 @@ namespace App\Jobs;
 use App\Models\AiContent;
 use App\Models\ContentPublication;
 use App\Models\WpIntegration;
+use App\Services\ImageGenerator;
 use App\Services\WordPressClient;
 use App\Support\Usage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -20,29 +22,27 @@ class PublishAiContentToWpJob implements ShouldQueue
     public function __construct(
         public int $aiContentId,
         public int $siteId,
-        public string $status = 'draft', // draft|publish|future
-        public ?string $scheduleAtIso = null, // ISO8601 tid om future
+        public string $status = 'draft',
+        public ?string $scheduleAtIso = null,
         public ?int $publicationId = null
     ) {
         $this->onQueue('publish');
     }
 
-    public function handle(Usage $usage): void
+    public function handle(Usage $usage, ImageGenerator $images): void
     {
         $content = AiContent::with('site')->findOrFail($this->aiContentId);
         $integration = WpIntegration::where('site_id', $this->siteId)->firstOrFail();
 
-        // Hämta eller skapa ContentPublication om den saknas
         $pub = $this->publicationId ? ContentPublication::find($this->publicationId) : null;
         if (!$pub) {
             $scheduledAt = null;
             if (!empty($this->scheduleAtIso)) {
-                try {
-                    $scheduledAt = Carbon::parse($this->scheduleAtIso);
-                } catch (\Throwable $e) {
-                    $scheduledAt = null; // ogiltig tid ignoreras
-                }
+                try { $scheduledAt = Carbon::parse($this->scheduleAtIso); } catch (\Throwable) {}
             }
+
+            // Spegla bildpreferenser in i payload
+            $imgPrefs = $content->inputs['image'] ?? ['generate' => false, 'mode' => 'auto', 'prompt' => null];
 
             $pub = ContentPublication::create([
                 'ai_content_id' => $content->id,
@@ -54,72 +54,130 @@ class PublishAiContentToWpJob implements ShouldQueue
                     'site_id' => $this->siteId,
                     'status'  => $this->status,
                     'date'    => $this->scheduleAtIso,
+                    'image'   => $imgPrefs,
                 ],
             ]);
         }
 
-        // Sätt processing när jobbet startar
         $pub->update(['status' => 'processing', 'message' => null]);
-
         $client = WordPressClient::for($integration);
 
-        // MD -> block/HTML
         $md = $this->normalizeMd($content->body_md ?? '');
         $blocks = $this->toGutenbergBlocks($md);
-        $htmlFallback = Str::of($md)->markdown();
+        $htmlFallback = \Illuminate\Support\Str::of($md)->markdown();
 
         $payload = [
-            'title'   => $content->title ?: Str::limit(strip_tags($htmlFallback), 48, '...'),
+            'title'   => $content->title ?: \Illuminate\Support\Str::limit(strip_tags($htmlFallback), 48, '...'),
             'content' => $blocks !== '' ? $blocks : $htmlFallback,
             'status'  => $this->status,
         ];
-
         if ($this->status === 'future' && $this->scheduleAtIso) {
             $payload['date'] = $this->scheduleAtIso;
         }
 
+        $featuredMediaId = null;
+        $imagesEnabled = config('features.image_generation', false);
+
+        // — Bildgenerering (respektera feature-flag) —
+        try {
+            if ($imagesEnabled) {
+                $pubPayload = $pub->payload ?? [];
+                $inputs     = $content->inputs ?? [];
+
+                $want = (bool)($pubPayload['image']['generate'] ?? $inputs['image']['generate'] ?? false);
+                $want = $imagesEnabled && $want;
+
+                $prompt = $pubPayload['image_prompt']
+                    ?? $pubPayload['image']['prompt']
+                    ?? $inputs['image']['prompt']
+                    ?? null;
+
+                if ($want && !$prompt) {
+                    $prompt = $this->buildAutoPrompt($content->title, $inputs);
+                }
+
+                if ($want && $prompt) {
+                    // Mindre JPEG för snabbare upload till WP
+                    $bytes    = $images->generateJpeg($prompt, '1024x1024', 85);
+                    $filename = 'ai-image-' . \Illuminate\Support\Str::uuid() . '.jpg';
+
+                    $media    = $client->uploadMedia($bytes, $filename, 'image/jpeg');
+                    $featuredMediaId = $media['id'] ?? null;
+                    $mediaUrl = $media['source_url'] ?? ($media['guid']['rendered'] ?? null) ?? null;
+
+                    Log::debug('[WP Publish] Media upload result', [
+                        'id'  => $featuredMediaId,
+                        'url' => $mediaUrl,
+                    ]);
+
+                    if ($featuredMediaId) {
+                        $payload['featured_media'] = $featuredMediaId;
+
+                        if ($mediaUrl) {
+                            $imgBlock = "<!-- wp:image {\"id\":{$featuredMediaId},\"sizeSlug\":\"full\",\"linkDestination\":\"none\"} -->
+<figure class=\"wp-block-image size-full\"><img src=\"{$mediaUrl}\" alt=\"\" class=\"wp-image-{$featuredMediaId}\"/></figure>
+<!-- /wp:image -->";
+                            $payload['content'] = $imgBlock . "\n\n" . $payload['content'];
+                        }
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('[WP Publish] Bilddel misslyckades – fortsätter utan bild', ['err' => $e->getMessage()]);
+        }
+
+        // — Skapa inlägg —
         try {
             $resp = $client->createPost($payload);
+            $postId = is_array($resp) ? ($resp['id'] ?? null) : (is_object($resp) ? ($resp->id ?? null) : null);
+
+            // Säkerställ featured_media via update om create ignorerade det
+            if ($postId && $featuredMediaId && (empty($resp['featured_media']) || (int)$resp['featured_media'] !== (int)$featuredMediaId)) {
+                $client->updatePost($postId, ['featured_media' => $featuredMediaId]);
+            }
 
             $pub->update([
                 'status'      => 'published',
-                'external_id' => is_array($resp) ? ($resp['id'] ?? null) : (is_object($resp) ? ($resp->id ?? null) : null),
+                'external_id' => $postId,
                 'payload'     => $payload,
                 'message'     => null,
             ]);
 
-            // Uppdatera state i AI-content
             $content->update([
                 'status' => $this->status === 'draft' ? 'ready' : 'published',
             ]);
 
-            // Usage-tracking
             $usage->increment($content->customer_id, 'ai.publish.wp');
         } catch (Throwable $e) {
-            $pub->update([
-                'status'  => 'failed',
-                'message' => $e->getMessage(),
-                'payload' => $payload,
-            ]);
+            $pub->update(['status' => 'failed', 'message' => $e->getMessage(), 'payload' => $payload]);
             throw $e;
         }
     }
 
+    private function buildAutoPrompt(?string $title, array $inputs): string
+    {
+        $kw    = implode(', ', $inputs['keywords'] ?? []);
+        $voice = $inputs['brand']['voice'] ?? null;
+        $aud   = $inputs['audience'] ?? null;
+
+        return trim("Create a clean blog featured image.
+Title: {$title}
+Keywords: {$kw}
+Audience: {$aud}
+Brand voice: {$voice}
+Style: modern, photographic, 16:9, minimal, no text overlays.");
+    }
+
     private function normalizeMd(string $md): string
     {
-        if ($md === '') {
-            return $md;
-        }
-
+        if ($md === '') return $md;
         $md = str_replace(["\r\n", "\r"], "\n", $md);
-
         $trimmed = trim($md);
         if (str_starts_with($trimmed, '```') && str_ends_with($trimmed, '```')) {
             $trimmed = preg_replace('/^```[a-zA-Z0-9_-]*\n?/','', $trimmed);
             $trimmed = preg_replace("/\n?```$/", '', $trimmed);
             $md = $trimmed;
         }
-
         $lines = explode("\n", $md);
         $minIndent = null;
         foreach ($lines as $line) {
@@ -129,8 +187,7 @@ class PublishAiContentToWpJob implements ShouldQueue
                 $len = strlen(str_replace("\t", '    ', $m[0]));
                 $minIndent = $minIndent === null ? $len : min($minIndent, $len);
             } else {
-                $minIndent = 0;
-                break;
+                $minIndent = 0; break;
             }
         }
         if ($minIndent && $minIndent > 0) {
@@ -139,18 +196,14 @@ class PublishAiContentToWpJob implements ShouldQueue
                 return preg_replace('/^ {0,' . $minIndent . '}/', '', $line);
             }, $lines));
         }
-
         return trim($md);
     }
 
     private function toGutenbergBlocks(string $md): string
     {
-        if ($md === '') {
-            return '';
-        }
-
+        if ($md === '') return '';
         try {
-            $html = (string) Str::of($md)->markdown();
+            $html = (string) \Illuminate\Support\Str::of($md)->markdown();
 
             $dom = new \DOMDocument('1.0', 'UTF-8');
             libxml_use_internal_errors(true);
@@ -158,9 +211,7 @@ class PublishAiContentToWpJob implements ShouldQueue
             libxml_clear_errors();
 
             $body = $dom->getElementsByTagName('body')->item(0);
-            if (!$body) {
-                return '';
-            }
+            if (!$body) return '';
 
             $out = '';
             foreach (iterator_to_array($body->childNodes) as $node) {
@@ -182,43 +233,23 @@ class PublishAiContentToWpJob implements ShouldQueue
                     case 'h4': $out .= "<!-- wp:heading {\"level\":4} -->{$htmlFrag}<!-- /wp:heading -->"; break;
                     case 'h5': $out .= "<!-- wp:heading {\"level\":5} -->{$htmlFrag}<!-- /wp:heading -->"; break;
                     case 'h6': $out .= "<!-- wp:heading {\"level\":6} -->{$htmlFrag}<!-- /wp:heading -->"; break;
-
-                    case 'p':
-                        $out .= "<!-- wp:paragraph -->{$htmlFrag}<!-- /wp:paragraph -->";
-                        break;
-
-                    case 'ul':
-                        $out .= "<!-- wp:list -->{$htmlFrag}<!-- /wp:list -->";
-                        break;
-
-                    case 'ol':
-                        $out .= "<!-- wp:list {\"ordered\":true} -->{$htmlFrag}<!-- /wp:list -->";
-                        break;
-
-                    case 'blockquote':
-                        $out .= "<!-- wp:quote -->{$htmlFrag}<!-- /wp:quote -->";
-                        break;
-
+                    case 'p':  $out .= "<!-- wp:paragraph -->{$htmlFrag}<!-- /wp:paragraph -->"; break;
+                    case 'ul': $out .= "<!-- wp:list -->{$htmlFrag}<!-- /wp:list -->"; break;
+                    case 'ol': $out .= "<!-- wp:list {\"ordered\":true} -->{$htmlFrag}<!-- /wp:list -->"; break;
+                    case 'blockquote': $out .= "<!-- wp:quote -->{$htmlFrag}<!-- /wp:quote -->"; break;
                     case 'pre':
                     case 'code':
                         if ($tag === 'code' && strtolower($node->parentNode?->nodeName) !== 'pre') {
                             $htmlFrag = '<pre><code>'.htmlspecialchars($node->textContent ?? '', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8').'</code></pre>';
                         }
-                        $out .= "<!-- wp:code -->{$htmlFrag}<!-- /wp:code -->";
-                        break;
-
-                    case 'hr':
-                        $out .= "<!-- wp:separator --><hr class=\"wp-block-separator\" /><!-- /wp:separator -->";
-                        break;
-
-                    default:
-                        $out .= "<!-- wp:html -->{$htmlFrag}<!-- /wp:html -->";
-                        break;
+                        $out .= "<!-- wp:code -->{$htmlFrag}<!-- /wp:code -->"; break;
+                    case 'hr': $out .= "<!-- wp:separator --><hr class=\"wp-block-separator\" /><!-- /wp:separator -->"; break;
+                    default:   $out .= "<!-- wp:html -->{$htmlFrag}<!-- /wp:html -->"; break;
                 }
             }
 
             return trim($out);
-        } catch (\Throwable $e) {
+        } catch (\Throwable) {
             return '';
         }
     }

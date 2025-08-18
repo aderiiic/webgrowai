@@ -16,8 +16,8 @@ class WordPressClient
         $this->baseUrl = rtrim($baseUrl, '/');
         $this->client = new Client([
             'base_uri' => $this->baseUrl,
-            'auth' => [$username, $appPassword],
-            'timeout' => 20,
+            'auth'     => [$username, $appPassword],
+            'timeout'  => 20,
         ]);
     }
 
@@ -45,7 +45,6 @@ class WordPressClient
 
     public function updatePost(int $id, array $payload): array
     {
-        // WP REST API accepterar POST för uppdatering
         $res = $this->client->post("/wp-json/wp/v2/posts/{$id}", ['json' => $payload]);
         return json_decode((string) $res->getBody(), true);
     }
@@ -72,6 +71,25 @@ class WordPressClient
     public function updatePage(int $id, array $payload): array
     {
         $res = $this->client->post("/wp-json/wp/v2/pages/{$id}", ['json' => $payload]);
+        return json_decode((string) $res->getBody(), true);
+    }
+
+    // Längre timeout för tunga uppladdningar + stäng "Expect: 100-continue"
+    public function uploadMedia(string $bytes, string $filename, string $mime = 'image/png'): array
+    {
+        $res = $this->client->post('/wp-json/wp/v2/media', [
+            'timeout'         => 120,
+            'connect_timeout' => 10,
+            'expect'          => false,
+            'multipart' => [
+                [
+                    'name'     => 'file',
+                    'contents' => $bytes,
+                    'filename' => $filename,
+                    'headers'  => ['Content-Type' => $mime],
+                ],
+            ],
+        ]);
         return json_decode((string) $res->getBody(), true);
     }
 }

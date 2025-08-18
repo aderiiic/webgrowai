@@ -161,6 +161,61 @@
                     </div>
                 </div>
 
+                <!-- Image generation -->
+                @if(config('features.image_generation'))
+                <div class="p-6 bg-gradient-to-r from-slate-50 to-indigo-50 rounded-xl border border-indigo-200/50">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7l6 6-6 6M21 7l-6 6 6 6"/>
+                                </svg>
+                            </div>
+                            <label class="text-lg font-semibold text-gray-900">Bildgenerering (DALL·E)</label>
+                        </div>
+                        <label class="inline-flex items-center cursor-pointer select-none">
+                            <input type="checkbox" wire:model="genImage" class="sr-only peer">
+                            <span class="px-4 py-2 rounded-lg border border-indigo-300 peer-checked:bg-indigo-600 peer-checked:text-white text-indigo-700 bg-white transition">
+                                Generera bild
+                            </span>
+                        </label>
+                    </div>
+
+                    <div class="text-sm text-indigo-800 mb-4">
+                        Om aktiverad skapas en bild med DALL·E när inlägget publiceras och laddas upp direkt till vald kanal/WordPress. Inga bildfiler lagras hos oss.
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4" x-data>
+                        <div class="lg:col-span-1">
+                            <label class="block text-sm font-medium text-gray-900 mb-2">Prompt‑källa</label>
+                            <div class="space-y-2">
+                                <label class="flex items-center space-x-2">
+                                    <input type="radio" wire:model="imagePromptMode" value="auto" class="text-indigo-600 focus:ring-indigo-500">
+                                    <span class="text-gray-800">Anpassa efter inlägget (rekommenderas)</span>
+                                </label>
+                                <label class="flex items-center space-x-2">
+                                    <input type="radio" wire:model="imagePromptMode" value="custom" class="text-indigo-600 focus:ring-indigo-500">
+                                    <span class="text-gray-800">Egen bildbeskrivning</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="lg:col-span-2" x-show="$wire.imagePromptMode === 'custom'">
+                            <label class="block text-sm font-medium text-gray-900 mb-2">Bildbeskrivning (kort prompt)</label>
+                            <textarea wire:model.defer="imagePrompt" rows="3" class="w-full px-4 py-3 bg-white border border-indigo-300 rounded-xl text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" placeholder="Beskriv bilden kort: motiv, stil, färgton, kameravinkel ..."></textarea>
+                            @error('imagePrompt')
+                            <p class="mt-2 text-sm text-red-600 flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                {{ $message }}
+                            </p>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+                @endif
+
                 <!-- Action buttons -->
                 <div class="flex items-center justify-between pt-6 border-t border-gray-200">
                     <a href="{{ route('ai.list') }}" class="inline-flex items-center px-6 py-3 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 hover:border-gray-400 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200 shadow-sm hover:shadow-md">

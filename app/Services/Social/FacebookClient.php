@@ -35,4 +35,27 @@ class FacebookClient
         ]);
         return json_decode((string) $res->getBody(), true);
     }
+
+    public function createPagePhoto(string $pageId, string $bytes, string $filename, string $caption = ''): array
+    {
+        $res = $this->http()->post($pageId.'/photos', [
+            'query' => ['access_token' => $this->accessToken],
+            'multipart' => [
+                [
+                    'name'     => 'source',
+                    'contents' => $bytes,
+                    'filename' => $filename,
+                ],
+                [
+                    'name'     => 'caption',
+                    'contents' => $caption,
+                ],
+                [
+                    'name'     => 'published',
+                    'contents' => 'true',
+                ],
+            ],
+        ]);
+        return json_decode((string) $res->getBody(), true);
+    }
 }

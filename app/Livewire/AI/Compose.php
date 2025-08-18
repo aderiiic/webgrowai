@@ -23,14 +23,27 @@ class Compose extends Component
     public string $keywords = '';
     public string $brand_voice = '';
 
+    // Bildgenerering
+    public bool $genImage = false;
+    public string $imagePromptMode = 'auto'; // auto|custom
+    public ?string $imagePrompt = null;
+
     public function submit(CurrentCustomer $current)
     {
         $this->validate([
             'template_id' => 'required|exists:content_templates,id',
-            'title' => 'required|string|min:3',
-            'tone' => 'required|in:short,long',
-            'site_id' => 'nullable|exists:sites,id',
+            'title'       => 'required|string|min:3',
+            'tone'        => 'required|in:short,long',
+            'site_id'     => 'nullable|exists:sites,id',
+            'genImage'        => 'boolean',
+            'imagePromptMode' => 'in:auto,custom',
+            'imagePrompt'     => 'nullable|string|max:500',
         ]);
+
+        if ($this->genImage && $this->imagePromptMode === 'custom' && blank($this->imagePrompt)) {
+            $this->addError('imagePrompt', 'Ange en kort bildbeskrivning eller välj “Anpassa efter inlägget”.');
+            return;
+        }
 
         $customer = $current->get();
         abort_unless($customer, 403);
@@ -40,6 +53,12 @@ class Compose extends Component
             'goal'     => $this->goal ?: null,
             'keywords' => $this->keywords ? array_values(array_filter(array_map('trim', explode(',', $this->keywords)))) : [],
             'brand'    => ['voice' => $this->brand_voice ?: null],
+            // Lägg med bildpreferenser som metadata
+            'image'    => [
+                'generate' => $this->genImage,
+                'mode'     => $this->imagePromptMode,
+                'prompt'   => $this->imagePromptMode === 'custom' ? $this->imagePrompt : null,
+            ],
         ];
 
         $content = AiContent::create([

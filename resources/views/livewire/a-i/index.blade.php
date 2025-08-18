@@ -264,7 +264,9 @@
                         ${times.map(function(t){return `<span class="px-2 py-1 bg-white border rounded">${t}</span>`}).join('')}
                     </div>
                     <div class="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2">
+                        @if(config('features.image_generation'))
                         <input type="text" placeholder="Bildprompt (valfritt)" class="img-prompt md:col-span-2 px-2 py-1 border rounded text-xs">
+                        @endif
                         <input type="datetime-local" placeholder="Schemalägg" class="schedule md:col-span-1 px-2 py-1 border rounded text-xs">
                         <button class="publish px-3 py-1 bg-sky-600 text-white rounded text-xs md:col-span-1">Publicera</button>
                     </div>
