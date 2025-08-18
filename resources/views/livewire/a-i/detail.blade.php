@@ -59,7 +59,6 @@
 
         @php $mdReady = !empty($md); @endphp
 
-            <!-- Content display -->
         <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 overflow-hidden">
             @if($mdReady)
                 <div class="p-8">

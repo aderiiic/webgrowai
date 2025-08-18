@@ -23,10 +23,8 @@ class Compose extends Component
     public string $keywords = '';
     public string $brand_voice = '';
 
-    // Nytt: kanal/format
-    // auto = mallens standard; annars: blog|facebook|instagram|linkedin|campaign
-    public string $channel = 'facebook';
-    public int $variants = 1; // antal förslag
+    // Kanal/format (visas endast om generisk mall)
+    public string $channel = 'auto';
 
     // Bildgenerering
     public bool $genImage = false;
@@ -40,8 +38,8 @@ class Compose extends Component
             'title'           => 'required|string|min:3',
             'tone'            => 'required|in:short,long',
             'site_id'         => 'nullable|exists:sites,id',
-            'channel'         => 'required|in:auto,blog,facebook,instagram,linkedin,campaign',
-            'variants'        => 'required|integer|min:1|max:5',
+            // Channel inte längre obligatorisk; sätts från mallen om möjligt
+            'channel'         => 'nullable|in:auto,blog,facebook,instagram,linkedin,campaign',
             'genImage'        => 'boolean',
             'imagePromptMode' => 'in:auto,custom',
             'imagePrompt'     => 'nullable|string|max:500',
@@ -55,19 +53,25 @@ class Compose extends Component
         $customer = $current->get();
         abort_unless($customer, 403);
 
-        // Kanal-specifika riktlinjer som modellen kan följa (hjälper generiska mallar)
-        $guidelines = $this->guidelinesFor($this->channel);
+        $tpl = ContentTemplate::find($this->template_id);
+        abort_unless($tpl, 422);
+
+        // 1) Försök mappa kanal från vald mall
+        $mapped = $this->channelFromTemplateSlug($tpl->slug);
+
+        // 2) Om mallen är generisk/okänd och användaren valt kanal manuellt, ta den
+        $finalChannel = $mapped ?: ($this->channel !== 'auto' ? $this->channel : 'auto');
+
+        $guidelines = $this->guidelinesFor($finalChannel);
 
         $inputs = [
-            'channel'  => $this->channel,     // viktig för att styra prompt
-            'variants' => $this->variants,    // hur många förslag som ska genereras
-            'audience' => $this->audience ?: null,
-            'goal'     => $this->goal ?: null,
-            'keywords' => $this->keywords ? array_values(array_filter(array_map('trim', explode(',', $this->keywords)))) : [],
-            'brand'    => ['voice' => $this->brand_voice ?: null],
-            'guidelines' => $guidelines,      // ger modellen konkreta formatregler
-            // Bildpreferenser som metadata
-            'image'    => [
+            'channel'   => $finalChannel,
+            'audience'  => $this->audience ?: null,
+            'goal'      => $this->goal ?: null,
+            'keywords'  => $this->keywords ? array_values(array_filter(array_map('trim', explode(',', $this->keywords)))) : [],
+            'brand'     => ['voice' => $this->brand_voice ?: null],
+            'guidelines'=> $guidelines,
+            'image'     => [
                 'generate' => $this->genImage,
                 'mode'     => $this->imagePromptMode,
                 'prompt'   => $this->imagePromptMode === 'custom' ? $this->imagePrompt : null,
@@ -90,9 +94,20 @@ class Compose extends Component
             ->with('success', 'Generering påbörjad.');
     }
 
+    private function channelFromTemplateSlug(?string $slug): ?string
+    {
+        return match ($slug) {
+            'social-facebook'  => 'facebook',
+            'social-instagram' => 'instagram',
+            'social-linkedin'  => 'linkedin',
+            'blog'             => 'blog',
+            'campaign'         => 'campaign',
+            default            => null, // generisk/okänd -> låt användaren välja
+        };
+    }
+
     private function guidelinesFor(string $channel): array
     {
-        // Grundguidelines per kanal – håll dem korta/konkreta
         return match ($channel) {
             'facebook' => [
                 'style' => 'Conversational, lätt, 1–2 korta stycken, 1–2 emojis max, 0–3 hashtags.',
@@ -127,11 +142,14 @@ class Compose extends Component
         };
     }
 
-    public function render(CurrentCustomer $current)
+    public function render(CurrentCustomer $current): View
     {
         $templates = ContentTemplate::orderBy('name')->get();
         $sites = $current->get()?->sites()->orderBy('name')->get() ?? collect();
 
-        return view('livewire.a-i.compose', compact('templates','sites'));
+        // Skicka med vald mall för att kunna dölja kanalvalet i Blade
+        $selectedTemplate = $templates->firstWhere('id', $this->template_id);
+
+        return view('livewire.a-i.compose', compact('templates','sites','selectedTemplate'));
     }
 }

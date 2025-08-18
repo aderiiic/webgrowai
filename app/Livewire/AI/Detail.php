@@ -61,14 +61,14 @@ class Detail extends Component
 
         $iso = null;
         if ($this->publishStatus === 'future' && $this->publishAt) {
-            $iso = \Illuminate\Support\Carbon::parse($this->publishAt)->toIso8601String();
+            $iso = Carbon::parse($this->publishAt)->toIso8601String();
         }
 
         $pub = ContentPublication::create([
             'ai_content_id' => $this->content->id,
             'target'        => 'wp',
             'status'        => 'queued',
-            'scheduled_at'  => $iso ? \Illuminate\Support\Carbon::parse($this->publishAt) : null,
+            'scheduled_at'  => $iso ? Carbon::parse($this->publishAt) : null,
             'message'       => null,
             'payload'       => [
                 'site_id' => $this->publishSiteId,
@@ -103,7 +103,7 @@ class Detail extends Component
             'socialScheduleAt' => 'nullable|date',
         ]);
 
-        $scheduledAt = $this->socialScheduleAt ? \Illuminate\Support\Carbon::parse($this->socialScheduleAt) : null;
+        $scheduledAt = $this->socialScheduleAt ? Carbon::parse($this->socialScheduleAt) : null;
 
         $pub = ContentPublication::create([
             'ai_content_id' => $this->content->id,
@@ -111,7 +111,9 @@ class Detail extends Component
             'status'        => 'queued',
             'scheduled_at'  => $scheduledAt,
             'message'       => null,
-            'payload'       => null,
+            'payload'       => [
+                'text' => $this->extractPlainText((string) ($this->content->body_md ?? '')),
+            ],
         ]);
 
         if (!$scheduledAt || $scheduledAt->isPast()) {
@@ -164,30 +166,28 @@ class Detail extends Component
     {
         $this->content->refresh();
 
-        $md = $this->content->body_md ?? '';
-        $normalized = $this->normalizeMd($md);
-        $html = $normalized !== '' ? Str::of($normalized)->markdown() : '';
+        $md = $this->normalizeMd((string) ($this->content->body_md ?? ''));
+        $html = $md !== '' ? Str::of($md)->markdown() : '';
 
         return view('livewire.a-i.detail', [
             'sites' => $this->sites,
-            'md'    => $normalized,
+            'md'    => $md,
             'html'  => $html,
         ]);
     }
 
-    /**
-     * Tar bort oavsiktlig indentering och inledande/avslutande kodstaket som gör att Markdown blir kodblock.
-     */
+    private function extractPlainText(string $md): string
+    {
+        $txt = preg_replace('/[`*_>#-]+/', '', $md ?? '');
+        $txt = strip_tags((string) $txt);
+        return trim((string) $txt);
+    }
+
     private function normalizeMd(string $md): string
     {
-        if ($md === '') {
-            return $md;
-        }
-
-        // Normalisera radbrytningar
+        if ($md === '') return $md;
         $md = str_replace(["\r\n", "\r"], "\n", $md);
 
-        // Trimma bort inledande och avslutande "```" om hela texten råkat hamna i kodstaket
         $trimmed = trim($md);
         if (str_starts_with($trimmed, '```') && str_ends_with($trimmed, '```')) {
             $trimmed = preg_replace('/^```[a-zA-Z0-9_-]*\n?/','', $trimmed);
@@ -195,13 +195,10 @@ class Detail extends Component
             $md = $trimmed;
         }
 
-        // Ta bort gemensam minsta indentering (dedent) för att undvika att allt blir code block
         $lines = explode("\n", $md);
         $minIndent = null;
         foreach ($lines as $line) {
-            if (trim($line) === '') {
-                continue;
-            }
+            if (trim($line) === '') continue;
             preg_match('/^( +|\t+)/', $line, $m);
             if (!empty($m[0])) {
                 $len = strlen(str_replace("\t", '    ', $m[0]));
@@ -213,7 +210,6 @@ class Detail extends Component
         }
         if ($minIndent && $minIndent > 0) {
             $md = implode("\n", array_map(function ($line) use ($minIndent) {
-                // ersätt tabs med 4 spaces för säker dedent
                 $line = str_replace("\t", '    ', $line);
                 return preg_replace('/^ {0,' . $minIndent . '}/', '', $line);
             }, $lines));

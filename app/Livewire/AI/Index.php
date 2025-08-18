@@ -21,7 +21,8 @@ class Index extends Component
     {
         $customer = $current->get();
 
-        $items = AiContent::where('customer_id', $customer?->id)
+        $items = AiContent::with('publications')
+            ->where('customer_id', $customer?->id)
             ->latest()
             ->paginate(12);
 

@@ -48,6 +48,27 @@
                     @enderror
                 </div>
 
+                <!-- Title -->
+                <div class="p-6 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-200/50">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707L16.414 6.5a1 1 0 00-.707-.293H7a2 2 0 00-2 2V19a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        <label class="text-lg font-semibold text-gray-900">Titel/Ämne</label>
+                    </div>
+                    <input type="text" wire:model.defer="title" class="w-full px-4 py-3 bg-white border border-emerald-300 rounded-xl text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200" placeholder="Ange ett ämne eller titel...">
+                    @error('title')
+                    <p class="mt-2 text-sm text-red-600 flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        {{ $message }}
+                    </p>
+                    @enderror
+                </div>
+
                 <!-- Kanal/Format + Längd -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="p-6 bg-gradient-to-r from-sky-50 to-blue-50 rounded-xl border border-sky-200/50">
@@ -59,22 +80,44 @@
                             </div>
                             <label class="text-lg font-semibold text-gray-900">Kanal / Format</label>
                         </div>
-                        <select wire:model="channel" class="w-full px-4 py-3 bg-white border border-sky-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-all duration-200">
-                            <option value="facebook">Socialt inlägg – Facebook</option>
-                            <option value="instagram">Socialt inlägg – Instagram</option>
-                            <option value="linkedin">Socialt inlägg – LinkedIn</option>
-                            <option value="blog">Blogginlägg</option>
-                            <option value="campaign">Kampanjidéer</option>
-                            <option value="auto">Auto (mallens standard)</option>
-                        </select>
-                        @error('channel')
-                        <p class="mt-2 text-sm text-red-600 flex items-center">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            {{ $message }}
-                        </p>
-                        @enderror
+
+                        @php
+                            $autoChannel = null;
+                            if (!empty($selectedTemplate?->slug)) {
+                                $map = [
+                                    'social-facebook' => 'facebook',
+                                    'social-instagram' => 'instagram',
+                                    'social-linkedin' => 'linkedin',
+                                    'blog' => 'blog',
+                                    'campaign' => 'campaign',
+                                ];
+                                $autoChannel = $map[$selectedTemplate->slug] ?? null;
+                            }
+                        @endphp
+
+                        @if($autoChannel)
+                            <div class="inline-flex items-center px-3 py-1 bg-white border border-sky-300 rounded-lg text-sm text-sky-800">
+                                Automatisk kanal från mall: <span class="ml-1 font-medium capitalize">{{ $autoChannel }}</span>
+                            </div>
+                            <p class="mt-2 text-xs text-sky-700">Byt mall om du vill ändra kanal.</p>
+                        @else
+                            <select wire:model="channel" class="w-full px-4 py-3 bg-white border border-sky-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-all duration-200">
+                                <option value="auto">Välj kanal...</option>
+                                <option value="facebook">Socialt inlägg – Facebook</option>
+                                <option value="instagram">Socialt inlägg – Instagram</option>
+                                <option value="linkedin">Socialt inlägg – LinkedIn</option>
+                                <option value="blog">Blogginlägg</option>
+                                <option value="campaign">Kampanjidéer</option>
+                            </select>
+                            @error('channel')
+                            <p class="mt-2 text-sm text-red-600 flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                {{ $message }}
+                            </p>
+                            @enderror
+                        @endif
                     </div>
 
                     <div class="p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200/50">
@@ -89,65 +132,6 @@
                         <select wire:model="tone" class="w-full px-4 py-3 bg-white border border-purple-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
                             <option value="short">Kort</option>
                             <option value="long">Lång</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Titel/Ämne + Antal varianter -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="p-6 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-200/50">
-                        <div class="flex items-center space-x-3 mb-4">
-                            <div class="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
-                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707L16.414 6.5a1 1 0 00-.707-.293H7a2 2 0 00-2 2V19a2 2 0 002 2z"/>
-                                </svg>
-                            </div>
-                            <label class="text-lg font-semibold text-gray-900">Titel/Ämne</label>
-                        </div>
-                        <input type="text" wire:model.defer="title" class="w-full px-4 py-3 bg-white border border-emerald-300 rounded-xl text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200" placeholder="Ange ett ämne eller titel...">
-                        @error('title')
-                        <p class="mt-2 text-sm text-red-600 flex items-center">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            {{ $message }}
-                        </p>
-                        @enderror
-                    </div>
-
-                    <div class="p-6 bg-gradient-to-r from-fuchsia-50 to-rose-50 rounded-xl border border-fuchsia-200/50">
-                        <div class="flex items-center space-x-3 mb-4">
-                            <div class="w-8 h-8 bg-fuchsia-500 rounded-lg flex items-center justify-center">
-                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                                </svg>
-                            </div>
-                            <label class="text-lg font-semibold text-gray-900">Antal varianter</label>
-                        </div>
-                        <input type="number" min="1" max="5" wire:model="variants" class="w-full px-4 py-3 bg-white border border-fuchsia-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 transition" />
-                        @error('variants')
-                        <p class="mt-2 text-sm text-red-600 flex items-center">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            {{ $message }}
-                        </p>
-                        @enderror
-                    </div>
-                </div>
-
-                <div class="p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200/50">
-                        <div class="flex items-center space-x-3 mb-4">
-                            <div class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
-                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/>
-                                </svg>
-                            </div>
-                            <label class="text-lg font-semibold text-gray-900">Längd</label>
-                        </div>
-                        <select wire:model="tone" class="w-full px-4 py-3 bg-white border border-purple-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
-                            <option value="short">Kort (GPT-4o-mini)</option>
-                            <option value="long">Lång (Claude 3.5 Sonnet)</option>
                         </select>
                     </div>
                 </div>
@@ -229,57 +213,57 @@
 
                 <!-- Image generation -->
                 @if(config('features.image_generation'))
-                <div class="p-6 bg-gradient-to-r from-slate-50 to-indigo-50 rounded-xl border border-indigo-200/50">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7l6 6-6 6M21 7l-6 6 6 6"/>
-                                </svg>
+                    <div class="p-6 bg-gradient-to-r from-slate-50 to-indigo-50 rounded-xl border border-indigo-200/50">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7l6 6-6 6M21 7l-6 6 6 6"/>
+                                    </svg>
+                                </div>
+                                <label class="text-lg font-semibold text-gray-900">Bildgenerering (DALL·E)</label>
                             </div>
-                            <label class="text-lg font-semibold text-gray-900">Bildgenerering (DALL·E)</label>
-                        </div>
-                        <label class="inline-flex items-center cursor-pointer select-none">
-                            <input type="checkbox" wire:model="genImage" class="sr-only peer">
-                            <span class="px-4 py-2 rounded-lg border border-indigo-300 peer-checked:bg-indigo-600 peer-checked:text-white text-indigo-700 bg-white transition">
+                            <label class="inline-flex items-center cursor-pointer select-none">
+                                <input type="checkbox" wire:model="genImage" class="sr-only peer">
+                                <span class="px-4 py-2 rounded-lg border border-indigo-300 peer-checked:bg-indigo-600 peer-checked:text-white text-indigo-700 bg-white transition">
                                 Generera bild
                             </span>
-                        </label>
-                    </div>
+                            </label>
+                        </div>
 
-                    <div class="text-sm text-indigo-800 mb-4">
-                        Om aktiverad skapas en bild med DALL·E när inlägget publiceras och laddas upp direkt till vald kanal/WordPress. Inga bildfiler lagras hos oss.
-                    </div>
+                        <div class="text-sm text-indigo-800 mb-4">
+                            Om aktiverad skapas en bild med DALL·E när inlägget publiceras och laddas upp direkt till vald kanal/WordPress. Inga bildfiler lagras hos oss.
+                        </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4" x-data>
-                        <div class="lg:col-span-1">
-                            <label class="block text-sm font-medium text-gray-900 mb-2">Prompt‑källa</label>
-                            <div class="space-y-2">
-                                <label class="flex items-center space-x-2">
-                                    <input type="radio" wire:model="imagePromptMode" value="auto" class="text-indigo-600 focus:ring-indigo-500">
-                                    <span class="text-gray-800">Anpassa efter inlägget (rekommenderas)</span>
-                                </label>
-                                <label class="flex items-center space-x-2">
-                                    <input type="radio" wire:model="imagePromptMode" value="custom" class="text-indigo-600 focus:ring-indigo-500">
-                                    <span class="text-gray-800">Egen bildbeskrivning</span>
-                                </label>
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4" x-data>
+                            <div class="lg:col-span-1">
+                                <label class="block text-sm font-medium text-gray-900 mb-2">Prompt‑källa</label>
+                                <div class="space-y-2">
+                                    <label class="flex items-center space-x-2">
+                                        <input type="radio" wire:model="imagePromptMode" value="auto" class="text-indigo-600 focus:ring-indigo-500">
+                                        <span class="text-gray-800">Anpassa efter inlägget (rekommenderas)</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2">
+                                        <input type="radio" wire:model="imagePromptMode" value="custom" class="text-indigo-600 focus:ring-indigo-500">
+                                        <span class="text-gray-800">Egen bildbeskrivning</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="lg:col-span-2" x-show="$wire.imagePromptMode === 'custom'">
+                                <label class="block text-sm font-medium text-gray-900 mb-2">Bildbeskrivning (kort prompt)</label>
+                                <textarea wire:model.defer="imagePrompt" rows="3" class="w-full px-4 py-3 bg-white border border-indigo-300 rounded-xl text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" placeholder="Beskriv bilden kort: motiv, stil, färgton, kameravinkel ..."></textarea>
+                                @error('imagePrompt')
+                                <p class="mt-2 text-sm text-red-600 flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    {{ $message }}
+                                </p>
+                                @enderror
                             </div>
                         </div>
-
-                        <div class="lg:col-span-2" x-show="$wire.imagePromptMode === 'custom'">
-                            <label class="block text-sm font-medium text-gray-900 mb-2">Bildbeskrivning (kort prompt)</label>
-                            <textarea wire:model.defer="imagePrompt" rows="3" class="w-full px-4 py-3 bg-white border border-indigo-300 rounded-xl text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" placeholder="Beskriv bilden kort: motiv, stil, färgton, kameravinkel ..."></textarea>
-                            @error('imagePrompt')
-                            <p class="mt-2 text-sm text-red-600 flex items-center">
-                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                                {{ $message }}
-                            </p>
-                            @enderror
-                        </div>
                     </div>
-                </div>
                 @endif
 
                 <!-- Action buttons -->

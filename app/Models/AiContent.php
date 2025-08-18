@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class AiContent extends Model
 {
@@ -19,4 +20,9 @@ class AiContent extends Model
     public function template(): BelongsTo { return $this->belongsTo(ContentTemplate::class); }
     public function customer(): BelongsTo { return $this->belongsTo(Customer::class); }
     public function site(): BelongsTo { return $this->belongsTo(Site::class); }
+
+    public function publications(): HasMany
+    {
+        return $this->hasMany(ContentPublication::class, 'ai_content_id');
+    }
 }
