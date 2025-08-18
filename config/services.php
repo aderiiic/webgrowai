@@ -68,6 +68,10 @@ return [
             'pages_read_engagement',
             'pages_manage_posts',
             'pages_manage_metadata',
+            'pages_read_user_content',
+            'read_insights',
+            'email',
+            'business_management',
         ],
     ],
 
