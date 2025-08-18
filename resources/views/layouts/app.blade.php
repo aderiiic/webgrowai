@@ -37,7 +37,7 @@
         </div>
 
         <!-- Navigation -->
-        <nav class="p-4 space-y-6 max-h-[calc(100vh-140px)] overflow-y-auto">
+        <nav class="p-4 space-y-6 max-h-[calc(100vh-140px)]">
             <!-- Översikt -->
             <div>
                 <div class="text-xs uppercase font-semibold text-gray-500 px-3 mb-3 tracking-wider">Översikt</div>

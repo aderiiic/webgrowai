@@ -228,10 +228,14 @@
             @endforelse
         </div>
 
-        <!-- Pagination -->
         @if($items->hasPages())
-            <div class="flex justify-center">
-                {{ $items->links() }}
+            <div class="space-y-2">
+                <div class="flex justify-center">
+                    {{ $items->links('pagination::simple-tailwind') }}
+                </div>
+                <p class="text-center text-xs text-gray-500">
+                    Visar {{ $items->firstItem() }}–{{ $items->lastItem() }} av {{ $items->total() }} resultat
+                </p>
             </div>
         @endif
     </div>

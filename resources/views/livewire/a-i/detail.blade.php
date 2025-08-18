@@ -34,9 +34,58 @@
             </div>
         </div>
 
+        @php
+            // Summera status per target för nuvarande innehåll
+            $pubs = $content->relationLoaded('publications') ? $content->publications : ($content->publications ?? collect());
+            $byTarget = [
+                'wp' => $pubs->where('target','wp'),
+                'facebook' => $pubs->where('target','facebook'),
+                'instagram' => $pubs->where('target','instagram'),
+                'linkedin' => $pubs->where('target','linkedin'),
+            ];
+            $state = function($col) {
+                if ($col->where('status','published')->count() > 0) return 'ok';
+                if ($col->whereIn('status',['queued','processing'])->count() > 0) return 'pending';
+                if ($col->where('status','failed')->count() > 0) return 'failed';
+                return 'none';
+            };
+            $statusToColor = fn($s) => match($s) {
+                'ok' => 'text-emerald-600',
+                'pending' => 'text-amber-500',
+                'failed' => 'text-red-600',
+                default => 'text-gray-400',
+            };
+            $statusToLabel = fn($s) => match($s) {
+                'ok' => 'Publicerad',
+                'pending' => 'Köad/Pågår',
+                'failed' => 'Misslyckad',
+                default => 'Inte publicerad',
+            };
+        @endphp
+
+        <div class="mt-2 flex items-center gap-4">
+            @foreach(['wp'=>'WordPress','facebook'=>'Facebook','instagram'=>'Instagram','linkedin'=>'LinkedIn'] as $t=>$label)
+                @php $st = $state($byTarget[$t]); @endphp
+                <div class="flex items-center gap-1" title="{{ $label }} – {{ $statusToLabel($st) }}">
+                    <svg class="w-4 h-4 {{ $statusToColor($st) }}" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        @if($t === 'wp')
+                            <path d="M10 1.25A8.75 8.75 0 1018.75 10 8.76 8.76 0 0010 1.25zm0 1.5A7.25 7.25 0 1117.25 10 7.26 7.26 0 0110 2.75zM6.1 7.5l2.6 7.2.9-2.7-1.7-4.5H6.1zm4.2 0l2.6 7.2c1.5-.8 2.4-2.5 2.4-4.4 0-1.1-.4-2-.8-2.8h-1.9l-1.4 4.3-1-4.3H10.3z"/>
+                        @elseif($t === 'facebook')
+                            <path d="M11 2h3a1 1 0 011 1v3h-2a1 1 0 00-1 1v2h3l-.5 3H12v7H9v-7H7V9h2V7a3 3 0 013-3z"/>
+                        @elseif($t === 'instagram')
+                            <path d="M7 2h6a5 5 0 015 5v6a5 5 0 01-5 5H7a5 5 0 01-5-5V7a5 5 0 015-5zm0 2a3 3 0 00-3 3v6a3 3 0 003 3h6a3 3 0 003-3V7a3 3 0 00-3-3H7zm3 2.5A3.5 3.5 0 1110 13a3.5 3.5 0 010-7zM15 6.5a1 1 0 110 2 1 1 0 010-2z"/>
+                        @else
+                            <path d="M4 3h12a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1zm2 4h2v6H6V7zm4 0h2.2l.1 3.2h.1c.5-1.6 1.6-3.3 3.5-3.3 1.8 0 2.6 1.1 2.6 3.5V17h-2.2v-5.5c0-1.2-.4-2-1.5-2-1.2 0-1.8 1-2.1 2v5.5H10V7z"/>
+                        @endif
+                    </svg>
+                    <span class="text-xs text-gray-600">{{ $label }}</span>
+                </div>
+            @endforeach
+        </div>
+
         <!-- Success/Error notifications -->
         @if(session('success'))
-            <div class="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl">
+            <div id="flash-success" class="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl">
                 <div class="flex items-center space-x-3">
                     <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -250,3 +299,36 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+    <script>
+        (function() {
+            function scrollToFlash() {
+                const el = document.getElementById('flash-success');
+                if (!el) return;
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                el.classList.add('ring-2','ring-emerald-300');
+                setTimeout(() => el.classList.remove('ring-2','ring-emerald-300'), 1200);
+            }
+
+            // 1) Fungerar vid full redirect
+            document.addEventListener('DOMContentLoaded', scrollToFlash);
+
+            // 2) Fungerar vid Livewire-uppdateringar utan reload (observerar att flash-elementet tillkommer)
+            const observer = new MutationObserver(() => {
+                if (document.getElementById('flash-success')) {
+                    scrollToFlash();
+                }
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+
+            // 3) Extra stöd: om du i komponenten dispatchar ett event kan vi också lyssna på det
+            // Livewire v3:
+            // window.addEventListener('livewire:initialized', () => {
+            //     Livewire.on('flash-success', scrollToFlash);
+            // });
+            // Livewire v2:
+            // window.addEventListener('ai:flash', scrollToFlash);
+        })();
+    </script>
+@endpush

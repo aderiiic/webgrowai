@@ -199,10 +199,14 @@
             @endforelse
         </div>
 
-        <!-- Pagination -->
         @if($pubs->hasPages())
-            <div class="flex justify-center">
-                {{ $pubs->links() }}
+            <div class="space-y-2">
+                <div class="flex justify-center">
+                    {{ $pubs->links('pagination::simple-tailwind') }}
+                </div>
+                <p class="text-center text-xs text-gray-500">
+                    Visar {{ $pubs->firstItem() }}–{{ $pubs->lastItem() }} av {{ $pubs->total() }} resultat
+                </p>
             </div>
         @endif
     </div>
