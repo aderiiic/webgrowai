@@ -11,7 +11,7 @@
 <body class="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 text-gray-900 antialiased">
 <div class="min-h-screen flex">
     <!-- Sidebar -->
-    <aside class="hidden lg:block w-72 bg-white/80 backdrop-blur-lg border-r border-gray-200/50 shadow-xl">
+    <aside class="hidden lg:block w-72 bg-white/80 backdrop-blur-lg border-r border-gray-200/50 shadow-xl flex-shrink-0 flex flex-col">
         <!-- Header -->
         <div class="px-6 py-6 border-b border-gray-100">
             <a href="{{ route('dashboard') }}" class="flex items-center space-x-3 group">
@@ -37,7 +37,7 @@
         </div>
 
         <!-- Navigation -->
-        <nav class="p-4 space-y-6 max-h-[calc(100vh-140px)]">
+        <nav class="p-4 space-y-6 overflow-y-auto flex-1">
             <!-- Översikt -->
             <div>
                 <div class="text-xs uppercase font-semibold text-gray-500 px-3 mb-3 tracking-wider">Översikt</div>
