@@ -48,7 +48,52 @@
                     @enderror
                 </div>
 
-                <!-- Basic content settings -->
+                <!-- Kanal/Format + Längd -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="p-6 bg-gradient-to-r from-sky-50 to-blue-50 rounded-xl border border-sky-200/50">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-8 h-8 bg-sky-500 rounded-lg flex items-center justify-center">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h18M3 12h18M3 19h18"/>
+                                </svg>
+                            </div>
+                            <label class="text-lg font-semibold text-gray-900">Kanal / Format</label>
+                        </div>
+                        <select wire:model="channel" class="w-full px-4 py-3 bg-white border border-sky-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-all duration-200">
+                            <option value="facebook">Socialt inlägg – Facebook</option>
+                            <option value="instagram">Socialt inlägg – Instagram</option>
+                            <option value="linkedin">Socialt inlägg – LinkedIn</option>
+                            <option value="blog">Blogginlägg</option>
+                            <option value="campaign">Kampanjidéer</option>
+                            <option value="auto">Auto (mallens standard)</option>
+                        </select>
+                        @error('channel')
+                        <p class="mt-2 text-sm text-red-600 flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            {{ $message }}
+                        </p>
+                        @enderror
+                    </div>
+
+                    <div class="p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200/50">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/>
+                                </svg>
+                            </div>
+                            <label class="text-lg font-semibold text-gray-900">Längd</label>
+                        </div>
+                        <select wire:model="tone" class="w-full px-4 py-3 bg-white border border-purple-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
+                            <option value="short">Kort</option>
+                            <option value="long">Lång</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Titel/Ämne + Antal varianter -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="p-6 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-200/50">
                         <div class="flex items-center space-x-3 mb-4">
@@ -70,7 +115,28 @@
                         @enderror
                     </div>
 
-                    <div class="p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200/50">
+                    <div class="p-6 bg-gradient-to-r from-fuchsia-50 to-rose-50 rounded-xl border border-fuchsia-200/50">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-8 h-8 bg-fuchsia-500 rounded-lg flex items-center justify-center">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                </svg>
+                            </div>
+                            <label class="text-lg font-semibold text-gray-900">Antal varianter</label>
+                        </div>
+                        <input type="number" min="1" max="5" wire:model="variants" class="w-full px-4 py-3 bg-white border border-fuchsia-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 transition" />
+                        @error('variants')
+                        <p class="mt-2 text-sm text-red-600 flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            {{ $message }}
+                        </p>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200/50">
                         <div class="flex items-center space-x-3 mb-4">
                             <div class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
                                 <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
