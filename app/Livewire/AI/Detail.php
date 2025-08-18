@@ -40,6 +40,11 @@ class Detail extends Component
 
         $this->sites = $current->get()?->sites()->orderBy('name')->get() ?? collect();
         $this->publishSiteId = $this->content->site_id ?: ($current->get()?->sites()->orderBy('id')->value('id'));
+
+        // Viktigt: se till att socialTarget har ett initialt värde
+        if (empty($this->socialTarget)) {
+            $this->socialTarget = 'facebook';
+        }
     }
 
     public function publish(): void

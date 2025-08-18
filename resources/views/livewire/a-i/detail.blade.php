@@ -242,12 +242,19 @@
                     <select wire:model="socialTarget" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200">
                         <option value="facebook">Facebook</option>
                         <option value="instagram">Instagram</option>
+                        {{-- Lägg ev. till LinkedIn här om du vill kunna välja det i samma select --}}
                     </select>
+                    @error('socialTarget')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Publiceringstid (valfritt)</label>
                     <input type="datetime-local" wire:model="socialScheduleAt" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200">
+                    @error('socialScheduleAt')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
             </div>
 
