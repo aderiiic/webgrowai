@@ -170,6 +170,18 @@
                                 </button>
                             @endif
 
+                            @if($p->status === 'queued')
+                                <button
+                                    onclick="if(!confirm('Avbryt denna publicering?')) return false;"
+                                    wire:click="cancel({{ $p->id }})"
+                                    class="inline-flex items-center px-3 py-2 bg-gray-100 text-gray-800 font-semibold rounded-xl hover:bg-gray-200 focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200 shadow-sm text-sm">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                    Avbryt
+                                </button>
+                            @endif
+
                             @if($p->payload)
                                 <details class="relative">
                                     <summary class="cursor-pointer inline-flex items-center px-3 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 text-sm">
