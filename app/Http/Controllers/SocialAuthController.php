@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SocialIntegration;
 use App\Support\CurrentCustomer;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -23,6 +24,8 @@ class SocialAuthController extends Controller
             'response_type' => 'code',
             'scope'         => implode(',', $scopes),
             'state'         => $state,
+            // Om användaren tidigare nekat någon permission: be Facebook att fråga igen
+            'auth_type'     => 'rerequest',
         ];
 
         $url = 'https://www.facebook.com/v19.0/dialog/oauth?' . http_build_query($params);
@@ -37,75 +40,125 @@ class SocialAuthController extends Controller
         $customer = $current->get();
         Log::info('[FB] Callback', ['customer' => $customer]);
         abort_unless($customer, 403);
-        Log::info('[FB] Callback', ['customer' => $customer]);
 
         $code = $req->query('code');
         abort_unless($code, 400, 'Saknar code');
 
-        Log::info($code . ' Saknar code');
+        Log::info('[FB] Auth code mottagen');
 
         $client = new Client(['timeout' => 30]);
 
-        Log::info('Working');
-
-        // 1) Byt code -> User access token
-        $tokenRes = $client->get('https://graph.facebook.com/v19.0/oauth/access_token', [
-            'query' => [
-                'client_id'     => config('services.facebook.client_id'),
-                'client_secret' => config('services.facebook.client_secret'),
-                'redirect_uri'  => config('services.facebook.redirect'),
-                'code'          => $code,
-            ],
-        ]);
-
-        Log::info('Token res', ['tokenRes' => $tokenRes]);
-        $token = json_decode((string) $tokenRes->getBody(), true);
-        $userAccessToken = $token['access_token'] ?? null;
-        abort_unless($userAccessToken, 400, 'Kunde inte hämta user access token');
-
-        Log::info('User access token', ['userAccessToken' => $userAccessToken]);
-
-        // 2) Hämta sidor för användaren
-        $pagesRes = $client->get('https://graph.facebook.com/v19.0/me/accounts', [
-            'query' => ['access_token' => $userAccessToken, 'fields' => 'id,name,access_token'],
-        ]);
-        $pages = json_decode((string) $pagesRes->getBody(), true);
-        $firstPage = $pages['data'][0] ?? null;
-
-        Log::info('First page', ['firstPage' => $firstPage]);
-        abort_unless($firstPage, 400, 'Inga sidor hittades på kontot');
-
-        $pageId = $firstPage['id'];
-        $pageAccessToken = $firstPage['access_token'];
-
-        Log::info('Page id', ['pageId' => $pageId]);
-
-        // 3) Spara facebook-integration
-        SocialIntegration::updateOrCreate(
-            ['customer_id' => $customer->id, 'provider' => 'facebook'],
-            ['page_id' => $pageId, 'access_token' => $pageAccessToken, 'status' => 'active']
-        );
-
-        // 4) Försök även få IG Business User kopplad till sidan
         try {
-            $igRes = $client->get("https://graph.facebook.com/v19.0/{$pageId}", [
-                'query' => ['access_token' => $pageAccessToken, 'fields' => 'instagram_business_account'],
+            // 1) Byt code -> User access token
+            $tokenRes = $client->get('https://graph.facebook.com/v19.0/oauth/access_token', [
+                'query' => [
+                    'client_id'     => config('services.facebook.client_id'),
+                    'client_secret' => config('services.facebook.client_secret'),
+                    'redirect_uri'  => config('services.facebook.redirect'),
+                    'code'          => $code,
+                ],
             ]);
-            $igData = json_decode((string) $igRes->getBody(), true);
-            $igUserId = $igData['instagram_business_account']['id'] ?? null;
 
-            if ($igUserId) {
-                SocialIntegration::updateOrCreate(
-                    ['customer_id' => $customer->id, 'provider' => 'instagram'],
-                    ['ig_user_id' => $igUserId, 'access_token' => $pageAccessToken, 'status' => 'active'] // FB Page token funkar för IG Graph
-                );
+            $tokenBody = (string) $tokenRes->getBody();
+            Log::info('[FB] Token res body', ['body' => $tokenBody]);
+
+            $token = json_decode($tokenBody, true);
+            $userAccessToken = $token['access_token'] ?? null;
+            abort_unless($userAccessToken, 400, 'Kunde inte hämta user access token');
+
+            Log::info('[FB] User access token erhållet');
+
+            // (Valfritt) Byt till long-lived user token för robustare flöde
+            try {
+                $llRes = $client->get('https://graph.facebook.com/v19.0/oauth/access_token', [
+                    'query' => [
+                        'grant_type'        => 'fb_exchange_token',
+                        'client_id'         => config('services.facebook.client_id'),
+                        'client_secret'     => config('services.facebook.client_secret'),
+                        'fb_exchange_token' => $userAccessToken,
+                    ],
+                ]);
+                $llBody = json_decode((string) $llRes->getBody(), true);
+                if (!empty($llBody['access_token'])) {
+                    $userAccessToken = $llBody['access_token'];
+                    Log::info('[FB] Long-lived user token erhållet');
+                }
+            } catch (\Throwable $e) {
+                Log::info('[FB] Kunde inte byta till long-lived token', ['error' => $e->getMessage()]);
             }
-        } catch (\Throwable $e) {
-            Log::info('[IG Link] Ingen IG business eller fel', ['error' => $e->getMessage()]);
-        }
 
-        return redirect()->route('settings.social')->with('success', 'Facebook ansluten. (Och Instagram om kopplad till sidan)');
+            // 2) Hämta sidor för användaren
+            $pagesRes = $client->get('https://graph.facebook.com/v19.0/me/accounts', [
+                'query' => [
+                    'access_token' => $userAccessToken,
+                    'fields'       => 'id,name,access_token',
+                    'limit'        => 50,
+                ],
+            ]);
+            $pagesBody = (string) $pagesRes->getBody();
+            Log::info('[FB] /me/accounts body', ['body' => $pagesBody]);
+
+            $pages = json_decode($pagesBody, true);
+            $firstPage = $pages['data'][0] ?? null;
+
+            if (!$firstPage) {
+                // Visa vänligt fel i UI i stället för 400 så användaren vet vad som saknas
+                return redirect()
+                    ->route('settings.social')
+                    ->with('error', 'Inga sidor hittades. Säkerställ att du är admin/redaktör för en Facebook-sida och att du godkänner behörigheterna: pages_show_list, pages_manage_metadata, pages_read_engagement. Om appen inte är i Live-läge måste ditt konto vara Admin/Developer/Tester i appen.');
+            }
+
+            $pageId = $firstPage['id'] ?? null;
+            $pageAccessToken = $firstPage['access_token'] ?? null;
+
+            Log::info('[FB] Page vald', ['pageId' => $pageId, 'hasToken' => (bool)$pageAccessToken]);
+
+            if (!$pageId || !$pageAccessToken) {
+                return redirect()
+                    ->route('settings.social')
+                    ->with('error', 'Sidan hittades men inget giltigt Page Access Token returnerades. Säkerställ att permissions inkluderar pages_manage_metadata och prova igen.');
+            }
+
+            // 3) Spara facebook-integration
+            SocialIntegration::updateOrCreate(
+                ['customer_id' => $customer->id, 'provider' => 'facebook'],
+                ['page_id' => $pageId, 'access_token' => $pageAccessToken, 'status' => 'active']
+            );
+
+            // 4) Försök även få IG Business User kopplad till sidan
+            try {
+                $igRes = $client->get("https://graph.facebook.com/v19.0/{$pageId}", [
+                    'query' => ['access_token' => $pageAccessToken, 'fields' => 'instagram_business_account'],
+                ]);
+                $igData = json_decode((string) $igRes->getBody(), true);
+                $igUserId = $igData['instagram_business_account']['id'] ?? null;
+
+                if ($igUserId) {
+                    SocialIntegration::updateOrCreate(
+                        ['customer_id' => $customer->id, 'provider' => 'instagram'],
+                        ['ig_user_id' => $igUserId, 'access_token' => $pageAccessToken, 'status' => 'active']
+                    );
+                }
+            } catch (\Throwable $e) {
+                Log::info('[IG Link] Ingen IG business eller fel', ['error' => $e->getMessage()]);
+            }
+
+            return redirect()->route('settings.social')->with('success', 'Facebook ansluten. (Och Instagram om kopplad till sidan)');
+        } catch (ClientException $e) {
+            $resp = $e->getResponse();
+            $body = $resp ? (string) $resp->getBody() : null;
+            Log::error('[FB] ClientException', [
+                'status' => $resp?->getStatusCode(),
+                'body'   => $body,
+                'msg'    => $e->getMessage(),
+            ]);
+            return redirect()->route('settings.social')->with('error', 'Facebook-inloggningen misslyckades: ' . ($body ?: $e->getMessage()));
+        } catch (\Throwable $e) {
+            Log::error('[FB] Okänt fel', ['error' => $e->getMessage()]);
+            return redirect()->route('settings.social')->with('error', 'Facebook-inloggningen misslyckades: ' . $e->getMessage());
+        }
     }
+
 
     // Instagram via direkt FB-login-flöde: vi återanvänder facebookRedirect/callback.
     // Alternativ callback om du vill ha separat knapp/flow:
