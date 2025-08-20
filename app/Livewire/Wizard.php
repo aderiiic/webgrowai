@@ -19,12 +19,13 @@ class Wizard extends Component
     public string $site_name = '';
     public string $site_url = '';
 
-    // Nytt: vald plattform i onboarding
     public string $provider = 'wordpress'; // wordpress|shopify|custom
 
-    // Statusflaggor
-    public bool $integrationConnected = false; // generisk koppling
-    public bool $wpConnected = false;          // legacy status, används ej för låsning längre
+    // NYTT: Shopify butiksvärde i onboarding
+    public string $shopify_shop = ''; // ex. my-shop.myshopify.com
+
+    public bool $integrationConnected = false;
+    public bool $wpConnected = false;
     public bool $leadTrackerReady = false;
     public bool $socialConnected = false;
     public bool $mailchimpConnected = false;
@@ -32,7 +33,6 @@ class Wizard extends Component
 
     public ?int $primarySiteId = null;
 
-    // Kvotstatus
     public bool $sitesQuotaExceeded = false;
     public int $sitesUsed = 0;
     public int $sitesLimit = 1;
@@ -46,7 +46,6 @@ class Wizard extends Component
 
         $this->refreshStatus($current);
 
-        // Om användaren redan har en sajt men hamnar på lägre steg, knuffa fram till integreringssteget
         if ($this->primarySiteId && $this->step < 2) {
             $this->step = 2;
             $this->persistStep();
@@ -64,12 +63,10 @@ class Wizard extends Component
 
         $this->primarySiteId = $customer?->sites()->value('id');
 
-        // Generisk integrationsstatus (oavsett plattform)
         $this->integrationConnected = $this->primarySiteId
             ? Integration::where('site_id', $this->primarySiteId)->exists()
             : false;
 
-        // Legacy WP-koll (visas informativt, används ej som spärr)
         $this->wpConnected = $this->primarySiteId
             ? WpIntegration::where('site_id', $this->primarySiteId)->exists()
             : false;
@@ -87,16 +84,11 @@ class Wizard extends Component
         $data = $this->validate([
             'site_name' => ['required', 'string', 'min:2', 'max:120'],
             'site_url'  => ['required', 'url', 'max:255'],
-        ], [
-            'site_name.required' => 'Ange ett namn för sajten.',
-            'site_url.required'  => 'Ange en giltig URL.',
-            'site_url.url'       => 'URL måste vara giltig (t.ex. https://example.com).',
         ]);
 
         $normalizedUrl = rtrim($data['site_url'], '/');
         $customer = $current->get();
 
-        /** @var Site $site */
         $site = $customer->sites()->create([
             'name'       => $data['site_name'],
             'url'        => $normalizedUrl,
@@ -105,7 +97,6 @@ class Wizard extends Component
 
         $this->primarySiteId = $site->id;
 
-        // Vidare till plattformsval
         $this->step = 2;
         $this->persistStep();
 
@@ -113,14 +104,8 @@ class Wizard extends Component
         $this->refreshStatus();
     }
 
-    public function markLeadTrackerReady(): void
-    {
-        $this->leadTrackerReady = true;
-    }
-
     public function next(): void
     {
-        // Låsning: kräver kopplad integration före nästa efter steg 3
         if ($this->step === 3 && !$this->integrationConnected) {
             $this->addError('integrationConnected', 'Koppla din sajt (WordPress/Shopify/Custom) för att fortsätta.');
             return;
@@ -167,11 +152,35 @@ class Wizard extends Component
         }
     }
 
-    // Öppna kopplingssidan (plattformsväljaren finns där)
     public function goConnect()
     {
         if (!$this->primarySiteId) return;
         $this->redirectRoute('sites.integrations.connect', ['site' => $this->primarySiteId]);
+    }
+
+    // NYTT: starta Shopify-OAuth direkt från onboarding steg 3
+    public function startShopifyConnect(): void
+    {
+        if (!$this->primarySiteId) return;
+
+        $data = $this->validate([
+            'shopify_shop' => ['required', 'string', 'regex:/^[a-zA-Z0-9][a-zA-Z0-9-]*\.myshopify\.com$/'],
+        ], [
+            'shopify_shop.required' => 'Ange din myshopify.com-domän.',
+            'shopify_shop.regex'    => 'Ange domänen i formatet my-shop.myshopify.com.',
+        ]);
+
+        $url = route('integrations.shopify.embedded', [
+            'shop' => $data['shopify_shop'],
+            'site' => $this->primarySiteId,
+        ]);
+
+        $this->redirect($url, navigate: false);
+    }
+
+    public function markLeadTrackerReady(): void
+    {
+        $this->leadTrackerReady = true;
     }
 
     public function render(CurrentCustomer $current): View
@@ -218,7 +227,7 @@ class Wizard extends Component
     {
         $user = auth()->user();
         if ($user && isset($user->onboarding_step)) {
-            $user->onboarding_step = 8; // färdig
+            $user->onboarding_step = 8;
             $user->save();
         }
     }

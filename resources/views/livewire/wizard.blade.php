@@ -198,12 +198,24 @@
                                 @enderror
 
                                 @if($provider === 'shopify')
-                                    <p class="mt-3 text-xs text-gray-600">
-                                        Tips: Klicka “Öppna koppling”, välj Shopify och använd knappen “Anslut med Shopify”.
+                                    <div class="mt-4 grid md:grid-cols-3 gap-3">
+                                        <div class="md:col-span-2">
+                                            <label class="block text-sm font-medium mb-1">Shop domain</label>
+                                            <input type="text" wire:model.defer="shopify_shop" class="w-full border rounded p-2" placeholder="my-shop.myshopify.com">
+                                            @error('shopify_shop') <div class="text-red-600 text-sm">{{ $message }}</div> @enderror
+                                        </div>
+                                        <div class="flex items-end">
+                                            <button wire:click="startShopifyConnect" class="px-4 py-2 bg-[#95BF47] text-white rounded w-full">
+                                                Anslut med Shopify
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <p class="mt-2 text-xs text-gray-600">
+                                        Du omdirigeras till Shopify för att godkänna behörigheter. Efteråt återvänder du hit.
                                     </p>
                                 @elseif($provider === 'custom')
                                     <p class="mt-3 text-xs text-gray-600">
-                                        Tips: För Custom kan du välja sitemap‑läge eller API‑läge i kopplingsformuläret.
+                                        Tips: För Custom kan du välja sitemap‑läge eller API‑läge på kopplingssidan.
                                     </p>
                                 @endif
                             </div>
