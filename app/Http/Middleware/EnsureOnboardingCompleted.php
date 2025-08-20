@@ -14,7 +14,7 @@ class EnsureOnboardingCompleted
         if ($user && $user->onboarding_step < 8) {
             if (
                 !$request->routeIs('onboarding') &&
-                !$request->routeIs('sites.wordpress*') &&
+                !$request->routeIs('sites.integrations.*') &&
                 !$request->routeIs('settings.social*')
             ) {
                 return redirect()->route('onboarding');

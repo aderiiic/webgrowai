@@ -1,4 +1,14 @@
-
+@php
+    $plans = app(\App\Services\Billing\PlanService::class);
+    $current = app(\App\Support\CurrentCustomer::class);
+    $customer = $current->get();
+    $canAddSite = false;
+    if ($customer) {
+        $quota = $plans->getQuota($customer, 'sites'); // null = obegränsat
+        $count = $customer->sites()->count();
+        $canAddSite = ($quota === null) || ($count < $quota);
+    }
+@endphp
 <!doctype html>
 <html lang="sv">
 <head>
@@ -163,6 +173,16 @@
                         </svg>
                         <span>Uppgradera plan</span>
                     </a>
+
+                    <li>
+                        <a href="{{ route('sites.index') }}" class="block px-3 py-2 hover:bg-gray-100">Mina sajter</a>
+                    </li>
+
+                    @if($canAddSite)
+                        <li>
+                            <a href="{{ route('sites.create') }}" class="block px-3 py-2 hover:bg-gray-100">Lägg till sajt</a>
+                        </li>
+                    @endif
                 </div>
             </div>
 

@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Integrations\ShopifyOAuthController;
 use App\Http\Controllers\LinkedInSuggestionController;
+use App\Livewire\Sites\IntegrationConnect;
 use App\Models\Invoice;
 use App\Models\Post;
 use App\Models\WpIntegration;
@@ -295,4 +297,45 @@ Route::middleware('web')->group(function() {
 
     Route::get('/auth/instagram/redirect', [SocialAuthController::class, 'instagramRedirect'])->name('auth.instagram.redirect');
     Route::get('/auth/instagram/callback', [SocialAuthController::class, 'instagramCallback'])->name('auth.instagram.callback');
+
+    Route::get('/sites/{site}/integrations/connect', IntegrationConnect::class)
+        ->name('sites.integrations.connect');
+
+    Route::get('/sites/create', SitesCreate::class)->name('sites.create');
+
+    Route::get('/integrations/shopify/install', [ShopifyOAuthController::class, 'install'])
+        ->name('integrations.shopify.install');
+    Route::get('/integrations/shopify/callback', [ShopifyOAuthController::class, 'callback'])
+        ->name('integrations.shopify.callback');
 });
+
+Route::middleware(['web','auth','verified'])->get('/integrations/shopify/embedded', function (\Illuminate\Http\Request $request) {
+    $shop = $request->query('shop'); // t.ex. medinashopse.myshopify.com
+    if (!$shop) {
+        return redirect()->route('sites.index')->with('error', 'Ingen butik angiven (shop saknas).');
+    }
+
+    $customer = app(\App\Support\CurrentCustomer::class)->get();
+    if (!$customer) {
+        return redirect()->route('dashboard')->with('error', 'Ingen aktiv kund vald.');
+    }
+
+    $site = $customer->sites()->latest('id')->first();
+    if (!$site) {
+        return redirect()->route('sites.create')->with('error', 'Skapa en sajt först.');
+    }
+
+    return redirect()->route('integrations.shopify.install', [
+        'site' => $site->id,
+        'shop' => $shop,
+    ]);
+})->name('integrations.shopify.embedded');
+
+Route::middleware(['auth','verified'])->group(function () {
+    // ... dina befintliga routes ...
+
+    Route::get('/account/paused', function () {
+        return view('account.paused');
+    })->name('account.paused');
+});
+
