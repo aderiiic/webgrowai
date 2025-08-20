@@ -114,6 +114,11 @@
 
         <div class="flex items-center gap-3">
             <button wire:click="save" class="px-4 py-2 bg-blue-600 text-white rounded">Spara & testa anslutning</button>
+
+            <button wire:click="validateConnection" class="px-4 py-2 bg-indigo-600 text-white rounded">
+                Testa anslutning igen
+            </button>
+
             @if($status === 'connected')
                 <span class="text-green-700">Status: Ansluten</span>
             @elseif($status === 'error')
@@ -122,5 +127,33 @@
                 <span class="text-gray-600">Status: {{ $status }}</span>
             @endif
         </div>
+
+        @if(!empty($diag))
+            <div class="mt-3 p-4 rounded-lg border {{ ($diag['ok'] ?? false) ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200' }}">
+                <div class="text-sm mb-2">
+                    Senast test: {{ $diag['ts'] ?? '' }}
+                </div>
+
+                @if(($diag['ok'] ?? false) && !empty($diag['sample']))
+                    <div class="text-sm text-gray-800">
+                        Exempel från API (max 3):
+                        <ul class="list-disc ml-5 mt-1">
+                            @foreach($diag['sample'] as $row)
+                                <li>
+                                    [{{ $row['type'] ?? 'n/a' }}] {{ $row['title'] ?? '(utan titel)' }}
+                                    @if(!empty($row['url'])) – <a href="{{ $row['url'] }}" class="text-indigo-600 underline" target="_blank" rel="noopener">öppna</a>@endif
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @elseif(!($diag['ok'] ?? true))
+                    <div class="text-sm text-red-700">
+                        Fel vid validering: {{ $diag['err'] ?? 'okänt fel' }}
+                    </div>
+                @else
+                    <div class="text-sm text-gray-700">Inga exempel returnerades.</div>
+                @endif
+            </div>
+        @endif
     </div>
 </div>

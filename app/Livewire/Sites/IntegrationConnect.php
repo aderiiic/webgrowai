@@ -34,6 +34,8 @@ class IntegrationConnect extends Component
     public ?string $status = null;
     public ?string $last_error = null;
 
+    public array $diag = [];
+
     public function mount(Site $site): void
     {
         $this->site = $site->loadMissing('customer');
@@ -168,6 +170,44 @@ class IntegrationConnect extends Component
         session()->flash('success', $integration->status === 'connected'
             ? 'Integrationen är ansluten.'
             : 'Misslyckades att ansluta. Kontrollera uppgifterna.');
+    }
+
+    public function validateConnection(IntegrationManager $manager): void
+    {
+        $this->diag = [];
+        try {
+            $integration = Integration::where('site_id', $this->site->id)->firstOrFail();
+            $client = $manager->forIntegration($integration);
+
+            $docs = $client->listDocuments(['limit' => 3]);
+            $sample = array_map(function ($d) {
+                return [
+                    'id'    => $d['id'] ?? null,
+                    'type'  => $d['type'] ?? null,
+                    'title' => $d['title'] ?? null,
+                    'url'   => $d['url'] ?? null,
+                ];
+            }, $docs);
+
+            $this->diag = [
+                'ok'     => true,
+                'sample' => $sample,
+                'ts'     => now()->toDateTimeString(),
+            ];
+            $this->status = 'connected';
+            $this->last_error = null;
+
+            session()->flash('success', 'Anslutningen validerades.');
+        } catch (\Throwable $e) {
+            $this->diag = [
+                'ok'   => false,
+                'err'  => $e->getMessage(),
+                'ts'   => now()->toDateTimeString(),
+            ];
+            $this->status = 'error';
+            $this->last_error = $e->getMessage();
+            session()->flash('success', 'Validering misslyckades. Kontrollera uppgifterna.');
+        }
     }
 
     public function render()
