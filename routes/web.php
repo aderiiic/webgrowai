@@ -330,3 +330,12 @@ Route::middleware(['web','auth','verified'])->get('/integrations/shopify/embedde
         'shop' => $shop,
     ]);
 })->name('integrations.shopify.embedded');
+
+Route::middleware(['auth','verified'])->group(function () {
+    // ... dina befintliga routes ...
+
+    Route::get('/account/paused', function () {
+        return view('account.paused');
+    })->name('account.paused');
+});
+
