@@ -308,3 +308,28 @@ Route::middleware('web')->group(function() {
     Route::get('/integrations/shopify/callback', [ShopifyOAuthController::class, 'callback'])
         ->name('integrations.shopify.callback');
 });
+
+Route::middleware(['web','auth','verified'])->get('/integrations/shopify/embedded', function (Request $request) {
+    $shop = $request->query('shop'); // t.ex. medinashopse.myshopify.com
+    if (!$shop) {
+        return redirect()->route('sites.index')->with('error', 'Ingen butik angiven (shop saknas).');
+    }
+
+    // Hitta en lämplig site för den inloggade kunden:
+    $customer = app(\App\Support\CurrentCustomer::class)->get();
+    if (!$customer) {
+        return redirect()->route('dashboard')->with('error', 'Ingen aktiv kund vald.');
+    }
+
+    // Välj senaste skapade sajten (enkelt för test). Alternativ: visa en sida för att välja sajt.
+    $site = $customer->sites()->latest('id')->first();
+    if (!$site) {
+        return redirect()->route('sites.create')->with('error', 'Skapa en sajt först.');
+    }
+
+    // Skicka in i vårt install-flöde (det sätter state i sessionen och fortsätter till Shopify authorize)
+    return redirect()->route('integrations.shopify.install', [
+        'site' => $site->id,
+        'shop' => $shop,
+    ]);
+})->name('integrations.shopify.embedded');
