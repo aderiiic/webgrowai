@@ -8,6 +8,7 @@ use App\Models\Invoice;
 use App\Models\Post;
 use App\Models\WpIntegration;
 use App\Services\Billing\InvoicePdf;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\TrackController;
@@ -334,32 +335,54 @@ Route::middleware('web')->group(function() {
 
 Route::get('/integrations/shopify/embedded', function (\Illuminate\Http\Request $request) {
     $shop = $request->query('shop');
-    $host = $request->query('host'); // skickas ofta av Shopify Admin
     if (!$shop) {
-        // Shopify kräver 'shop' i query, returnera 400 om den saknas
-        abort(400, 'Missing shop parameter');
+        return response('Missing shop parameter', 400);
     }
 
-    // Välj en "site" att koppla (enkelt: senast skapad för inloggad kund, eller en default om du stödjer oinloggat läge)
-    // För att klara automatiska tester utan login: välj en neutral fallback eller visa en enkel sida som ber användaren välja site.
-    $siteId = session('shopify_embedded_site') ?? null;
-    if (!$siteId) {
-        // Minimalt: lagra "shop" i session och skicka till en lättviktssida där användaren väljer site.
-        // För att klara testet direkt: avbryt site-val och kör en "headless" install-flöde mot en default siteId.
-        // Här antar vi att du har en siteId för test. Ersätt med din logik:
-        $siteId = \App\Models\Site::query()->value('id'); // första bästa site
-        if (!$siteId) {
-            return redirect('https://webgrowai.se/')->with('error','Ingen site tillgänglig.');
-        }
-        session()->put('shopify_embedded_site', $siteId);
+    $clientId    = config('services.shopify.client_id');
+    $scopes      = str_replace(' ', ',', (string) config('services.shopify.scopes', 'read_content'));
+    $redirectUrl = config('services.shopify.redirect') ?: route('integrations.shopify.callback');
+    $state       = \Illuminate\Support\Str::random(40);
+
+    $request->session()->put('shopify_oauth_state', $state);
+    if ($request->has('site')) {
+        $request->session()->put('shopify_oauth_site', (int) $request->query('site'));
     }
 
-    // Skicka rakt in i install-rutten -> /admin/oauth/authorize (Shopify visar grant-sidan)
-    return redirect()->route('integrations.shopify.install', [
-        'site' => $siteId,
-        'shop' => $shop,
-    ]);
+    $authorize = sprintf(
+        'https://%s/admin/oauth/authorize?client_id=%s&scope=%s&redirect_uri=%s&state=%s',
+        $shop,
+        urlencode($clientId),
+        urlencode($scopes),
+        urlencode($redirectUrl),
+        urlencode($state)
+    );
+
+    $jsonAuthorize = json_encode($authorize);
+
+    $html = <<<HTML
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Redirecting…</title></head>
+<body>
+<script>
+  var redirectUrl = $jsonAuthorize;
+  if (window.top === window.self) {
+    window.location.href = redirectUrl;
+  } else {
+    window.top.location.href = redirectUrl;
+  }
+</script>
+<noscript>
+  <a href="{$authorize}">Continue</a>
+</noscript>
+</body>
+</html>
+HTML;
+
+    return response($html, 200)->header('Content-Type', 'text/html; charset=UTF-8');
 })->name('integrations.shopify.embedded');
+
 
 
 Route::middleware(['auth','verified'])->group(function () {
@@ -370,6 +393,11 @@ Route::middleware(['auth','verified'])->group(function () {
     })->name('account.paused');
 });
 
-Route::post('/webhooks/shopify/customers/data_request', [ShopifyWebhookController::class, 'customersDataRequest']);
-Route::post('/webhooks/shopify/customers/redact', [ShopifyWebhookController::class, 'customersRedact']);
-Route::post('/webhooks/shopify/shop/redact', [ShopifyWebhookController::class, 'shopRedact']);
+Route::post('/webhooks/shopify/customers/data_request', [ShopifyWebhookController::class, 'customersDataRequest'])
+    ->withoutMiddleware(VerifyCsrfToken::class);
+
+Route::post('/webhooks/shopify/customers/redact', [ShopifyWebhookController::class, 'customersRedact'])
+    ->withoutMiddleware(VerifyCsrfToken::class);
+
+Route::post('/webhooks/shopify/shop/redact', [ShopifyWebhookController::class, 'shopRedact'])
+    ->withoutMiddleware(VerifyCsrfToken::class);
