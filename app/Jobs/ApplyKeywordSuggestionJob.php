@@ -3,8 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\KeywordSuggestion;
-use App\Models\WpIntegration;
-use App\Services\WordPressClient;
+use App\Services\Sites\IntegrationManager;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
@@ -17,25 +16,22 @@ class ApplyKeywordSuggestionJob implements ShouldQueue
         $this->onQueue('default');
     }
 
-    public function handle(): void
+    public function handle(IntegrationManager $integrations): void
     {
         $sug = KeywordSuggestion::with('site')->findOrFail($this->suggestionId);
-        $integration = WpIntegration::where('site_id', $sug->site_id)->firstOrFail();
-        $wp = WordPressClient::for($integration);
+        $client = $integrations->forSite($sug->site_id);
+
+        if (!$client->supports('update_meta')) {
+            $sug->update(['status' => 'unsupported', 'applied_at' => now()]);
+            return;
+        }
+
         $payload = [];
-
-        $title = $sug->suggested['title'] ?? null;
-        $meta  = $sug->suggested['meta'] ?? null;
-
-        if ($title) $payload['title'] = $title;
-        if ($meta)  $payload['excerpt'] = $meta;
+        if (!empty($sug->suggested['title'])) $payload['title'] = $sug->suggested['title'];
+        if (!empty($sug->suggested['meta']))  $payload['meta']  = $sug->suggested['meta'];
 
         if (!empty($payload)) {
-            if ($sug->wp_type === 'page') {
-                $wp->updatePage($sug->wp_post_id, $payload);
-            } else {
-                $wp->updatePost($sug->wp_post_id, $payload);
-            }
+            $client->updateDocument($sug->wp_post_id, $sug->wp_type ?? 'page', $payload);
             $sug->update(['status' => 'applied', 'applied_at' => now()]);
         }
     }

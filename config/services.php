@@ -102,4 +102,15 @@ return [
             'email'
         ],
     ],
+
+    'shopify' => [
+        'client_id'     => env('SHOPIFY_CLIENT_ID', 'your_app_api_key'),
+        'client_secret' => env('SHOPIFY_CLIENT_SECRET', 'your_app_api_secret'),
+        // kommaseparerad lista med scopes, håll den tight
+        'scopes'        => env('SHOPIFY_SCOPES', 'read_content,write_content'),
+        // valfritt: sätt explicit callback, annars bygger vi dynamiskt
+        'redirect'      => env('SHOPIFY_REDIRECT', null),
+        // API-version kan användas av adapter om du vill
+        'api_version'   => env('SHOPIFY_API_VERSION', '2024-10'),
+    ],
 ];

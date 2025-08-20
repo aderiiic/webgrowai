@@ -49,14 +49,16 @@ class Create extends Component
             'url'  => 'required|url|max:1024',
         ]);
 
-        Site::create([
+        $site = Site::create([
             'customer_id' => $customer->id,
             'name' => $this->name,
             'url'  => $this->url,
         ]);
 
         session()->flash('success', 'Sajt skapad.');
-        $this->redirectRoute('sites.index');
+
+        // NYTT: skicka direkt till "Koppla integration" för nya sajten
+        $this->redirectRoute('sites.integrations.connect', ['site' => $site->id]);
     }
 
     public function render()

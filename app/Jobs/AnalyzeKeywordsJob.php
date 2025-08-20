@@ -6,13 +6,11 @@ use App\Support\Usage;
 use App\Models\KeywordSuggestion;
 use App\Models\RankingSnapshot;
 use App\Models\Site;
-use App\Models\WpIntegration;
 use App\Services\AI\AiProviderManager;
 use App\Services\Billing\QuotaGuard;
-use App\Services\WordPressClient;
+use App\Services\Sites\IntegrationManager;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -26,31 +24,19 @@ class AnalyzeKeywordsJob implements ShouldQueue
         $this->onQueue('ai');
     }
 
-    public function handle(AiProviderManager $manager, QuotaGuard $quota, Usage $usage): void
+    public function handle(IntegrationManager $integrations, AiProviderManager $manager, QuotaGuard $quota, Usage $usage): void
     {
         $site = Site::with('customer')->findOrFail($this->siteId);
         $customer = $site->customer;
 
-        try {
-            $integration = WpIntegration::where('site_id', $site->id)->firstOrFail();
-        } catch (ModelNotFoundException $e) {
-            Log::warning('[AnalyzeKeywords] ingen WP-integration kopplad, hoppar över', [
-                'customer_id' => $customer?->id,
-                'site_id'     => $site->id,
-            ]);
-            return;
-        }
-
-        $wp = WordPressClient::for($integration);
+        $client = $integrations->forSite($site->id);
         $prov = $manager->choose(null, 'short');
 
         $rankings = RankingSnapshot::where('site_id', $site->id)
             ->latest('checked_at')->get()->groupBy('wp_post_id');
 
         if ($rankings->isEmpty()) {
-            Log::info('[AnalyzeKeywords] inga ranking-snapshots hittades', [
-                'site_id' => $site->id,
-            ]);
+            Log::info('[AnalyzeKeywords] inga ranking-snapshots hittades', ['site_id' => $site->id]);
             return;
         }
 
@@ -58,63 +44,39 @@ class AnalyzeKeywordsJob implements ShouldQueue
             try {
                 $quota->checkOrFail($customer, 'ai.generate');
             } catch (\Throwable $e) {
-                Log::warning('[AnalyzeKeywords] blocked by quota', [
-                    'customer_id' => $customer->id,
-                    'site_id' => $site->id,
-                    'post_id' => $pid,
-                    'error' => $e->getMessage(),
-                ]);
-                break; // avbryt vidare genereringar denna körning
+                Log::warning('[AnalyzeKeywords] blocked by quota', ['customer_id' => $customer->id, 'site_id' => $site->id, 'post_id' => $pid, 'error' => $e->getMessage()]);
+                break;
             }
 
             $ptype = Arr::get($list->first(), 'wp_type', 'page');
 
-            // Använd rätt endpoint baserat på typslag
             try {
-                $data = $ptype === 'post'
-                    ? $wp->getPost((int)$pid)
-                    : $wp->getPage((int)$pid);
+                $doc = $client->getDocument((int)$pid, $ptype);
             } catch (\Throwable $e) {
-                Log::warning('[AnalyzeKeywords] kunde inte hämta resurs från WP', [
-                    'site_id' => $site->id,
-                    'post_id' => (int)$pid,
-                    'type'    => $ptype,
-                    'error'   => $e->getMessage(),
-                ]);
+                Log::warning('[AnalyzeKeywords] kunde inte hämta resurs', ['site_id' => $site->id, 'post_id' => (int)$pid, 'type' => $ptype, 'error' => $e->getMessage()]);
                 continue;
             }
 
-            if (!$data || !isset($data['id'])) {
-                continue;
-            }
+            if (empty($doc['id'])) continue;
 
-            $url = (string)($data['link'] ?? $site->url);
-            $title = trim(strip_tags($data['title']['rendered'] ?? ''));
-            $excerpt = trim(strip_tags($data['excerpt']['rendered'] ?? ''));
-            $html = (string)Arr::get($data, 'content.rendered', '');
+            $url = (string)($doc['url'] ?? $site->url);
+            $title = trim((string)($doc['title'] ?? ''));
+            $excerpt = trim((string)($doc['excerpt'] ?? ''));
+            $html = (string)($doc['html'] ?? '');
             $text = Str::of($html)->stripTags()->squish()->limit(4000);
 
             $rankInfo = $list->map(fn($r) => ['keyword' => $r->keyword, 'position' => $r->position])->values()->all();
 
             $prompt = "Du är en svensk SEO-specialist. Professionell ton, inga meta-fraser.\n".
-                "Uppgift: föreslå nya relevanta nyckelord att inkludera (5–10) och optimera meta-title (max 60 tecken) och meta-description (max 155 tecken) för sidan.\n".
+                "Uppgift: föreslå nya relevanta nyckelord (5–10) och optimera meta-title (max 60 tecken) samt meta-description (max 155 tecken).\n".
                 "Data:\nTitel: {$title}\nUtdrag: {$excerpt}\nInnehåll (trimmat): {$text}\nRanking: ".json_encode($rankInfo, JSON_UNESCAPED_UNICODE)."\n".
-                "Returnera ENDAST JSON:\n{\n".
-                "  \"keywords\": [\"...\"],\n".
-                "  \"title\": {\"current\": \"...\", \"suggested\": \"...\"},\n".
-                "  \"meta\": {\"current\": \"...\", \"suggested\": \"...\"},\n".
-                "  \"insights\": [\"...\"]\n".
-                "}\n";
+                "Returnera ENDAST JSON: {\"keywords\":[],\"title\":{\"current\":\"\",\"suggested\":\"\"},\"meta\":{\"current\":\"\",\"suggested\":\"\"},\"insights\":[]}";
 
             $out = $prov->generate($prompt, ['max_tokens' => 600, 'temperature' => 0.5]);
             $json = trim(Str::of($out)->after('{')->beforeLast('}'));
-            $json = '{'.$json.'}';
-            $obj = json_decode($json, true);
+            $obj = json_decode('{'.$json.'}', true);
             if (!is_array($obj)) {
-                Log::info('[AnalyzeKeywords] ogiltig JSON från AI, hoppar post', [
-                    'site_id' => $site->id,
-                    'post_id' => (int)$pid,
-                ]);
+                Log::info('[AnalyzeKeywords] ogiltig JSON från AI, hoppar post', ['site_id' => $site->id, 'post_id' => (int)$pid]);
                 continue;
             }
 
@@ -124,7 +86,7 @@ class AnalyzeKeywordsJob implements ShouldQueue
                     'url' => $url,
                     'current' => [
                         'title' => $title,
-                        'meta'  => $excerpt,  // MVP: använder excerpt som meta
+                        'meta'  => $excerpt,
                         'keywords' => [],
                     ],
                     'suggested' => [

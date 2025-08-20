@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Integrations\ShopifyOAuthController;
 use App\Http\Controllers\LinkedInSuggestionController;
+use App\Livewire\Sites\IntegrationConnect;
 use App\Models\Invoice;
 use App\Models\Post;
 use App\Models\WpIntegration;
@@ -295,4 +297,14 @@ Route::middleware('web')->group(function() {
 
     Route::get('/auth/instagram/redirect', [SocialAuthController::class, 'instagramRedirect'])->name('auth.instagram.redirect');
     Route::get('/auth/instagram/callback', [SocialAuthController::class, 'instagramCallback'])->name('auth.instagram.callback');
+
+    Route::get('/sites/{site}/integrations/connect', IntegrationConnect::class)
+        ->name('sites.integrations.connect');
+
+    Route::get('/sites/create', SitesCreate::class)->name('sites.create');
+
+    Route::get('/integrations/shopify/install', [ShopifyOAuthController::class, 'install'])
+        ->name('integrations.shopify.install');
+    Route::get('/integrations/shopify/callback', [ShopifyOAuthController::class, 'callback'])
+        ->name('integrations.shopify.callback');
 });
