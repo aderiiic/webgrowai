@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\Integration;
 use App\Models\Site;
 use App\Models\WpIntegration;
 use App\Support\CurrentCustomer;
@@ -18,7 +19,12 @@ class Wizard extends Component
     public string $site_name = '';
     public string $site_url = '';
 
-    public bool $wpConnected = false;
+    // Nytt: vald plattform i onboarding
+    public string $provider = 'wordpress'; // wordpress|shopify|custom
+
+    // Statusflaggor
+    public bool $integrationConnected = false; // generisk koppling
+    public bool $wpConnected = false;          // legacy status, används ej för låsning längre
     public bool $leadTrackerReady = false;
     public bool $socialConnected = false;
     public bool $mailchimpConnected = false;
@@ -26,14 +32,13 @@ class Wizard extends Component
 
     public ?int $primarySiteId = null;
 
-    // NYTT: kvotstatus
+    // Kvotstatus
     public bool $sitesQuotaExceeded = false;
     public int $sitesUsed = 0;
     public int $sitesLimit = 1;
 
     public function mount(CurrentCustomer $current): void
     {
-        // Läs senast sparade onboarding-steg från användaren
         $user = auth()->user();
         if ($user && isset($user->onboarding_step)) {
             $this->step = max(1, min(7, (int) $user->onboarding_step ?: 1));
@@ -41,7 +46,7 @@ class Wizard extends Component
 
         $this->refreshStatus($current);
 
-        // Om användaren redan har en sajt men hamnar på lägre steg, knuffa fram till WP-steget
+        // Om användaren redan har en sajt men hamnar på lägre steg, knuffa fram till integreringssteget
         if ($this->primarySiteId && $this->step < 2) {
             $this->step = 2;
             $this->persistStep();
@@ -53,13 +58,18 @@ class Wizard extends Component
         $current ??= app(CurrentCustomer::class);
         $customer = $current->get();
 
-        // Kvotberäkning (anpassa efter ert plansystem)
         $this->sitesUsed  = (int) ($customer?->sites()->count() ?? 0);
-        $this->sitesLimit = (int) ($customer->plan_max_sites ?? 1); // t.ex. kolumn på kund/plan
+        $this->sitesLimit = (int) ($customer->plan_max_sites ?? 1);
         $this->sitesQuotaExceeded = $this->sitesUsed >= $this->sitesLimit;
 
         $this->primarySiteId = $customer?->sites()->value('id');
 
+        // Generisk integrationsstatus (oavsett plattform)
+        $this->integrationConnected = $this->primarySiteId
+            ? Integration::where('site_id', $this->primarySiteId)->exists()
+            : false;
+
+        // Legacy WP-koll (visas informativt, används ej som spärr)
         $this->wpConnected = $this->primarySiteId
             ? WpIntegration::where('site_id', $this->primarySiteId)->exists()
             : false;
@@ -69,7 +79,6 @@ class Wizard extends Component
 
     public function createSite(CurrentCustomer $current): void
     {
-        // Stoppa direkt om kvoten är slut
         if ($this->sitesQuotaExceeded) {
             $this->addError('site_name', "Du har nått din sajtkvot ({$this->sitesUsed}/{$this->sitesLimit}).");
             return;
@@ -85,7 +94,6 @@ class Wizard extends Component
         ]);
 
         $normalizedUrl = rtrim($data['site_url'], '/');
-
         $customer = $current->get();
 
         /** @var Site $site */
@@ -97,7 +105,7 @@ class Wizard extends Component
 
         $this->primarySiteId = $site->id;
 
-        // Gå vidare och spara steg
+        // Vidare till plattformsval
         $this->step = 2;
         $this->persistStep();
 
@@ -112,8 +120,9 @@ class Wizard extends Component
 
     public function next(): void
     {
-        if ($this->step === 3 && !$this->wpConnected) {
-            $this->addError('wpConnected', 'Koppla din WordPress-sajt för att fortsätta.');
+        // Låsning: kräver kopplad integration före nästa efter steg 3
+        if ($this->step === 3 && !$this->integrationConnected) {
+            $this->addError('integrationConnected', 'Koppla din sajt (WordPress/Shopify/Custom) för att fortsätta.');
             return;
         }
         if ($this->step === 4 && !$this->leadTrackerReady) {
@@ -158,6 +167,13 @@ class Wizard extends Component
         }
     }
 
+    // Öppna kopplingssidan (plattformsväljaren finns där)
+    public function goConnect()
+    {
+        if (!$this->primarySiteId) return;
+        $this->redirectRoute('sites.integrations.connect', ['site' => $this->primarySiteId]);
+    }
+
     public function render(CurrentCustomer $current): View
     {
         $this->refreshStatus($current);
@@ -170,15 +186,12 @@ class Wizard extends Component
     public function markSocialConnected(): void
     {
         $this->socialConnected = true;
-
         $this->persistStep();
     }
 
-    // Markera Mailchimp som klart (valfritt steg)
     public function markMailchimpConnected(): void
     {
         $this->mailchimpConnected = true;
-
         $this->persistStep();
     }
 
@@ -188,14 +201,12 @@ class Wizard extends Component
         $this->persistStep();
     }
 
-    // NYTT: hoppa över sista steget och gå till Dashboard
     public function goDashboard()
     {
         $this->completeOnboarding();
         return $this->redirectRoute('dashboard');
     }
 
-    // NYTT: slutför (markera klart) och gå till Dashboard
     public function complete()
     {
         $this->weeklyConfigured = true;
@@ -211,5 +222,4 @@ class Wizard extends Component
             $user->save();
         }
     }
-
 }
