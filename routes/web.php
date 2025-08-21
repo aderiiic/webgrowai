@@ -259,10 +259,10 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
         $siteId = $customer->sites()->value('id');
         abort_unless($siteId, 404, 'Ingen sajt.');
 
-        // Nytt: kontrollera WP-koppling innan vi köar
-        $hasWp = WpIntegration::where('site_id', $siteId)->exists();
-        if (!$hasWp) {
-            return back()->with('success', 'Koppla din WordPress-sajt under “Sajter → WordPress” för att köra CRO-analysen.');
+        // Nytt: acceptera vilken integration som helst (wordpress|shopify|custom)
+        $hasAnyIntegration = Integration::where('site_id', $siteId)->exists();
+        if (!$hasAnyIntegration) {
+            return back()->with('error', 'Koppla din sajt under “Sajter → Integrationer” (WordPress, Shopify eller Custom) för att köra CRO‑analysen.');
         }
 
         dispatch(new AnalyzeConversionJob($siteId))->onQueue('default');
@@ -275,14 +275,15 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
             abort_unless($user->customers()->whereKey($site->customer_id)->exists(), 403);
         }
 
-        $hasWp = WpIntegration::where('site_id', $site->id)->exists();
-        if (!$hasWp) {
-            return back()->with('success', 'Koppla din WordPress-sajt under “Sajter → WordPress” för att köra CRO-analysen.');
+        // Nytt: acceptera vilken integration som helst (wordpress|shopify|custom)
+        $hasAnyIntegration = Integration::where('site_id', $site->id)->exists();
+        if (!$hasAnyIntegration) {
+            return back()->with('error', 'Koppla din sajt under “Sajter → Integrationer” (WordPress, Shopify eller Custom) för att köra CRO‑analysen.');
         }
 
         dispatch(new AnalyzeConversionJob($site->id))->onQueue('default');
 
-        return back()->with('success', 'CRO-analys köad för '.$site->name.'. Uppdatera om en stund.');
+        return back()->with('success', 'CRO‑analys köad för '.$site->name.'. Uppdatera om en stund.');
     })->name('sites.cro.analyze')->whereNumber('site');
 });
 
