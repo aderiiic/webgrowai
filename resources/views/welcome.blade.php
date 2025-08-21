@@ -590,7 +590,7 @@
                             </svg>
                         </div>
                         <blockquote class="text-slate-700 mb-6 leading-relaxed italic">
-                            "Vi ökade våra demo‑bokningar med 42% på två månader. Att kunna Apply:a förslag direkt till WordPress sparar oss timmar varje vecka."
+                            "Vi ökade våra demo‑bokningar med 42% på två månader. Att kunna tillämpa förslag direkt till WordPress sparar oss timmar varje vecka."
                         </blockquote>
                         <div class="flex items-center">
                             <div class="w-12 h-12 bg-gradient-to-r from-emerald-400 to-green-400 rounded-full flex items-center justify-center text-white font-semibold">S</div>
@@ -689,7 +689,7 @@
                             </svg>
                         </summary>
                         <div class="px-6 pb-6">
-                            <p class="text-slate-600 leading-relaxed">Du kopplar din WP med ett säkert app‑lösenord eller Shopify via oAuth. Därefter kan du Apply:a AI‑förslag direkt till sidor/texter med ett klick. Ingen FTP eller teknisk kunskap krävs.</p>
+                            <p class="text-slate-600 leading-relaxed">Du kopplar din WP med ett säkert app‑lösenord eller Shopify via oAuth. Därefter kan du tillämpa AI‑förslag direkt till sidor/texter med ett klick. Ingen FTP eller teknisk kunskap krävs.</p>
                         </div>
                     </details>
                     <details class="group bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
