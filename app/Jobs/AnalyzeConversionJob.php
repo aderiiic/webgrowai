@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Models\Integration;
+use App\Services\Sites\IntegrationManager;
 use App\Support\Usage;
 use App\Models\ConversionSuggestion;
 use App\Models\Site;
@@ -10,6 +12,7 @@ use App\Services\AI\AiProviderManager;
 use App\Services\Billing\QuotaGuard;
 use App\Services\WordPressClient;
 use Illuminate\Bus\Queueable;
+use GuzzleHttp\Client as HttpClient;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Arr;
@@ -25,42 +28,87 @@ class AnalyzeConversionJob implements ShouldQueue
         $this->onQueue('default');
     }
 
-    public function handle(AiProviderManager $manager, QuotaGuard $quota, Usage $usage): void
+    public function handle(AiProviderManager $manager, QuotaGuard $quota, Usage $usage, IntegrationManager $integrations): void
     {
         $site = Site::with('customer')->findOrFail($this->siteId);
         $customer = $site->customer;
 
-        try {
-            $integration = WpIntegration::where('site_id', $site->id)->firstOrFail();
-        } catch (ModelNotFoundException $e) {
-            Log::warning('[AnalyzeConversion] ingen WP-integration kopplad, hoppar över', [
+        // 1) Hämta valfri integration (wordpress|shopify|custom)
+        $integration = Integration::where('site_id', $site->id)->first();
+
+        if (!$integration) {
+            Log::warning('[AnalyzeConversion] ingen integration kopplad, hoppar över', [
                 'customer_id' => $customer?->id,
                 'site_id'     => $site->id,
             ]);
             return;
         }
 
-        $wp = WordPressClient::for($integration);
-
-        // 1) Hämta startsidan + landningssidor (enkelt: pages, publicerade, senast uppdaterade)
+        // 2) Försök hämta landningssidor
+        $pages = [];
         try {
-            $pages = $wp->getPages(['per_page' => $this->limit, 'orderby' => 'modified']);
+            // a) Om WordPress: använd befintligt flöde för sidor
+            if ($integration->provider === 'wordpress') {
+                // Använd adapterklient via IntegrationManager om tillgängligt
+                $client = $integrations->forIntegration($integration);
+
+                // Antag att adaptern har en metod getPages eller listPages. Försök båda.
+                if (method_exists($client, 'getPages')) {
+                    $pages = $client->getPages(['per_page' => $this->limit, 'orderby' => 'modified']);
+                } elseif (method_exists($client, 'listPages')) {
+                    $pages = $client->listPages($this->limit);
+                }
+            } else {
+                // b) Icke-WP: försök via adapter först...
+                try {
+                    $client = $integrations->forIntegration($integration);
+                    if (method_exists($client, 'getPages')) {
+                        $pages = $client->getPages(['limit' => $this->limit]);
+                    } elseif (method_exists($client, 'listPages')) {
+                        $pages = $client->listPages($this->limit);
+                    }
+                } catch (\Throwable $e) {
+                    // Adapter saknas eller kastar fel – vi faller tillbaka på startsidan nedan
+                }
+            }
         } catch (\Throwable $e) {
-            Log::warning('[AnalyzeConversion] kunde inte hämta sidor från WP', [
+            Log::warning('[AnalyzeConversion] kunde inte hämta sidor via adapter', [
                 'customer_id' => $customer?->id,
                 'site_id'     => $site->id,
+                'provider'    => $integration->provider,
                 'error'       => $e->getMessage(),
             ]);
-            return;
         }
 
+        // Fallback: om inga sidor kunde hämtas via integration, analysera åtminstone startsidan
         if (empty($pages)) {
-            Log::info('[AnalyzeConversion] inga sidor hittades att analysera', [
-                'site_id' => $site->id,
-            ]);
-            return;
+            try {
+                $http = new HttpClient(['timeout' => 10]);
+                $res = $http->get($site->url);
+                $html = (string) $res->getBody();
+
+                $title = '';
+                if (preg_match('/<title[^>]*>(.*?)<\/title>/is', $html, $m)) {
+                    $title = Str::of($m[1])->stripTags()->squish()->toString();
+                }
+
+                $pages = [[
+                    'id'      => 0,
+                    'link'    => $site->url,
+                    'title'   => ['rendered' => $title],
+                    'content' => ['rendered' => $html],
+                ]];
+            } catch (\Throwable $e) {
+                Log::warning('[AnalyzeConversion] kunde inte hämta startsidan', [
+                    'site_id' => $site->id,
+                    'url'     => $site->url,
+                    'error'   => $e->getMessage(),
+                ]);
+                return;
+            }
         }
 
+        // 3) Kör AI-analysen per sida
         $prov = $manager->choose(null, 'short');
         $guidelines = "Du är en svensk CRO-specialist. Ge konkreta förbättringar utan meta-kommentarer, inga emojis.";
 
@@ -70,9 +118,9 @@ class AnalyzeConversionJob implements ShouldQueue
             } catch (\Throwable $e) {
                 Log::warning('[AnalyzeConversion] blocked by quota', [
                     'customer_id' => $customer->id,
-                    'site_id' => $site->id,
-                    'page_id' => $p['id'] ?? null,
-                    'error' => $e->getMessage(),
+                    'site_id'     => $site->id,
+                    'page_id'     => Arr::get($p, 'id'),
+                    'error'       => $e->getMessage(),
                 ]);
                 break;
             }
