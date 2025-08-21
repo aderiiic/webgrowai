@@ -4,11 +4,13 @@ use App\Http\Controllers\Integrations\ShopifyOAuthController;
 use App\Http\Controllers\LinkedInSuggestionController;
 use App\Http\Controllers\ShopifyWebhookController;
 use App\Livewire\Sites\IntegrationConnect;
+use App\Models\Integration;
 use App\Models\Invoice;
 use App\Models\Post;
 use App\Models\WpIntegration;
 use App\Services\Billing\InvoicePdf;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\TrackController;
@@ -215,14 +217,37 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
         abort_unless($siteId, 404, 'Ingen sajt.');
 
         // Nytt: kräver WP-koppling
-        $hasWp = WpIntegration::where('site_id', $siteId)->exists();
-        if (!$hasWp) {
+        $hasAnyIntegration = Integration::where('site_id', $siteId)->exists();
+        if (!$hasAnyIntegration) {
             return back()->with('success', 'Koppla din WordPress-sajt under “Sajter → WordPress” för att köra SEO‑analysen av nyckelord.');
         }
 
         dispatch(new AnalyzeKeywordsJob($siteId))->onQueue('ai');
         return back()->with('success', 'AI-analys köad.');
     })->name('seo.keywords.analyze');
+
+    Route::get('/seo/keywords/fetch-analyze', function () {
+        $customer = app(\App\Support\CurrentCustomer::class)->get();
+        abort_unless($customer, 403);
+        $siteId = $customer->sites()->value('id');
+        abort_unless($siteId, 404, 'Ingen sajt.');
+
+        // Säkerställ att någon integration finns (oavsett provider)
+        $hasAnyIntegration = Integration::where('site_id', $siteId)->exists();
+
+        if (!$hasAnyIntegration) {
+            return back()->with('error', 'Koppla din sajt under “Sajter → Integrationer” (WordPress, Shopify eller Custom) för att hämta rankingar och köra AI‑analys.');
+        }
+
+        // Kör i kedja: först hämta rankingar (default-kö), sedan AI-analys (ai-kö).
+        // Om jobben själva definierar queue() kan de använda rätt kö ändå.
+        Bus::chain([
+            new FetchRankingsJob($siteId),
+            new AnalyzeKeywordsJob($siteId),
+        ])->dispatch();
+
+        return back()->with('success', 'Hämtning av rankingar och AI‑analys har köats.');
+    })->name('seo.keywords.fetch_analyze');
 
     // Den parameteriserade routen kommer sist + begränsad till numeriskt id
     Route::get('/cro/suggestions/{id}', SuggestionDetail::class)->name('cro.suggestion.detail')->whereNumber('id');

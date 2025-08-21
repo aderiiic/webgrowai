@@ -21,6 +21,12 @@
                     </svg>
                     AI-analys
                 </a>
+                <a href="{{ route('seo.keywords.fetch_analyze') }}" class="inline-flex items-center px-6 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl hover:from-emerald-700 hover:to-teal-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transform hover:scale-[1.02] transition-all duration-200 shadow-lg hover:shadow-xl">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6M9 19l3 3m0 0l3-3m-3 3V10M9.663 17h4.673"/>
+                    </svg>
+                    Hämta rankning & analys
+                </a>
             </div>
         </div>
 
@@ -124,6 +130,12 @@
                     <h3 class="text-xl font-semibold text-gray-900 mb-3">Inga förslag ännu</h3>
                     <p class="text-gray-600 mb-6">Kör "Hämta rankingar" följt av "AI-analys" för att generera nyckelordsförslag.</p>
                     <div class="flex justify-center space-x-4">
+                        <a href="{{ route('seo.keywords.fetch_analyze') }}" class="inline-flex items-center px-6 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl hover:from-emerald-700 hover:to-teal-700 transition-all duration-200 shadow-lg">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6M9 19l3 3m0 0l3-3m-3 3V10M9.663 17h4.673"/>
+                            </svg>
+                            Hämta rankning & analys
+                        </a>
                         <a href="{{ route('seo.keywords.fetch') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 shadow-sm">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
