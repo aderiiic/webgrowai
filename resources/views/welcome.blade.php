@@ -199,89 +199,125 @@
         </section>
 
         <!-- Free Website Program -->
-        <section class="py-20 bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 text-white">
-            <div class="max-w-7xl mx-auto px-4">
-                <div class="grid lg:grid-cols-2 gap-12 items-center">
-                    <div class="space-y-8">
-                        <div class="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-yellow-400/20 to-orange-400/20 border border-yellow-400/30">
-                            <svg class="w-5 h-5 text-yellow-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path>
-                            </svg>
-                            <span class="text-yellow-400 font-bold">Exklusivt erbjudande</span>
+        <!-- Free Website Program - Refined Premium Version -->
+        <section class="py-32 bg-slate-900 relative overflow-hidden">
+            <!-- Subtle background elements -->
+            <div class="absolute inset-0">
+                <div class="absolute top-40 right-20 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl"></div>
+                <div class="absolute bottom-20 left-20 w-80 h-80 bg-indigo-500/3 rounded-full blur-3xl"></div>
+            </div>
+
+            <!-- Minimal grid pattern -->
+            <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.02"%3E%3Ccircle cx="7" cy="7" r="1"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-40"></div>
+
+            <div class="relative max-w-7xl mx-auto px-4">
+                <div class="grid lg:grid-cols-2 gap-20 items-center">
+                    <div class="space-y-12">
+                        <!-- Clean badge -->
+                        <div class="inline-flex items-center px-6 py-2 rounded-full bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm">
+                            <div class="w-2 h-2 bg-indigo-400 rounded-full mr-3 animate-pulse"></div>
+                            <span class="text-slate-300 font-medium">Exklusivt erbjudande</span>
                         </div>
 
-                        <h2 class="text-4xl md:text-5xl font-bold leading-tight">
-                            Gratis webbsida med Growth årsplan
-                        </h2>
+                        <div class="space-y-8">
+                            <h2 class="text-5xl md:text-6xl font-bold leading-tight text-white">
+                                Gratis webbsida med
+                                <span class="text-indigo-400">Growth årsplan</span>
+                            </h2>
 
-                        <p class="text-xl text-indigo-100 leading-relaxed">
-                            Prenumerera på Growth årsplan och få en helt gratis, professionell webbsida byggd av vårt team. Designad för konvertering och SEO-optimerad från start.
-                        </p>
+                            <p class="text-xl text-slate-400 leading-relaxed max-w-xl">
+                                Prenumerera på Growth årsplan och få en helt gratis, professionell webbsida byggd av vårt team. Designad för konvertering och SEO-optimerad från start.
+                            </p>
+                        </div>
 
-                        <div class="space-y-4">
-                            <div class="flex items-center">
-                                <svg class="w-6 h-6 text-emerald-400 mr-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                                </svg>
-                                <span class="text-lg">Professionell design & utveckling</span>
+                        <!-- Clean features list -->
+                        <div class="space-y-6">
+                            <div class="flex items-start">
+                                <div class="w-6 h-6 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center mr-4 mt-1 flex-shrink-0">
+                                    <svg class="w-3 h-3 text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 class="text-white font-semibold mb-1">Professionell design & utveckling</h4>
+                                    <p class="text-slate-500 text-sm">Byggs av vårt expertteam med fokus på konvertering</p>
+                                </div>
                             </div>
-                            <div class="flex items-center">
-                                <svg class="w-6 h-6 text-emerald-400 mr-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                                </svg>
-                                <span class="text-lg">SEO-optimerad från start</span>
+
+                            <div class="flex items-start">
+                                <div class="w-6 h-6 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center mr-4 mt-1 flex-shrink-0">
+                                    <svg class="w-3 h-3 text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 class="text-white font-semibold mb-1">SEO-optimerad från start</h4>
+                                    <p class="text-slate-500 text-sm">Teknisk SEO och prestandaoptimering inkluderat</p>
+                                </div>
                             </div>
-                            <div class="flex items-center">
-                                <svg class="w-6 h-6 text-emerald-400 mr-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                                </svg>
-                                <span class="text-lg">Konverteringsoptimerad layout</span>
-                            </div>
-                            <div class="flex items-center">
-                                <svg class="w-6 h-6 text-emerald-400 mr-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                                </svg>
-                                <span class="text-lg">Integrerat med WebGrow AI</span>
+
+                            <div class="flex items-start">
+                                <div class="w-6 h-6 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center mr-4 mt-1 flex-shrink-0">
+                                    <svg class="w-3 h-3 text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 class="text-white font-semibold mb-1">Fullständigt integrerat</h4>
+                                    <p class="text-slate-500 text-sm">WebGrow AI fungerar direkt utan extra konfiguration</p>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                            <p class="text-indigo-100 mb-2">
-                                <strong class="text-white">Värde:</strong> Normalt 25 000 - 50 000 kr
-                            </p>
-                            <p class="text-emerald-300 text-lg font-semibold">
-                                För dig: Helt gratis med Growth årsplan
-                            </p>
+                        <!-- Minimal value proposition -->
+                        <div class="bg-slate-800/30 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-slate-500 text-sm mb-1">Normalt värde</p>
+                                    <p class="text-slate-300 text-2xl font-bold">25 000 - 50 000 kr</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-indigo-400 text-sm font-medium mb-1">För dig</p>
+                                    <p class="text-white text-2xl font-bold">Helt gratis</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20" x-data="{ email: '' }">
-                        <h3 class="text-2xl font-bold mb-6 text-center">Intresserad? Hör av dig!</h3>
-                        <form class="space-y-6" @submit.prevent="console.log('Form submitted:', email)">
-                            <div>
-                                <label for="free-website-email" class="block text-sm font-medium text-indigo-100 mb-2">
-                                    Din e-postadress
-                                </label>
-                                <input
-                                    type="email"
-                                    id="free-website-email"
-                                    x-model="email"
-                                    class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
-                                    placeholder="din@epost.se"
-                                    required>
+                    <!-- Minimal premium form -->
+                    <div class="relative">
+                        <div class="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700/50" x-data="{ email: '' }">
+                            <div class="text-center mb-8">
+                                <h3 class="text-2xl font-bold text-white mb-3">Intresserad? Hör av dig</h3>
+                                <p class="text-slate-400">Vi kontaktar dig inom 24h med mer information</p>
                             </div>
 
-                            <button
-                                type="submit"
-                                class="w-full px-6 py-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-slate-900 font-bold rounded-lg hover:from-yellow-500 hover:to-orange-600 transform hover:scale-105 transition-all duration-200 shadow-xl"
-                                data-lead-cta="free_website_signup">
-                                Få mer information
-                            </button>
+                            <form class="space-y-6" @submit.prevent="console.log('Form submitted:', email)">
+                                <div>
+                                    <label for="free-website-email" class="block text-sm font-medium text-slate-300 mb-3">
+                                        Din e-postadress
+                                    </label>
+                                    <input
+                                        type="email"
+                                        id="free-website-email"
+                                        x-model="email"
+                                        class="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
+                                        placeholder="din@epost.se"
+                                        required>
+                                </div>
 
-                            <p class="text-xs text-indigo-200 text-center">
-                                Vi kontaktar dig inom 24h med mer information om programmet och nästa steg.
-                            </p>
-                        </form>
+                                <button
+                                    type="submit"
+                                    class="w-full px-6 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.99] shadow-lg"
+                                    data-lead-cta="free_website_signup">
+                                    Få mer information
+                                </button>
+
+                                <p class="text-xs text-slate-500 text-center">
+                                    Vi kontaktar dig inom 24h med mer information om programmet och nästa steg.
+                                </p>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
