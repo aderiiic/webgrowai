@@ -4,33 +4,36 @@
 @section('content')
     <main x-data="{ demoOpen:false }">
         <!-- Hero -->
-        <section class="relative overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+        <section class="relative overflow-hidden bg-gradient-to-br from-slate-50 via-indigo-50 to-purple-100">
             <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23f1f5f9" fill-opacity="0.4"%3E%3Ccircle cx="7" cy="7" r="1"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-50"></div>
             <div class="relative max-w-7xl mx-auto px-4 py-20 lg:py-32 grid lg:grid-cols-2 gap-12 items-center">
                 <div class="space-y-8">
-                    <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 border border-blue-200">
+                    <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-800 border border-indigo-200">
                         <span class="w-2 h-2 bg-emerald-500 rounded-full mr-2 animate-pulse"></span>
                         Lanserat! AI-driven marknadsföring
                     </div>
-                    <h1 class="text-4xl md:text-6xl font-bold leading-tight bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent">
+                    <h1 class="text-4xl md:text-6xl font-bold leading-tight bg-gradient-to-r from-gray-900 via-indigo-900 to-purple-900 bg-clip-text text-transparent">
                         Mer trafik. Fler leads. Mindre handpåläggning.
                     </h1>
                     <p class="text-xl text-slate-600 max-w-2xl leading-relaxed">
-                        WebGrow AI sköter SEO‑förslag, CRO‑insikter, AI‑publicering till WordPress & sociala kanaler – på autopilot.
+                        WebGrow AI sköter SEO‑förslag, CRO‑insikter, AI‑publicering till WordPress, Shopify & sociala kanaler – på autopilot.
                     </p>
                     <div class="flex flex-col sm:flex-row gap-4">
                         @if(Route::has('register'))
                             <a href="{{ route('register') }}"
-                               class="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-center"
+                               class="group relative px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-center"
                                data-lead-cta="hero_register">
                                 <span class="relative z-10">Starta gratis idag</span>
-                                <div class="absolute inset-0 bg-gradient-to-r from-blue-700 to-indigo-700 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+                                <div class="absolute inset-0 bg-gradient-to-r from-indigo-700 to-purple-700 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
                             </a>
                         @endif
                         <button @click="demoOpen=true"
-                                class="px-8 py-4 bg-white/80 backdrop-blur-sm text-slate-800 font-semibold rounded-xl border border-slate-200 hover:bg-white hover:shadow-lg transition-all duration-200"
+                                class="px-8 py-4 bg-white/80 backdrop-blur-sm text-slate-800 font-semibold rounded-xl border border-slate-200 hover:bg-white hover:shadow-lg transition-all duration-200 flex items-center justify-center"
                                 data-lead-cta="hero_book_demo">
-                            <span class="mr-2">🎯</span> Boka demo
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            Boka demo
                         </button>
                     </div>
                     <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 text-sm text-slate-500">
@@ -46,7 +49,7 @@
                             </svg>
                             Ingen bindningstid
                         </div>
-                        <a href="#pricing" class="text-blue-600 hover:text-blue-700 font-medium" data-lead-cta="hero_see_pricing">
+                        <a href="#pricing" class="text-indigo-600 hover:text-indigo-700 font-medium" data-lead-cta="hero_see_pricing">
                             Se priser →
                         </a>
                     </div>
@@ -71,8 +74,8 @@
                                 <p class="text-sm text-slate-600">AI föreslår meta‑titel/description för dina sidor</p>
                             </div>
                         </div>
-                        <div class="flex items-start gap-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <div class="flex items-start gap-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200">
+                            <div class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center flex-shrink-0">
                                 <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                                 </svg>
@@ -90,17 +93,195 @@
                             </div>
                             <div>
                                 <h4 class="font-medium text-slate-800">AI-publicering</h4>
-                                <p class="text-sm text-slate-600">WordPress/Facebook/Instagram automation</p>
+                                <p class="text-sm text-slate-600">WordPress/Shopify/Custom sidor automation</p>
                             </div>
                         </div>
                     </div>
                     <div class="mt-6 pt-6 border-t border-slate-200">
-                        <a href="{{ route('news.index') }}" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium transition-colors">
+                        <a href="{{ route('news.index') }}" class="inline-flex items-center text-indigo-600 hover:text-indigo-700 font-medium transition-colors">
                             Läs vad som är nytt
                             <svg class="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
                             </svg>
                         </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Platform Integration -->
+        <section class="py-20 bg-white">
+            <div class="max-w-7xl mx-auto px-4">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-4">
+                        Integrerar med dina befintliga verktyg
+                    </h2>
+                    <p class="text-xl text-slate-600 max-w-3xl mx-auto">
+                        Enkelt och säkert via oAuth. Som Shopify partner erbjuder vi gratis onboarding och support.
+                    </p>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-8 mb-16">
+                    <!-- WordPress -->
+                    <div class="group text-center p-8 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border border-blue-200/50 hover:shadow-xl transition-all duration-300">
+                        <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
+                            <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M21.469,14.825l-5.406-9.237C15.529,4.826,15.001,4.5,14.47,4.5h-4.94c-0.531,0-1.058,0.326-1.592,1.088L2.531,14.825c-0.531,0.766-0.531,2.013,0,2.775L7.938,26.837C8.472,27.603,9,27.928,9.531,27.928h4.938c0.531,0,1.059-0.325,1.592-1.086l5.406-9.237C21.999,16.838,21.999,15.591,21.469,14.825z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-800 mb-3">WordPress</h3>
+                        <p class="text-slate-600 leading-relaxed">Säker oAuth-anslutning för automatisk optimering av innehåll och SEO-inställningar.</p>
+                        <div class="mt-4 inline-flex items-center text-blue-600 font-medium">
+                            <span class="w-2 h-2 bg-emerald-500 rounded-full mr-2"></span>
+                            Säker integration
+                        </div>
+                    </div>
+
+                    <!-- Shopify -->
+                    <div class="group text-center p-8 bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl border border-emerald-200/50 hover:shadow-xl transition-all duration-300">
+                        <div class="w-16 h-16 bg-gradient-to-r from-emerald-500 to-green-600 rounded-xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
+                            <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M15.337 2.001c-0.907,0-1.76,0.655-2.332,1.603-0.458-0.174-0.985-0.266-1.562-0.266-2.156,0-4.003,1.299-5.229,3.284-1.117-0.426-2.162-0.37-2.805,0.273-0.764,0.763-0.764,2.212,0,2.975l8.834,8.834c0.381,0.381,0.893,0.596,1.438,0.596s1.057-0.215,1.438-0.596l8.834-8.834c0.764-0.763,0.764-2.212,0-2.975-0.643-0.643-1.688-0.699-2.805-0.273-1.226-1.985-3.073-3.284-5.229-3.284-0.577,0-1.104,0.092-1.562,0.266C17.097,2.656,16.244,2.001,15.337,2.001z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-800 mb-3">Shopify</h3>
+                        <p class="text-slate-600 leading-relaxed">Shopify Partner med specialiserad e-handelsoptimering och produktmarknadsföring.</p>
+                        <div class="mt-4 inline-flex items-center text-emerald-600 font-medium">
+                            <span class="w-2 h-2 bg-emerald-500 rounded-full mr-2"></span>
+                            <a href="https://webbi.se" target="_blank" class="hover:underline">Webbi - Shopify Partner</a>
+                        </div>
+                    </div>
+
+                    <!-- Custom Sites -->
+                    <div class="group text-center p-8 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border border-purple-200/50 hover:shadow-xl transition-all duration-300">
+                        <div class="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
+                            <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-800 mb-3">Custom Sidor</h3>
+                        <p class="text-slate-600 leading-relaxed">API-integration för anpassade webbplatser och plattformar via säker oAuth-autentisering.</p>
+                        <div class="mt-4 inline-flex items-center text-purple-600 font-medium">
+                            <span class="w-2 h-2 bg-emerald-500 rounded-full mr-2"></span>
+                            Flexibel API
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Support Features -->
+                <div class="bg-gradient-to-r from-slate-50 to-indigo-50 rounded-2xl p-8 text-center">
+                    <h3 class="text-2xl font-bold text-slate-800 mb-4">Fullständig support från dag ett</h3>
+                    <div class="grid md:grid-cols-3 gap-6 mb-8">
+                        <div class="flex items-center justify-center">
+                            <svg class="w-6 h-6 text-emerald-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="font-semibold text-slate-800">Gratis onboarding</span>
+                        </div>
+                        <div class="flex items-center justify-center">
+                            <svg class="w-6 h-6 text-emerald-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="font-semibold text-slate-800">Personlig support</span>
+                        </div>
+                        <div class="flex items-center justify-center">
+                            <svg class="w-6 h-6 text-emerald-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="font-semibold text-slate-800">Shopify partner</span>
+                        </div>
+                    </div>
+                    <p class="text-slate-600 max-w-2xl mx-auto">
+                        Vi hjälper dig att komma igång snabbt och säkert. Som Shopify partner har vi djup expertis inom e-handel och kan anpassa lösningen efter dina specifika behov.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Free Website Program -->
+        <section class="py-20 bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 text-white">
+            <div class="max-w-7xl mx-auto px-4">
+                <div class="grid lg:grid-cols-2 gap-12 items-center">
+                    <div class="space-y-8">
+                        <div class="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-yellow-400/20 to-orange-400/20 border border-yellow-400/30">
+                            <svg class="w-5 h-5 text-yellow-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="text-yellow-400 font-bold">Exklusivt erbjudande</span>
+                        </div>
+
+                        <h2 class="text-4xl md:text-5xl font-bold leading-tight">
+                            Gratis webbsida med Growth årsplan
+                        </h2>
+
+                        <p class="text-xl text-indigo-100 leading-relaxed">
+                            Prenumerera på Growth årsplan och få en helt gratis, professionell webbsida byggd av vårt team. Designad för konvertering och SEO-optimerad från start.
+                        </p>
+
+                        <div class="space-y-4">
+                            <div class="flex items-center">
+                                <svg class="w-6 h-6 text-emerald-400 mr-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="text-lg">Professionell design & utveckling</span>
+                            </div>
+                            <div class="flex items-center">
+                                <svg class="w-6 h-6 text-emerald-400 mr-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="text-lg">SEO-optimerad från start</span>
+                            </div>
+                            <div class="flex items-center">
+                                <svg class="w-6 h-6 text-emerald-400 mr-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="text-lg">Konverteringsoptimerad layout</span>
+                            </div>
+                            <div class="flex items-center">
+                                <svg class="w-6 h-6 text-emerald-400 mr-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="text-lg">Integrerat med WebGrow AI</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                            <p class="text-indigo-100 mb-2">
+                                <strong class="text-white">Värde:</strong> Normalt 25 000 - 50 000 kr
+                            </p>
+                            <p class="text-emerald-300 text-lg font-semibold">
+                                För dig: Helt gratis med Growth årsplan
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20" x-data="{ email: '' }">
+                        <h3 class="text-2xl font-bold mb-6 text-center">Intresserad? Hör av dig!</h3>
+                        <form class="space-y-6" @submit.prevent="console.log('Form submitted:', email)">
+                            <div>
+                                <label for="free-website-email" class="block text-sm font-medium text-indigo-100 mb-2">
+                                    Din e-postadress
+                                </label>
+                                <input
+                                    type="email"
+                                    id="free-website-email"
+                                    x-model="email"
+                                    class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                                    placeholder="din@epost.se"
+                                    required>
+                            </div>
+
+                            <button
+                                type="submit"
+                                class="w-full px-6 py-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-slate-900 font-bold rounded-lg hover:from-yellow-500 hover:to-orange-600 transform hover:scale-105 transition-all duration-200 shadow-xl"
+                                data-lead-cta="free_website_signup">
+                                Få mer information
+                            </button>
+
+                            <p class="text-xs text-indigo-200 text-center">
+                                Vi kontaktar dig inom 24h med mer information om programmet och nästa steg.
+                            </p>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -127,8 +308,8 @@
                         <h3 class="text-xl font-bold text-slate-800 mb-3">Nyckelordsoptimering</h3>
                         <p class="text-slate-600 leading-relaxed">SerpAPI‑baserad rankingkoll, AI‑förslag på keywords & meta—Apply till WP med ett klick.</p>
                     </div>
-                    <div class="group p-8 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border border-blue-200/50 hover:shadow-xl transition-all duration-300">
-                        <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                    <div class="group p-8 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-200/50 hover:shadow-xl transition-all duration-300">
+                        <div class="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                             </svg>
@@ -143,14 +324,14 @@
                             </svg>
                         </div>
                         <h3 class="text-xl font-bold text-slate-800 mb-3">AI‑publicering</h3>
-                        <p class="text-slate-600 leading-relaxed">Generera & schemalägg innehåll till WordPress, Facebook & Instagram automatiskt.</p>
+                        <p class="text-slate-600 leading-relaxed">Generera & schemalägg innehåll till WordPress, Shopify & Instagram automatiskt.</p>
                     </div>
                 </div>
             </div>
         </section>
 
         <!-- Pricing -->
-        <section id="pricing" class="py-20 bg-gradient-to-br from-slate-50 to-blue-50">
+        <section id="pricing" class="py-20 bg-gradient-to-br from-slate-50 to-indigo-50">
             <div class="max-w-7xl mx-auto px-4">
                 <div class="text-center mb-16">
                     <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-4">Priser som växer med dig</h2>
@@ -210,6 +391,18 @@
                                 <svg class="w-5 h-5 text-emerald-500 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                                 </svg>
+                                Grundläggande statistik
+                            </li>
+                            <li class="flex items-center text-slate-700">
+                                <svg class="w-5 h-5 text-emerald-500 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                                Koppling till sociala medier
+                            </li>
+                            <li class="flex items-center text-slate-700">
+                                <svg class="w-5 h-5 text-emerald-500 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
                                 1 sajt, 2 användare
                             </li>
                         </ul>
@@ -221,14 +414,14 @@
                     </div>
 
                     <!-- Growth - Most Popular -->
-                    <div class="relative bg-white rounded-2xl border-2 border-blue-500 shadow-2xl hover:shadow-3xl transition-all duration-300 p-8 scale-105">
-                        <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <span class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-lg">
-                        Mest populär
+                    <div class="relative bg-white rounded-2xl border-2 border-indigo-500 shadow-2xl hover:shadow-3xl transition-all duration-300 p-8 scale-105">
+                        <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
+                    <span class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
+                        Populär + gratis webbsida
                     </span>
                         </div>
                         <div class="text-center">
-                            <h3 class="text-lg font-semibold text-blue-600 mb-2">Growth</h3>
+                            <h3 class="text-lg font-semibold text-indigo-600 mb-2">Growth</h3>
                             <div class="mb-4">
                                 <div class="flex items-center justify-center gap-2 mb-2">
                                     <span class="text-lg text-slate-400 line-through">3 990 kr</span>
@@ -269,17 +462,30 @@
                                 <svg class="w-5 h-5 text-emerald-500 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                                 </svg>
+                                Avancerad statistik & analys
+                            </li>
+                            <li class="flex items-center text-slate-700">
+                                <svg class="w-5 h-5 text-emerald-500 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                                Koppling till sociala medier
+                            </li>
+                            <li class="flex items-center text-slate-700">
+                                <svg class="w-5 h-5 text-emerald-500 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
                                 3 sajter, 5 användare
+                            </li>
+                            <li class="flex items-center text-yellow-600 bg-yellow-50 p-2 rounded-lg border border-yellow-200">
+                                <svg class="w-5 h-5 text-yellow-600 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path>
+                                </svg>
+                                <strong>Gratis webbsida vid årsplan!</strong>
                             </li>
                         </ul>
                         <div class="space-y-3">
-                            @if(Route::has('register'))
-                                <a href="{{ route('register') }}"
-                                   class="w-full inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 transform hover:scale-105 transition-all duration-200 shadow-lg"
-                                   data-lead-cta="pricing_growth_register">Prova gratis</a>
-                            @endif
                             <button @click="demoOpen=true"
-                                    class="w-full px-6 py-3 bg-white text-slate-700 font-semibold rounded-xl border border-slate-300 hover:bg-slate-50 transition-colors duration-200"
+                                    class="w-full px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg"
                                     data-lead-cta="pricing_growth_demo">Boka demo</button>
                         </div>
                     </div>
@@ -347,9 +553,6 @@
                         </h3>
                         <p class="text-orange-800">
                             <strong>Exklusivt för early adopters:</strong> Upp till 69% rabatt första året! Hjälp oss forma framtidens AI-marknadsföring.
-                            <span class="block mt-2 text-sm">
-                        Nöjd-kund-garanti: Inte nöjd inom 30 dagar? Ingen debitering.
-                    </span>
                         </p>
                     </div>
                 </div>
@@ -397,8 +600,8 @@
                             </div>
                         </div>
                     </div>
-                    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200/50 rounded-2xl p-8 hover:shadow-lg transition-all duration-300">
-                        <div class="flex text-blue-500 mb-4">
+                    <div class="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200/50 rounded-2xl p-8 hover:shadow-lg transition-all duration-300">
+                        <div class="flex text-indigo-500 mb-4">
                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
                             </svg>
@@ -419,7 +622,7 @@
                             "SEO‑förslagen är konkreta och träffsäkra. Vi fick snabb effekt på flera viktiga sidor och bättre CTR redan första månaden."
                         </blockquote>
                         <div class="flex items-center">
-                            <div class="w-12 h-12 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-full flex items-center justify-center text-white font-semibold">J</div>
+                            <div class="w-12 h-12 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-full flex items-center justify-center text-white font-semibold">J</div>
                             <div class="ml-4">
                                 <div class="font-semibold text-slate-800">Johan</div>
                                 <div class="text-sm text-slate-600">E‑commerce Manager, E‑handel</div>
@@ -460,7 +663,7 @@
         </section>
 
         <!-- FAQ -->
-        <section id="faq" class="py-20 bg-gradient-to-br from-slate-50 to-blue-50">
+        <section id="faq" class="py-20 bg-gradient-to-br from-slate-50 to-indigo-50">
             <div class="max-w-4xl mx-auto px-4">
                 <div class="text-center mb-16">
                     <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-4">Vanliga frågor</h2>
@@ -480,13 +683,13 @@
                     </details>
                     <details class="group bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
                         <summary class="cursor-pointer p-6 font-semibold text-slate-800 flex items-center justify-between">
-                            <span>Hur fungerar publiceringen till WordPress?</span>
+                            <span>Hur fungerar publiceringen till WordPress och Shopify?</span>
                             <svg class="w-5 h-5 text-slate-500 group-open:rotate-180 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </summary>
                         <div class="px-6 pb-6">
-                            <p class="text-slate-600 leading-relaxed">Du kopplar din WP med ett säkert app‑lösenord. Därefter kan du Apply:a AI‑förslag direkt till sidor/texter med ett klick. Ingen FTP eller teknisk kunskap krävs.</p>
+                            <p class="text-slate-600 leading-relaxed">Du kopplar din WP med ett säkert app‑lösenord eller Shopify via oAuth. Därefter kan du Apply:a AI‑förslag direkt till sidor/texter med ett klick. Ingen FTP eller teknisk kunskap krävs.</p>
                         </div>
                     </details>
                     <details class="group bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
@@ -511,6 +714,17 @@
                             <p class="text-slate-600 leading-relaxed">Du kan antingen uppgradera till nästa plan eller betala för extra användning enligt våra tilläggspriser. Du får alltid en varning innan något debiteras.</p>
                         </div>
                     </details>
+                    <details class="group bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                        <summary class="cursor-pointer p-6 font-semibold text-slate-800 flex items-center justify-between">
+                            <span>Hur fungerar det gratis webbsideprogrammet?</span>
+                            <svg class="w-5 h-5 text-slate-500 group-open:rotate-180 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </summary>
+                        <div class="px-6 pb-6">
+                            <p class="text-slate-600 leading-relaxed">När du prenumererar på Growth årsplan bygger vårt team en professionell webbsida åt dig helt gratis. Den är SEO-optimerad och integrerad med WebGrow AI från start. Normalt värde 25 000-50 000 kr.</p>
+                        </div>
+                    </details>
                 </div>
             </div>
         </section>
@@ -525,20 +739,20 @@
                 <form class="space-y-4" method="POST" action="{{ route('demo.request') }}">
                     @csrf
                     <div>
-                        <input type="text" name="name" class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Ditt namn" required>
+                        <input type="text" name="name" class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Ditt namn" required>
                     </div>
                     <div>
-                        <input type="email" name="email" class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Din e‑post" required>
+                        <input type="email" name="email" class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Din e‑post" required>
                     </div>
                     <div>
-                        <input type="text" name="company" class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Företag (valfritt)">
+                        <input type="text" name="company" class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Företag (valfritt)">
                     </div>
                     <div>
-                        <textarea name="notes" rows="3" class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none" placeholder="Vad vill du fokusera på i demon? (valfritt)"></textarea>
+                        <textarea name="notes" rows="3" class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors resize-none" placeholder="Vad vill du fokusera på i demon? (valfritt)"></textarea>
                     </div>
                     <div class="flex items-center justify-between gap-3 pt-4">
                         <button type="button" class="px-6 py-3 text-slate-600 font-medium rounded-xl border border-slate-300 hover:bg-slate-50 transition-colors" @click="demoOpen=false">Avbryt</button>
-                        <button type="submit" class="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-colors shadow-lg" data-lead-cta="book_demo_submit">Skicka</button>
+                        <button type="submit" class="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-colors shadow-lg" data-lead-cta="book_demo_submit">Skicka</button>
                     </div>
                 </form>
             </div>
@@ -552,7 +766,7 @@
                         <h3 class="text-3xl font-bold text-slate-800 mb-2">Senaste nytt</h3>
                         <p class="text-slate-600">Håll dig uppdaterad med de senaste funktionerna</p>
                     </div>
-                    <a href="{{ route('news.index') }}" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold transition-colors">
+                    <a href="{{ route('news.index') }}" class="inline-flex items-center text-indigo-600 hover:text-indigo-700 font-semibold transition-colors">
                         Visa alla
                         <svg class="w-4 h-4 ml-2" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
@@ -561,11 +775,11 @@
                 </div>
                 <div class="grid md:grid-cols-3 gap-8">
                     @foreach(\App\Models\Post::query()->whereNotNull('published_at')->latest('published_at')->take(3)->get() as $post)
-                        <a href="{{ route('news.show', $post->slug) }}" class="group block bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-lg hover:border-blue-200 transition-all duration-300">
+                        <a href="{{ route('news.show', $post->slug) }}" class="group block bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-lg hover:border-indigo-200 transition-all duration-300">
                             <div class="text-sm text-slate-500 mb-3">{{ optional($post->published_at)->format('j M Y') }}</div>
-                            <h4 class="text-lg font-semibold text-slate-800 mb-3 group-hover:text-blue-600 transition-colors">{{ $post->title }}</h4>
+                            <h4 class="text-lg font-semibold text-slate-800 mb-3 group-hover:text-indigo-600 transition-colors">{{ $post->title }}</h4>
                             <p class="text-slate-600 line-clamp-3 leading-relaxed">{{ $post->excerpt }}</p>
-                            <div class="flex items-center mt-4 text-blue-600 font-medium text-sm group-hover:text-blue-700 transition-colors">
+                            <div class="flex items-center mt-4 text-indigo-600 font-medium text-sm group-hover:text-indigo-700 transition-colors">
                                 Läs mer
                                 <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-200" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
