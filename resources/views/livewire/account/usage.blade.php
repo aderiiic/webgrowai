@@ -58,12 +58,49 @@
             </div>
         @endif
 
-        <!-- Usage metrics -->
+        @php
+            // Slå ihop alla publicerings-rader (FB/IG/LI/Shopify/WordPress) till en "Publiceringar"
+            $pubKeys = ['facebook','instagram','linkedin','shopify','wordpress','wp','Publiceringar','Facebook','Instagram','LinkedIn','Shopify','WordPress'];
+            $rowsDisplay = [];
+            $pubAgg = ['label' => 'Publiceringar', 'used' => 0, 'quota' => 0, 'pct' => 0, 'warn' => false, 'stop' => false];
+            foreach ($rows as $r) {
+                $label = (string)($r['label'] ?? '');
+                $isPub = false;
+                foreach ($pubKeys as $k) {
+                    if (stripos($label, $k) !== false) { $isPub = true; break; }
+                }
+                if ($isPub) {
+                    $u = (int)($r['used'] ?? 0);
+                    $q = (int)($r['quota'] ?? 0);
+                    $pubAgg['used']  += $u;
+                    $pubAgg['quota'] += $q;
+                    // warn/stop om någon säger stop eller warn
+                    $pubAgg['stop'] = $pubAgg['stop'] || !empty($r['stop']);
+                    $pubAgg['warn'] = $pubAgg['warn'] || !empty($r['warn']);
+                } else {
+                    $rowsDisplay[] = $r;
+                }
+            }
+            if ($pubAgg['used'] > 0 || $pubAgg['quota'] > 0) {
+                $pubAgg['pct'] = $pubAgg['quota'] > 0 ? (int)round(($pubAgg['used'] / max(1,$pubAgg['quota'])) * 100) : 0;
+                // Om kvoten finns, räkna varningsflaggor smart
+                if ($pubAgg['quota'] > 0) {
+                    $pubAgg['stop'] = $pubAgg['used'] >= $pubAgg['quota'];
+                    $pubAgg['warn'] = !$pubAgg['stop'] && $pubAgg['pct'] >= 80;
+                }
+                array_unshift($rowsDisplay, $pubAgg);
+            } else {
+                // Om inga pub-rader hittades, visa originalraderna
+                $rowsDisplay = $rowsDisplay ?: $rows;
+            }
+        @endphp
+
+            <!-- Usage metrics -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            @foreach($rows as $r)
+            @foreach($rowsDisplay as $r)
                 @php
-                    // Mappa etiketten så att ev. WP-specifik label visas som "Publiceringar"
                     $rawLabel = $r['label'] ?? '';
+                    // Om label innehåller WP/wordpress → visa "Publiceringar"
                     $label = preg_match('/\bwp\b|wordpress/i', (string)$rawLabel) ? 'Publiceringar' : $rawLabel;
 
                     $statusColors = [
@@ -72,7 +109,7 @@
                         'normal' => ['bg' => 'from-indigo-50 to-blue-50', 'border' => 'border-indigo-200/50', 'text' => 'text-indigo-800', 'progress' => 'bg-indigo-500'],
                     ];
 
-                    $status = $r['stop'] ? 'stop' : ($r['warn'] ? 'warn' : 'normal');
+                    $status = (!empty($r['stop'])) ? 'stop' : ((!empty($r['warn'])) ? 'warn' : 'normal');
                     $colors = $statusColors[$status];
                 @endphp
 
@@ -98,7 +135,7 @@
                     </div>
 
                     <!-- Status message -->
-                    @if($r['warn'] && !$r['stop'])
+                    @if(!empty($r['warn']) && empty($r['stop']))
                         <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg">
                             <div class="flex items-center space-x-2">
                                 <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -107,7 +144,7 @@
                                 <p class="text-xs font-medium text-amber-800">Du har nått {{ $r['pct'] }}% av kvoten</p>
                             </div>
                         </div>
-                    @elseif($r['stop'])
+                    @elseif(!empty($r['stop']))
                         <div class="p-3 bg-red-50 border border-red-200 rounded-lg">
                             <div class="flex items-center space-x-2">
                                 <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

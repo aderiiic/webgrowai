@@ -2,10 +2,12 @@
 
 namespace App\Livewire\AI;
 
-use App\Jobs\PublishAiContentJob;
+use App\Jobs\PublishAiContentJob; // Byt till generiska jobbet
+use App\Jobs\PublishToFacebookJob;
+use App\Jobs\PublishToInstagramJob;
+use App\Jobs\PublishToLinkedInJob;
 use App\Models\AiContent;
 use App\Models\ContentPublication;
-use App\Models\Integration;
 use App\Services\Sites\IntegrationManager;
 use App\Support\CurrentCustomer;
 use Illuminate\Contracts\View\View;
@@ -18,7 +20,37 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class Detail extends Component
 {
-    // ... egenskaper som tidigare ...
+    public AiContent $content;
+    public $sites;
+
+    public ?int $publishSiteId = null;
+    public string $publishStatus = 'draft';
+    public ?string $publishAt = null;
+
+    public string $socialTarget = '';
+    public ?string $socialScheduleAt = null;
+
+    public string $liQuickText = '';
+    public ?string $liQuickScheduleAt = null;
+    public string $liQuickImagePrompt = '';
+
+    // UI-hjälp: om kvot är nådd (beräknas i render)
+    public bool $publishQuotaReached = false;
+    public ?int $publishQuotaLimit = null;
+    public int $publishQuotaUsed = 0;
+
+    public function mount(int $id, CurrentCustomer $current): void
+    {
+        $this->content = AiContent::with('template','site','customer')->findOrFail($id);
+        Gate::authorize('view', $this->content);
+
+        $this->sites = $current->get()?->sites()->orderBy('name')->get() ?? collect();
+        $this->publishSiteId = $this->content->site_id ?: ($current->get()?->sites()->orderBy('id')->value('id'));
+
+        if (empty($this->socialTarget)) {
+            $this->socialTarget = 'facebook';
+        }
+    }
 
     public function publish(): void
     {
@@ -35,6 +67,33 @@ class Detail extends Component
         if (!$user->isAdmin()) {
             $customer = $current->get();
             abort_unless($customer && $customer->sites()->whereKey($this->publishSiteId)->exists(), 403);
+        } else {
+            $customer = $current->get();
+        }
+
+        // Kvotkontroll för publiceringar (månad)
+        // Om ingen plan/limit hittas: obegränsat
+        $limit = null;
+        try {
+            $limit = optional(optional($customer)->plan)->publication_quota;
+        } catch (\Throwable) {
+            $limit = null;
+        }
+
+        if ($limit !== null) {
+            $start = Carbon::now()->startOfMonth();
+            $end   = Carbon::now()->endOfMonth();
+
+            $used = ContentPublication::whereBetween('created_at', [$start, $end])
+                ->whereHas('aiContent', function ($q) use ($customer) {
+                    $q->when($customer, fn($q2) => $q2->where('customer_id', $customer->id));
+                })
+                ->count();
+
+            if ($used >= (int)$limit) {
+                session()->flash('success', 'Kvotgräns för publiceringar är uppnådd för din plan.');
+                return;
+            }
         }
 
         $iso = null;
@@ -42,12 +101,11 @@ class Detail extends Component
             $iso = Carbon::parse($this->publishAt)->toIso8601String();
         }
 
-        // Avgör preferred provider genom att titta på integrationerna för vald site
-        $providers = Integration::where('site_id', $this->publishSiteId)->pluck('provider')->all();
-        $preferredProvider = in_array('wordpress', $providers, true) ? 'wordpress'
-            : (in_array('shopify', $providers, true) ? 'shopify' : null);
-
-        $target = $preferredProvider === 'shopify' ? 'shopify' : 'wp';
+        // Hämta provider för vald sajt (styr target och feedback)
+        $client = app(IntegrationManager::class)->forSite($this->publishSiteId);
+        $provider = $client->provider(); // 'wordpress' | 'shopify' | 'custom'
+        // Viktigt: spara target = provider för konsistens
+        $target = $provider;
 
         $pub = ContentPublication::create([
             'ai_content_id' => $this->content->id,
@@ -56,23 +114,23 @@ class Detail extends Component
             'scheduled_at'  => $iso ? Carbon::parse($this->publishAt) : null,
             'message'       => null,
             'payload'       => [
-                'site_id'  => $this->publishSiteId,
-                'status'   => $this->publishStatus,
-                'date'     => $iso,
-                'provider' => $preferredProvider,
+                'site_id' => $this->publishSiteId,
+                'status'  => $this->publishStatus,
+                // Låt datum vara ISO8601 – jobbet mappar till rätt fält (date/date_gmt/publication_time) per provider
+                'date'    => $iso,
             ],
         ]);
 
+        // Publicera via generiskt jobb (IntegrationManager hanterar Shopify/WordPress)
         dispatch(new PublishAiContentJob(
             aiContentId: $this->content->id,
             siteId: $this->publishSiteId,
             status: $this->publishStatus,
             scheduleAtIso: $iso,
-            publicationId: $pub->id,
-            preferredProvider: $preferredProvider
+            publicationId: $pub->id
         ))->onQueue('publish');
 
-        $platform = $preferredProvider === 'shopify' ? 'Shopify' : 'WordPress';
+        $platform = $provider === 'shopify' ? 'Shopify' : 'WordPress';
         session()->flash('success', $platform.'-publicering köad.');
     }
 
@@ -161,17 +219,42 @@ class Detail extends Component
         $currentProvider = null;
         try {
             if ($this->publishSiteId) {
-                $currentProvider = app(IntegrationManager::class)->forSite((int)$this->publishSiteId)->provider();
+                $currentProvider = app(IntegrationManager::class)->forSite((int)$this->publishSiteId)->provider(); // 'shopify' | 'wordpress' | null
             }
         } catch (\Throwable) {
             $currentProvider = null;
         }
 
+        // Beräkna kvotläge för UI
+        $customer = app(CurrentCustomer::class)->get();
+        $limit = null;
+        try {
+            $limit = optional(optional($customer)->plan)->publication_quota;
+        } catch (\Throwable) {
+            $limit = null;
+        }
+
+        $used = 0;
+        if ($limit !== null && $customer) {
+            $start = Carbon::now()->startOfMonth();
+            $end   = Carbon::now()->endOfMonth();
+            $used = ContentPublication::whereBetween('created_at', [$start, $end])
+                ->whereHas('aiContent', fn($q) => $q->where('customer_id', $customer->id))
+                ->count();
+        }
+
+        $this->publishQuotaLimit = $limit !== null ? (int)$limit : null;
+        $this->publishQuotaUsed  = $used;
+        $this->publishQuotaReached = $limit !== null ? ($used >= (int)$limit) : false;
+
         return view('livewire.a-i.detail', [
-            'sites'           => $this->sites,
-            'md'              => $md,
-            'html'            => $html,
-            'currentProvider' => $currentProvider, // 'shopify' | 'wordpress' | null
+            'sites'                 => $this->sites,
+            'md'                    => $md,
+            'html'                  => $html,
+            'currentProvider'       => $currentProvider, // 'shopify' | 'wordpress' | null
+            'publishQuotaReached'   => $this->publishQuotaReached,
+            'publishQuotaLimit'     => $this->publishQuotaLimit,
+            'publishQuotaUsed'      => $this->publishQuotaUsed,
         ]);
     }
 

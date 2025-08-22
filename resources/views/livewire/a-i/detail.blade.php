@@ -36,12 +36,13 @@
 
         @php
             $pubs = $content->relationLoaded('publications') ? $content->publications : ($content->publications ?? collect());
+            // Stöd både 'wp' och 'wordpress'
             $byTarget = [
-                'wp'       => $pubs->where('target','wp'),
-                'shopify'  => $pubs->where('target','shopify'),
-                'facebook' => $pubs->where('target','facebook'),
-                'instagram'=> $pubs->where('target','instagram'),
-                'linkedin' => $pubs->where('target','linkedin'),
+                'wordpress' => $pubs->whereIn('target',['wp','wordpress']),
+                'shopify'   => $pubs->where('target','shopify'),
+                'facebook'  => $pubs->where('target','facebook'),
+                'instagram' => $pubs->where('target','instagram'),
+                'linkedin'  => $pubs->where('target','linkedin'),
             ];
             $state = function($col) {
                 if ($col->where('status','published')->count() > 0) return 'ok';
@@ -65,11 +66,11 @@
         @endphp
 
         <div class="mt-2 flex items-center gap-4">
-            @foreach(['wp'=>'WordPress','shopify'=>'Shopify','facebook'=>'Facebook','instagram'=>'Instagram','linkedin'=>'LinkedIn'] as $t=>$label)
+            @foreach(['wordpress'=>'WordPress','shopify'=>'Shopify','facebook'=>'Facebook','instagram'=>'Instagram','linkedin'=>'LinkedIn'] as $t=>$label)
                 @php $st = $state($byTarget[$t]); @endphp
                 <div class="flex items-center gap-1" title="{{ $label }} – {{ $statusToLabel($st) }}">
                     <svg class="w-4 h-4 {{ $statusToColor($st) }}" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                        @if($t === 'wp')
+                        @if($t === 'wordpress')
                             <path d="M10 1.25A8.75 8.75 0 1018.75 10 8.76 8.76 0 0010 1.25zm0 1.5A7.25 7.25 0 1117.25 10 7.26 7.26 0 0110 2.75zM6.1 7.5l2.6 7.2.9-2.7-1.7-4.5H6.1zm4.2 0l2.6 7.2c1.5-.8 2.4-2.5 2.4-4.4 0-1.1-.4-2-.8-2.8h-1.9l-1.4 4.3-1-4.3H10.3z"/>
                         @elseif($t === 'shopify')
                             <path d="M6 2a2 2 0 00-2 2v1H3a1 1 0 00-1 .8L1 9a2 2 0 002 2h14a2 2 0 002-2l-2-3.2A1 1 0 0016 5h-1V4a2 2 0 00-2-2H6zm7 3H7V4a1 1 0 011-1h4a1 1 0 011 1v1zM3 12v4a2 2 0 002 2h10a2 2 0 002-2v-4H3z"/>
@@ -105,6 +106,23 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                     <p class="text-sm font-medium text-red-800">{{ $content->error }}</p>
+                </div>
+            </div>
+        @endif
+
+        @if($publishQuotaReached)
+            <div class="p-4 bg-red-50 border border-red-200 rounded-xl">
+                <div class="flex items-center space-x-3">
+                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <p class="text-sm font-medium text-red-800">
+                        Kvot för publiceringar uppnådd
+                        @if(!is_null($publishQuotaLimit))
+                            ({{ $publishQuotaUsed }} / {{ $publishQuotaLimit }})
+                        @endif
+                        – uppgradera plan eller begär extraanvändning.
+                    </p>
                 </div>
             </div>
         @endif
@@ -158,16 +176,14 @@
                 </div>
             </div>
 
-            <!-- WordPress publishing -->
+            <!-- WordPress/Shopify publishing -->
             <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6">
                 <div class="flex items-center space-x-4 mb-6">
                     <div class="w-12 h-12 {{ $isShopify ? 'bg-gradient-to-br from-emerald-500 to-teal-600' : 'bg-gradient-to-br from-emerald-500 to-teal-600' }} rounded-xl flex items-center justify-center">
                         <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
                             @if($isShopify)
-                                <!-- Shopify-liknande ikon -->
                                 <path d="M7 3a2 2 0 00-2 2v1H4a1 1 0 00-.96.72L2 10a2 2 0 002 2h16a2 2 0 002-2l-2.2-3.3A1 1 0 0019 6h-2V5a2 2 0 00-2-2H7zm8 3H9V5a1 1 0 011-1h4a1 1 0 011 1v1zM4 13v5a2 2 0 002 2h12a2 2 0 002-2v-5H4z"/>
                             @else
-                                <!-- WP-liknande ikon -->
                                 <path d="M21.469 6.825c.84 1.537 1.318 3.3 1.318 5.175 0 3.979-2.156 7.456-5.363 9.325l3.295-9.527c.615-1.54.82-2.771.82-3.864 0-.405-.026-.78-.07-1.11m-7.981.105c.647-.03 1.232-.105 1.232-.105.582-.075.514-.93-.067-.899 0 0-1.755.135-2.88.135-1.064 0-2.85-.15-2.85-.15-.584-.03-.661.854-.075.884 0 0 .54.061 1.125.09l1.68 4.605-2.37 7.08L5.354 6.9c.649-.03 1.234-.1 1.234-.1.585-.075.516-.93-.065-.896 0 0-1.746.138-2.874.138-.2 0-.438-.008-.69-.015C4.911 3.15 8.235 1.215 12 1.215c2.809 0 5.365 1.072 7.286 2.833-.046-.003-.091-.009-.141-.009-1.06 0-1.812.923-1.812 1.914 0 .89.513 1.643 1.06 2.531.411.72.89 1.643.89 2.977 0 .915-.354 1.994-.821 3.479l-1.075 3.585-3.9-11.61.001.014z"/>
                             @endif
                         </svg>
@@ -196,7 +212,7 @@
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                                <select wire:model="publishStatus" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200">
+                                <select wire:model="publishStatus" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200" @if($publishQuotaReached) disabled @endif>
                                     <option value="draft">Utkast</option>
                                     <option value="publish">Publicera</option>
                                     <option value="future">Schemalägg</option>
@@ -205,7 +221,7 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Publiceringstid</label>
-                                <input type="datetime-local" wire:model="publishAt" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200">
+                                <input type="datetime-local" wire:model="publishAt" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200" @if($publishQuotaReached) disabled @endif>
                             </div>
                         </div>
                     </div>
@@ -213,7 +229,7 @@
                     <div class="flex justify-between items-center pt-4 border-t border-gray-200">
                         @php $mdReady = !empty($md); @endphp
                         @if($mdReady && $publishSiteId)
-                            <button wire:click="quickDraft" class="inline-flex items-center px-4 py-2 bg-emerald-100 text-emerald-800 font-medium rounded-lg hover:bg-emerald-200 transition-colors duration-200 text-sm">
+                            <button wire:click="quickDraft" class="inline-flex items-center px-4 py-2 bg-emerald-100 text-emerald-800 font-medium rounded-lg hover:bg-emerald-200 transition-colors duration-200 text-sm {{ $publishQuotaReached ? 'opacity-50 cursor-not-allowed' : '' }}" @if($publishQuotaReached) disabled @endif>
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                                 </svg>
@@ -223,8 +239,8 @@
                             <div></div>
                         @endif
 
-                        <button wire:click="publish" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl hover:from-emerald-700 hover:to-teal-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl {{ !$mdReady ? 'opacity-50 cursor-not-allowed' : '' }}"
-                                @if(!$mdReady) disabled @endif>
+                        <button wire:click="publish" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl hover:from-emerald-700 hover:to-teal-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl {{ (!$mdReady || $publishQuotaReached) ? 'opacity-50 cursor-not-allowed' : '' }}"
+                                @if(!$mdReady || $publishQuotaReached) disabled @endif>
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
                             </svg>
@@ -253,7 +269,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Kanal</label>
-                    <select wire:model="socialTarget" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200">
+                    <select wire:model="socialTarget" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200" @if($publishQuotaReached) disabled @endif>
                         <option value="facebook">Facebook</option>
                         <option value="instagram">Instagram</option>
                         {{-- Lägg ev. till LinkedIn här om du vill kunna välja det i samma select --}}
@@ -265,7 +281,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Publiceringstid (valfritt)</label>
-                    <input type="datetime-local" wire:model="socialScheduleAt" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200">
+                    <input type="datetime-local" wire:model="socialScheduleAt" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200" @if($publishQuotaReached) disabled @endif>
                     @error('socialScheduleAt')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
@@ -280,8 +296,8 @@
             </div>
 
             <div class="flex justify-end">
-                <button wire:click="queueSocial" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-semibold rounded-xl hover:from-pink-700 hover:to-purple-700 focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl {{ !$mdReady ? 'opacity-50 cursor-not-allowed' : '' }}"
-                        @if(!$mdReady) disabled @endif>
+                <button wire:click="queueSocial" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-semibold rounded-xl hover:from-pink-700 hover:to-purple-700 focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl {{ (!$mdReady || $publishQuotaReached) ? 'opacity-50 cursor-not-allowed' : '' }}"
+                        @if(!$mdReady || $publishQuotaReached) disabled @endif>
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
                     </svg>
@@ -304,13 +320,13 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <input type="text" wire:model.defer="liQuickText" class="md:col-span-3 w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm" placeholder="Inläggstext">
-                <input type="datetime-local" wire:model.defer="liQuickScheduleAt" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm" placeholder="Schemalägg (valfritt)">
-                <input type="text" wire:model.defer="liQuickImagePrompt" class="md:col-span-2 w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm" placeholder="Bildprompt (valfritt)">
+                <input type="text" wire:model.defer="liQuickText" class="md:col-span-3 w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm" placeholder="Inläggstext" @if($publishQuotaReached) disabled @endif>
+                <input type="datetime-local" wire:model.defer="liQuickScheduleAt" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm" placeholder="Schemalägg (valfritt)" @if($publishQuotaReached) disabled @endif>
+                <input type="text" wire:model.defer="liQuickImagePrompt" class="md:col-span-2 w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm" placeholder="Bildprompt (valfritt)" @if($publishQuotaReached) disabled @endif>
             </div>
 
             <div class="mt-4 flex justify-end">
-                <button wire:click="queueLinkedInQuick" class="inline-flex items-center px-4 py-2 bg-sky-600 text-white font-semibold rounded-xl hover:bg-sky-700 focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition-all duration-200 shadow-md">
+                <button wire:click="queueLinkedInQuick" class="inline-flex items-center px-4 py-2 bg-sky-600 text-white font-semibold rounded-xl hover:bg-sky-700 focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition-all duration-200 shadow-md {{ $publishQuotaReached ? 'opacity-50 cursor-not-allowed' : '' }}" @if($publishQuotaReached) disabled @endif>
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
                     </svg>
@@ -331,25 +347,11 @@
                 el.classList.add('ring-2','ring-emerald-300');
                 setTimeout(() => el.classList.remove('ring-2','ring-emerald-300'), 1200);
             }
-
-            // 1) Fungerar vid full redirect
             document.addEventListener('DOMContentLoaded', scrollToFlash);
-
-            // 2) Fungerar vid Livewire-uppdateringar utan reload (observerar att flash-elementet tillkommer)
             const observer = new MutationObserver(() => {
-                if (document.getElementById('flash-success')) {
-                    scrollToFlash();
-                }
+                if (document.getElementById('flash-success')) { scrollToFlash(); }
             });
             observer.observe(document.body, { childList: true, subtree: true });
-
-            // 3) Extra stöd: om du i komponenten dispatchar ett event kan vi också lyssna på det
-            // Livewire v3:
-            // window.addEventListener('livewire:initialized', () => {
-            //     Livewire.on('flash-success', scrollToFlash);
-            // });
-            // Livewire v2:
-            // window.addEventListener('ai:flash', scrollToFlash);
         })();
     </script>
 @endpush
