@@ -1,6 +1,4 @@
 <?php
-// app/Jobs/PublishAiContentJob.php
-
 namespace App\Jobs;
 
 use App\Models\AiContent;
@@ -21,7 +19,8 @@ class PublishAiContentJob implements ShouldQueue
         public int $siteId,
         public string $status = 'draft',
         public ?string $scheduleAtIso = null,
-        public ?int $publicationId = null
+        public ?int $publicationId = null,
+        public ?string $preferredProvider = null // 'wordpress' | 'shopify' | null
     ) {
         $this->onQueue('publish');
     }
@@ -47,20 +46,21 @@ class PublishAiContentJob implements ShouldQueue
                     'site_id' => $this->siteId,
                     'status'  => $this->status,
                     'date'    => $this->scheduleAtIso,
+                    'provider'=> $this->preferredProvider,
                 ],
             ]);
         }
 
         $pub->update(['status' => 'processing', 'message' => null]);
 
-        $client = $integrations->forSite($this->siteId);
+        // Använd preferred provider om satt, annars fallback
+        $client = $integrations->forSiteWithProvider($this->siteId, $this->preferredProvider);
 
         if (!$client->supports('publish')) {
             $pub->update(['status' => 'failed', 'message' => 'Plattformen stödjer ännu inte publicering via API.']);
             return;
         }
 
-        // Konvertera MD → HTML (enkel fallback). För WP kan blockformat mappas i respektive adapter i framtiden.
         $html = (string) \Illuminate\Support\Str::of($content->body_md ?? '')->markdown();
 
         $payload = [
@@ -87,14 +87,13 @@ class PublishAiContentJob implements ShouldQueue
                 'status' => $this->status === 'draft' ? 'ready' : 'published',
             ]);
 
-            $provider = $client->provider(); // 'wordpress' | 'shopify' | ...
+            $provider = $client->provider();
             $metric = match ($provider) {
                 'wordpress' => 'ai.publish.wp',
                 'shopify'   => 'ai.publish.shopify',
                 default     => 'ai.publish.site',
             };
             $usage->increment($content->customer_id, $metric);
-
             $usage->increment($content->customer_id, 'ai.publish');
         } catch (\Throwable $e) {
             Log::error('[Publish] misslyckades', ['err' => $e->getMessage()]);

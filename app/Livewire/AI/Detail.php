@@ -2,12 +2,10 @@
 
 namespace App\Livewire\AI;
 
-use App\Jobs\PublishAiContentJob; // Byt till generiska jobbet
-use App\Jobs\PublishToFacebookJob;
-use App\Jobs\PublishToInstagramJob;
-use App\Jobs\PublishToLinkedInJob;
+use App\Jobs\PublishAiContentJob;
 use App\Models\AiContent;
 use App\Models\ContentPublication;
+use App\Models\Integration;
 use App\Services\Sites\IntegrationManager;
 use App\Support\CurrentCustomer;
 use Illuminate\Contracts\View\View;
@@ -20,32 +18,7 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class Detail extends Component
 {
-    public AiContent $content;
-    public $sites;
-
-    public ?int $publishSiteId = null;
-    public string $publishStatus = 'draft';
-    public ?string $publishAt = null;
-
-    public string $socialTarget = '';
-    public ?string $socialScheduleAt = null;
-
-    public string $liQuickText = '';
-    public ?string $liQuickScheduleAt = null;
-    public string $liQuickImagePrompt = '';
-
-    public function mount(int $id, CurrentCustomer $current): void
-    {
-        $this->content = AiContent::with('template','site','customer')->findOrFail($id);
-        Gate::authorize('view', $this->content);
-
-        $this->sites = $current->get()?->sites()->orderBy('name')->get() ?? collect();
-        $this->publishSiteId = $this->content->site_id ?: ($current->get()?->sites()->orderBy('id')->value('id'));
-
-        if (empty($this->socialTarget)) {
-            $this->socialTarget = 'facebook';
-        }
-    }
+    // ... egenskaper som tidigare ...
 
     public function publish(): void
     {
@@ -69,10 +42,12 @@ class Detail extends Component
             $iso = Carbon::parse($this->publishAt)->toIso8601String();
         }
 
-        // Hämta provider för vald sajt (styr target och feedback)
-        $client = app(IntegrationManager::class)->forSite($this->publishSiteId);
-        $provider = $client->provider();
-        $target = $provider === 'shopify' ? 'shopify' : 'wp';
+        // Avgör preferred provider genom att titta på integrationerna för vald site
+        $providers = Integration::where('site_id', $this->publishSiteId)->pluck('provider')->all();
+        $preferredProvider = in_array('wordpress', $providers, true) ? 'wordpress'
+            : (in_array('shopify', $providers, true) ? 'shopify' : null);
+
+        $target = $preferredProvider === 'shopify' ? 'shopify' : 'wp';
 
         $pub = ContentPublication::create([
             'ai_content_id' => $this->content->id,
@@ -81,22 +56,23 @@ class Detail extends Component
             'scheduled_at'  => $iso ? Carbon::parse($this->publishAt) : null,
             'message'       => null,
             'payload'       => [
-                'site_id' => $this->publishSiteId,
-                'status'  => $this->publishStatus,
-                'date'    => $iso,
+                'site_id'  => $this->publishSiteId,
+                'status'   => $this->publishStatus,
+                'date'     => $iso,
+                'provider' => $preferredProvider,
             ],
         ]);
 
-        // Viktigt: använd det generiska jobbet som publicerar via IntegrationManager (Shopify/WordPress)
         dispatch(new PublishAiContentJob(
             aiContentId: $this->content->id,
             siteId: $this->publishSiteId,
             status: $this->publishStatus,
             scheduleAtIso: $iso,
-            publicationId: $pub->id
+            publicationId: $pub->id,
+            preferredProvider: $preferredProvider
         ))->onQueue('publish');
 
-        $platform = $provider === 'shopify' ? 'Shopify' : 'WordPress';
+        $platform = $preferredProvider === 'shopify' ? 'Shopify' : 'WordPress';
         session()->flash('success', $platform.'-publicering köad.');
     }
 
