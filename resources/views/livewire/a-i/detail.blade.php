@@ -61,6 +61,7 @@
                 'failed' => 'Misslyckad',
                 default => 'Inte publicerad',
             };
+            $isShopify = ($currentProvider ?? null) === 'shopify';
         @endphp
 
         <div class="mt-2 flex items-center gap-4">
@@ -160,14 +161,24 @@
             <!-- WordPress publishing -->
             <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6">
                 <div class="flex items-center space-x-4 mb-6">
-                    <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center">
+                    <div class="w-12 h-12 {{ $isShopify ? 'bg-gradient-to-br from-emerald-500 to-teal-600' : 'bg-gradient-to-br from-emerald-500 to-teal-600' }} rounded-xl flex items-center justify-center">
                         <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M21.469 6.825c.84 1.537 1.318 3.3 1.318 5.175 0 3.979-2.156 7.456-5.363 9.325l3.295-9.527c.615-1.54.82-2.771.82-3.864 0-.405-.026-.78-.07-1.11m-7.981.105c.647-.03 1.232-.105 1.232-.105.582-.075.514-.93-.067-.899 0 0-1.755.135-2.88.135-1.064 0-2.85-.15-2.85-.15-.584-.03-.661.854-.075.884 0 0 .54.061 1.125.09l1.68 4.605-2.37 7.08L5.354 6.9c.649-.03 1.234-.1 1.234-.1.585-.075.516-.93-.065-.896 0 0-1.746.138-2.874.138-.2 0-.438-.008-.69-.015C4.911 3.15 8.235 1.215 12 1.215c2.809 0 5.365 1.072 7.286 2.833-.046-.003-.091-.009-.141-.009-1.06 0-1.812.923-1.812 1.914 0 .89.513 1.643 1.06 2.531.411.72.89 1.643.89 2.977 0 .915-.354 1.994-.821 3.479l-1.075 3.585-3.9-11.61.001.014z"/>
+                            @if($isShopify)
+                                <!-- Shopify-liknande ikon -->
+                                <path d="M7 3a2 2 0 00-2 2v1H4a1 1 0 00-.96.72L2 10a2 2 0 002 2h16a2 2 0 002-2l-2.2-3.3A1 1 0 0019 6h-2V5a2 2 0 00-2-2H7zm8 3H9V5a1 1 0 011-1h4a1 1 0 011 1v1zM4 13v5a2 2 0 002 2h12a2 2 0 002-2v-5H4z"/>
+                            @else
+                                <!-- WP-liknande ikon -->
+                                <path d="M21.469 6.825c.84 1.537 1.318 3.3 1.318 5.175 0 3.979-2.156 7.456-5.363 9.325l3.295-9.527c.615-1.54.82-2.771.82-3.864 0-.405-.026-.78-.07-1.11m-7.981.105c.647-.03 1.232-.105 1.232-.105.582-.075.514-.93-.067-.899 0 0-1.755.135-2.88.135-1.064 0-2.85-.15-2.85-.15-.584-.03-.661.854-.075.884 0 0 .54.061 1.125.09l1.68 4.605-2.37 7.08L5.354 6.9c.649-.03 1.234-.1 1.234-.1.585-.075.516-.93-.065-.896 0 0-1.746.138-2.874.138-.2 0-.438-.008-.69-.015C4.911 3.15 8.235 1.215 12 1.215c2.809 0 5.365 1.072 7.286 2.833-.046-.003-.091-.009-.141-.009-1.06 0-1.812.923-1.812 1.914 0 .89.513 1.643 1.06 2.531.411.72.89 1.643.89 2.977 0 .915-.354 1.994-.821 3.479l-1.075 3.585-3.9-11.61.001.014z"/>
+                            @endif
                         </svg>
                     </div>
                     <div>
-                        <h2 class="text-xl font-bold text-gray-900">WordPress</h2>
-                        <p class="text-sm text-gray-600">Publicera direkt till din WordPress-sajt</p>
+                        <h2 class="text-xl font-bold text-gray-900">
+                            {{ $isShopify ? 'Shopify' : 'WordPress' }}
+                        </h2>
+                        <p class="text-sm text-gray-600">
+                            {{ $isShopify ? 'Publicera direkt till din Shopify-butik' : 'Publicera direkt till din WordPress-sajt' }}
+                        </p>
                     </div>
                 </div>
 
@@ -200,6 +211,7 @@
                     </div>
 
                     <div class="flex justify-between items-center pt-4 border-t border-gray-200">
+                        @php $mdReady = !empty($md); @endphp
                         @if($mdReady && $publishSiteId)
                             <button wire:click="quickDraft" class="inline-flex items-center px-4 py-2 bg-emerald-100 text-emerald-800 font-medium rounded-lg hover:bg-emerald-200 transition-colors duration-200 text-sm">
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
