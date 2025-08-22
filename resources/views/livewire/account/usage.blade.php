@@ -62,9 +62,13 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             @foreach($rows as $r)
                 @php
+                    // Mappa etiketten så att ev. WP-specifik label visas som "Publiceringar"
+                    $rawLabel = $r['label'] ?? '';
+                    $label = preg_match('/\bwp\b|wordpress/i', (string)$rawLabel) ? 'Publiceringar' : $rawLabel;
+
                     $statusColors = [
-                        'stop' => ['bg' => 'from-red-50 to-pink-50', 'border' => 'border-red-200/50', 'text' => 'text-red-800', 'progress' => 'bg-red-500'],
-                        'warn' => ['bg' => 'from-amber-50 to-yellow-50', 'border' => 'border-amber-200/50', 'text' => 'text-amber-800', 'progress' => 'bg-amber-500'],
+                        'stop'   => ['bg' => 'from-red-50 to-pink-50', 'border' => 'border-red-200/50', 'text' => 'text-red-800', 'progress' => 'bg-red-500'],
+                        'warn'   => ['bg' => 'from-amber-50 to-yellow-50', 'border' => 'border-amber-200/50', 'text' => 'text-amber-800', 'progress' => 'bg-amber-500'],
                         'normal' => ['bg' => 'from-indigo-50 to-blue-50', 'border' => 'border-indigo-200/50', 'text' => 'text-indigo-800', 'progress' => 'bg-indigo-500'],
                     ];
 
@@ -74,7 +78,7 @@
 
                 <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6 hover:shadow-2xl transition-all duration-200">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-bold text-gray-900">{{ $r['label'] }}</h3>
+                        <h3 class="text-lg font-bold text-gray-900">{{ $label }}</h3>
                         <div class="inline-flex items-center px-3 py-1 bg-gradient-to-r {{ $colors['bg'] }} {{ $colors['border'] }} border rounded-full">
                             <span class="text-sm font-semibold {{ $colors['text'] }}">
                                 {{ $r['used'] }} / {{ $r['quota'] }}

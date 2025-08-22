@@ -93,8 +93,9 @@ class PublishAiContentJob implements ShouldQueue
                 'shopify'   => 'ai.publish.shopify',
                 default     => 'ai.publish.site',
             };
+            $usage->increment($content->customer_id, $metric);
 
-            $usage->increment($content->customer_id, 'ai.publish.site');
+            $usage->increment($content->customer_id, 'ai.publish');
         } catch (\Throwable $e) {
             Log::error('[Publish] misslyckades', ['err' => $e->getMessage()]);
             $pub->update(['status' => 'failed', 'message' => $e->getMessage(), 'payload' => $payload]);

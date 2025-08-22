@@ -65,9 +65,8 @@ class PublishToLinkedInJob implements ShouldQueue
             'payload'     => array_merge($payload, ['asset_urn' => $assetUrn]),
         ]);
 
-        if ($customerId) {
-            $usage->increment($customerId, 'ai.publish.linkedin');
-        }
+        $usage->increment($customerId, 'ai.publish.linkedin');
+        $usage->increment($customerId, 'ai.publish');
     }
 
     private function buildAutoPrompt(?string $title, array $inputs): string

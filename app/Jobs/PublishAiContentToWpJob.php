@@ -148,6 +148,7 @@ class PublishAiContentToWpJob implements ShouldQueue
             ]);
 
             $usage->increment($content->customer_id, 'ai.publish.wp');
+            $usage->increment($content->customer_id, 'ai.publish');
         } catch (Throwable $e) {
             $pub->update(['status' => 'failed', 'message' => $e->getMessage(), 'payload' => $payload]);
             throw $e;
