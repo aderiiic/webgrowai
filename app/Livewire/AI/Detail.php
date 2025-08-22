@@ -2,7 +2,7 @@
 
 namespace App\Livewire\AI;
 
-use App\Jobs\PublishAiContentToWpJob;
+use App\Jobs\PublishAiContentJob; // Byt till generiska jobbet
 use App\Jobs\PublishToFacebookJob;
 use App\Jobs\PublishToInstagramJob;
 use App\Jobs\PublishToLinkedInJob;
@@ -42,7 +42,6 @@ class Detail extends Component
         $this->sites = $current->get()?->sites()->orderBy('name')->get() ?? collect();
         $this->publishSiteId = $this->content->site_id ?: ($current->get()?->sites()->orderBy('id')->value('id'));
 
-        // Viktigt: se till att socialTarget har ett initialt värde
         if (empty($this->socialTarget)) {
             $this->socialTarget = 'facebook';
         }
@@ -70,9 +69,9 @@ class Detail extends Component
             $iso = Carbon::parse($this->publishAt)->toIso8601String();
         }
 
+        // Hämta provider för vald sajt (styr target och feedback)
         $client = app(IntegrationManager::class)->forSite($this->publishSiteId);
         $provider = $client->provider();
-
         $target = $provider === 'shopify' ? 'shopify' : 'wp';
 
         $pub = ContentPublication::create([
@@ -88,7 +87,8 @@ class Detail extends Component
             ],
         ]);
 
-        dispatch(new PublishAiContentToWpJob(
+        // Viktigt: använd det generiska jobbet som publicerar via IntegrationManager (Shopify/WordPress)
+        dispatch(new PublishAiContentJob(
             aiContentId: $this->content->id,
             siteId: $this->publishSiteId,
             status: $this->publishStatus,
@@ -97,7 +97,6 @@ class Detail extends Component
         ))->onQueue('publish');
 
         $platform = $provider === 'shopify' ? 'Shopify' : 'WordPress';
-
         session()->flash('success', $platform.'-publicering köad.');
     }
 
@@ -182,10 +181,21 @@ class Detail extends Component
         $md = $this->normalizeMd((string) ($this->content->body_md ?? ''));
         $html = $md !== '' ? Str::of($md)->markdown() : '';
 
+        // Ta reda på provider för nuvarande vald sajt så vi kan visa rätt paneltext/ikon
+        $currentProvider = null;
+        try {
+            if ($this->publishSiteId) {
+                $currentProvider = app(IntegrationManager::class)->forSite((int)$this->publishSiteId)->provider();
+            }
+        } catch (\Throwable) {
+            $currentProvider = null;
+        }
+
         return view('livewire.a-i.detail', [
-            'sites' => $this->sites,
-            'md'    => $md,
-            'html'  => $html,
+            'sites'           => $this->sites,
+            'md'              => $md,
+            'html'            => $html,
+            'currentProvider' => $currentProvider, // 'shopify' | 'wordpress' | null
         ]);
     }
 
