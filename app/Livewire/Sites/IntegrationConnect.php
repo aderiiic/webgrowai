@@ -54,7 +54,6 @@ class IntegrationConnect extends Component
             if ($existing->provider === 'wordpress') {
                 $this->wp_url = (string)($creds['wp_url'] ?? '');
                 $this->wp_username = (string)($creds['wp_username'] ?? '');
-                // Lösenordet visas inte; kräver ny inmatning för att uppdatera
             } elseif ($existing->provider === 'shopify') {
                 $this->shop_domain = (string)($creds['shop_domain'] ?? '');
             } else {
@@ -121,8 +120,8 @@ class IntegrationConnect extends Component
             if ($this->shop_access_token !== '') {
                 $credentials['access_token'] = Crypt::encryptString($this->shop_access_token);
             } elseif (!$integration->exists) {
-                $this->addError('shop_access_token', 'Access token krävs vid första anslutningen.');
-                return;
+                // För OAuth-flödet behöver vi inte token här; använd knappen "Anslut med Shopify" istället.
+                // Låt bli att stoppa här – användaren kan köra OAuth-knappen utan att spara token manuellt.
             }
         } else {
             $credentials = [
@@ -139,20 +138,12 @@ class IntegrationConnect extends Component
 
         $integration->credentials = $credentials;
 
-        // Testa anslutning via adapter.listDocuments(['limit'=>1])
         try {
-            // Skapa en temporär integration i minnet för test om nycklar just uppdaterats
             $integration->status = 'connecting';
             $integration->last_error = null;
-
-            // Spara först så att IntegrationManager kan läsa
             $integration->save();
 
-            // Bygg adapter och testa
             $client = $manager->forIntegration($integration);
-
-            // Decrypt i adapters: här förväntas adapters hantera decrypt ifall de kräver plaintext
-            // Vi kör en minimal test:
             $client->listDocuments(['limit' => 1]);
 
             $integration->status = 'connected';
@@ -170,6 +161,24 @@ class IntegrationConnect extends Component
         session()->flash('success', $integration->status === 'connected'
             ? 'Integrationen är ansluten.'
             : 'Misslyckades att ansluta. Kontrollera uppgifterna.');
+    }
+
+    // NYTT: Shopify-OAuth från connect-sidan
+    public function startShopifyConnect(): void
+    {
+        $data = $this->validate([
+            'shop_domain' => ['required', 'string', 'regex:/^[a-zA-Z0-9][a-zA-Z0-9-]*\.myshopify\.com$/'],
+        ], [
+            'shop_domain.required' => 'Ange din myshopify.com-domän.',
+            'shop_domain.regex'    => 'Ange domänen i formatet my-shop.myshopify.com.',
+        ]);
+
+        $url = route('integrations.shopify.embedded', [
+            'shop' => $data['shop_domain'],
+            'site' => $this->site->id,
+        ]);
+
+        $this->redirect($url, navigate: false);
     }
 
     public function validateConnection(IntegrationManager $manager): void
@@ -214,6 +223,6 @@ class IntegrationConnect extends Component
     {
         $integration = Integration::where('site_id', $this->site->id)->first();
         return view('livewire.sites.integration-connect', compact('integration'))
-            ->layout('layouts.app'); // Viktigt: peka på rätt layout
+            ->layout('layouts.app');
     }
 }

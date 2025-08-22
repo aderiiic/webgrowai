@@ -4,17 +4,16 @@
     <div class="space-y-6">
         <div>
             <label class="block text-sm font-medium mb-1">Plattform</label>
-            <!-- Byt till .live och lägg wire:key på selecten -->
             <select wire:model.live="provider" wire:key="provider-select" class="w-full border rounded p-2">
                 <option value="wordpress">WordPress</option>
                 <option value="shopify">Shopify</option>
                 <option value="custom">Custom</option>
             </select>
-            <!-- Debug (temporärt): visar vilket värde Livewire har -->
             <p class="text-xs text-gray-500 mt-1">Vald: {{ $provider }}</p>
         </div>
 
         @if($provider === 'wordpress')
+            <!-- oförändrat WP-block -->
             <div class="grid md:grid-cols-2 gap-4" wire:key="provider-wordpress">
                 <div>
                     <label class="block text-sm font-medium mb-1">WordPress URL</label>
@@ -35,6 +34,7 @@
             </div>
 
         @elseif($provider === 'shopify')
+            <!-- Shopify: starta embedded OAuth från connect-sidan -->
             <div class="space-y-3" wire:key="provider-shopify">
                 <div>
                     <label class="block text-sm font-medium mb-1">Shop domain</label>
@@ -43,33 +43,20 @@
                 </div>
 
                 <div class="flex items-center gap-3">
-                    @php
-                        $shopVal = trim($shop_domain ?? '');
-                        $installUrl = $shopVal
-                            ? route('integrations.shopify.install', ['site' => $site->id, 'shop' => $shopVal])
-                            : null;
-                    @endphp
-
-                    @if($installUrl)
-                        <a href="{{ $installUrl }}" class="px-4 py-2 bg-[#95BF47] text-white rounded">
-                            Anslut med Shopify
-                        </a>
-                    @else
-                        <button class="px-4 py-2 bg-gray-300 text-gray-700 rounded cursor-not-allowed" disabled>
-                            Anslut med Shopify
-                        </button>
-                    @endif
-
-                    <p class="text-xs text-gray-500">Ange din butik först (ex: my-shop.myshopify.com).</p>
+                    <button wire:click="startShopifyConnect" class="px-4 py-2 bg-[#95BF47] text-white rounded">
+                        Anslut med Shopify
+                    </button>
+                    <p class="text-xs text-gray-500">Ange din butik (ex: my-shop.myshopify.com) och klicka för att godkänna i Shopify.</p>
                 </div>
 
                 <p class="text-xs text-gray-500">
-                    Efter att du godkänt behörigheter i Shopify återvänder du hit och status uppdateras automatiskt.
+                    Efter godkännande återvänder du hit. Klicka “Testa anslutning igen” för att verifiera.
                 </p>
             </div>
 
         @else
-        <div class="space-y-4" wire:key="provider-custom">
+            <!-- Custom-block -->
+            <div class="space-y-4" wire:key="provider-custom">
                 <div>
                     <label class="block text-sm font-medium mb-1">Läge</label>
                     <select wire:model.live="custom_mode" class="w-full border rounded p-2">
@@ -114,10 +101,7 @@
 
         <div class="flex items-center gap-3">
             <button wire:click="save" class="px-4 py-2 bg-blue-600 text-white rounded">Spara & testa anslutning</button>
-
-            <button wire:click="validateConnection" class="px-4 py-2 bg-indigo-600 text-white rounded">
-                Testa anslutning igen
-            </button>
+            <button wire:click="validateConnection" class="px-4 py-2 bg-indigo-600 text-white rounded">Testa anslutning igen</button>
 
             @if($status === 'connected')
                 <span class="text-green-700">Status: Ansluten</span>
