@@ -6,6 +6,7 @@ use App\Models\ContentPublication;
 use App\Models\SocialIntegration;
 use App\Services\ImageGenerator;
 use App\Services\Social\LinkedInService;
+use App\Support\Usage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
@@ -15,7 +16,7 @@ class PublishToLinkedInJob implements ShouldQueue
 
     public function __construct(public int $publicationId) {}
 
-    public function handle(LinkedInService $li, ImageGenerator $images): void
+    public function handle(LinkedInService $li, ImageGenerator $images, Usage $usage): void
     {
         $pub = \App\Models\ContentPublication::findOrFail($this->publicationId);
         if ($pub->status !== 'queued') return;
@@ -63,6 +64,10 @@ class PublishToLinkedInJob implements ShouldQueue
             'message'     => 'Publicerat till LinkedIn',
             'payload'     => array_merge($payload, ['asset_urn' => $assetUrn]),
         ]);
+
+        if ($customerId) {
+            $usage->increment($customerId, 'ai.publish.linkedin');
+        }
     }
 
     private function buildAutoPrompt(?string $title, array $inputs): string

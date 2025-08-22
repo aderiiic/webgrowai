@@ -88,7 +88,7 @@ class PublishToInstagramJob implements ShouldQueue
                 'message'     => 'OK',
             ]);
 
-            $usage->increment($content->customer_id, 'social.publish.instagram');
+            $usage->increment($content->customer_id, 'ai.publish.instagram');
         } catch (\Throwable $e) {
             $pub->update(['status' => 'failed', 'message' => $e->getMessage()]);
             throw $e;

@@ -85,15 +85,58 @@
 
             <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl border border-emerald-200/50 p-6">
                 <div class="flex items-center justify-between">
-                    <div>
-                        <div class="text-sm font-medium text-emerald-700">Publicerade till WordPress</div>
-                        <div class="text-3xl font-bold text-emerald-900">{{ $monthPublishTotal }}</div>
-                        <div class="text-sm text-emerald-600">Denna månad</div>
-                    </div>
-                    <div class="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center">
-                        <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M21.469 6.825c.84 1.537 1.318 3.3 1.318 5.175 0 3.979-2.156 7.456-5.363 9.325l3.295-9.527c.615-1.54.82-2.771.82-3.864 0-.405-.026-.78-.07-1.11m-7.981.105c.647-.03 1.232-.105 1.232-.105.582-.075.514-.93-.067-.899 0 0-1.755.135-2.88.135-1.064 0-2.85-.15-2.85-.15-.584-.03-.661.854-.075.884 0 0 .54.061 1.125.09l1.68 4.605-2.37 7.08L5.354 6.9c.649-.03 1.234-.1 1.234-.1.585-.075.516-.93-.065-.896 0 0-1.746.138-2.874.138-.2 0-.438-.008-.69-.015C4.911 3.15 8.235 1.215 12 1.215c2.809 0 5.365 1.072 7.286 2.833-.046-.003-.091-.009-.141-.009-1.06 0-1.812.923-1.812 1.914 0 .89.513 1.643 1.06 2.531.411.72.89 1.643.89 2.977 0 .915-.354 1.994-.821 3.479l-1.075 3.585-3.9-11.61.001.014z"/>
-                        </svg>
+                    <div class="w-full">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-sm font-medium text-emerald-700">Publiceringar</div>
+                                <div class="text-3xl font-bold text-emerald-900">{{ $monthPublishTotal }}</div>
+                                <div class="text-sm text-emerald-600">Denna månad</div>
+                            </div>
+                            <div class="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center ml-4">
+                                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 6v12m6-6H6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Uppdelning per kanal -->
+                        <div class="mt-4 flex flex-wrap gap-2">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-white border border-emerald-200 text-emerald-700 text-xs">
+                                <!-- WP ikon -->
+                                <svg class="w-3.5 h-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M10 1.25A8.75 8.75 0 1018.75 10 8.76 8.76 0 0010 1.25zm0 1.5A7.25 7.25 0 1117.25 10 7.26 7.26 0 0110 2.75zM6.1 7.5l2.6 7.2.9-2.7-1.7-4.5H6.1zm4.2 0l2.6 7.2c1.5-.8 2.4-2.5 2.4-4.4 0-1.1-.4-2-.8-2.8h-1.9l-1.4 4.3-1-4.3H10.3z"/>
+                                </svg>
+                                 {{ $monthPublishBy['wp'] }}
+                            </span>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-white border border-emerald-200 text-emerald-700 text-xs">
+                                <!-- Shopify ikon (bag) -->
+                                <svg class="w-3.5 h-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M6 2a2 2 0 00-2 2v1H3a1 1 0 00-1 .8L1 9a2 2 0 002 2h14a2 2 0 002-2l-2-3.2A1 1 0 0016 5h-1V4a2 2 0 00-2-2H6zm7 3H7V4a1 1 0 011-1h4a1 1 0 011 1v1zM3 12v4a2 2 0 002 2h10a2 2 0 002-2v-4H3z"/>
+                                </svg>
+                                 {{ $monthPublishBy['shopify'] }}
+                            </span>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-white border border-emerald-200 text-emerald-700 text-xs">
+                                <!-- Facebook ikon -->
+                                <svg class="w-3.5 h-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M11 2h3a1 1 0 011 1v3h-2a1 1 0 00-1 1v2h3l-.5 3H12v7H9v-7H7V9h2V7a3 3 0 013-3z"/>
+                                </svg>
+                                 {{ $monthPublishBy['facebook'] }}
+                            </span>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-white border border-emerald-200 text-emerald-700 text-xs">
+                                <!-- Instagram ikon -->
+                                <svg class="w-3.5 h-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M6 3h8a4 4 0 014 4v6a4 4 0 01-4 4H6a4 4 0 01-4-4V7a4 4 0 014-4zm4 3.5A3.5 3.5 0 1110 14a3.5 3.5 0 010-7zM15 6.5a1 1 0 110 2 1 1 0 010-2z"/>
+                                </svg>
+                                 {{ $monthPublishBy['instagram'] }}
+                            </span>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-white border border-emerald-200 text-emerald-700 text-xs">
+                                <!-- LinkedIn ikon -->
+                                <svg class="w-3.5 h-3.5 mr-1" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M4.98 3.5C4.98 4.88 3.86 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1s2.48 1.12 2.48 2.5zM.5 8h4V24h-4V8zm7.5 0h3.8v2.2h.1c.5-1 1.7-2.2 3.6-2.2 3.8 0 4.5 2.5 4.5 5.8V24h-4V14.7c0-2.2 0-5-3-5s-3.4 2.3-3.4 4.9V24H8V8z"/>
+                                </svg>
+                                 {{ $monthPublishBy['linkedin'] }}
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>

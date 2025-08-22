@@ -87,6 +87,13 @@ class PublishAiContentJob implements ShouldQueue
                 'status' => $this->status === 'draft' ? 'ready' : 'published',
             ]);
 
+            $provider = $client->provider(); // 'wordpress' | 'shopify' | ...
+            $metric = match ($provider) {
+                'wordpress' => 'ai.publish.wp',
+                'shopify'   => 'ai.publish.shopify',
+                default     => 'ai.publish.site',
+            };
+
             $usage->increment($content->customer_id, 'ai.publish.site');
         } catch (\Throwable $e) {
             Log::error('[Publish] misslyckades', ['err' => $e->getMessage()]);

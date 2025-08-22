@@ -72,7 +72,7 @@ class PublishToFacebookJob implements ShouldQueue
                 ]);
             }
 
-            $usage->increment($content->customer_id, 'social.publish.facebook');
+            $usage->increment($content->customer_id, 'ai.publish.facebook');
         } catch (\Throwable $e) {
             $pub->update(['status' => 'failed', 'message' => $e->getMessage()]);
             throw $e;
