@@ -60,6 +60,17 @@
                         $perfColor = 'text-red-700';
                         $perfBg = 'bg-red-100';
                     }
+
+                    $int = $integrationsBySite[$site->id] ?? null;
+                    $provider = $int['provider'] ?? null; // 'wordpress'|'shopify'|'custom'|null
+                    $status = $int['status'] ?? 'disconnected';
+
+                    $provLabel = $provider ? ucfirst($provider) : 'Ingen';
+                    $statusColor = match ($status) {
+                        'connected' => 'text-emerald-700 bg-emerald-100 border-emerald-200',
+                        'error'     => 'text-red-700 bg-red-100 border-red-200',
+                        default     => 'text-gray-700 bg-gray-100 border-gray-200',
+                    };
                 @endphp
 
                 <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6 hover:shadow-2xl transition-all duration-200">
@@ -88,10 +99,19 @@
                         </div>
                     </div>
 
-                    <!-- Site key info -->
-                    <div class="mb-4 p-3 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-200/50">
-                        <div class="text-xs font-medium text-gray-600 mb-1">Site Key</div>
-                        <div class="font-mono text-sm text-gray-900 break-all">{{ $site->public_key }}</div>
+                    <!-- Integration info -->
+                    <div class="mb-4 grid md:grid-cols-2 gap-3">
+                        <div class="p-3 rounded-xl border {{ $statusColor }}">
+                            <div class="text-xs font-medium">Integration</div>
+                            <div class="text-sm font-semibold">
+                                {{ $provLabel }}
+                                <span class="text-xs font-medium ml-2">({{ $status }})</span>
+                            </div>
+                        </div>
+                        <div class="p-3 rounded-xl border border-gray-200/50 bg-gradient-to-r from-gray-50 to-white">
+                            <div class="text-xs font-medium text-gray-600 mb-1">Site Key</div>
+                            <div class="font-mono text-sm text-gray-900 break-all">{{ $site->public_key }}</div>
+                        </div>
                     </div>
 
                     <!-- Audit info -->
@@ -139,19 +159,32 @@
                             Redigera
                         </a>
 
-                        <a href="{{ route('sites.wordpress', $site) }}" class="inline-flex items-center justify-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 shadow-sm hover:shadow-md">
-                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M21.469 6.825c.84 1.537 1.318 3.3 1.318 5.175 0 3.979-2.156 7.456-5.363 9.325l3.295-9.527c.615-1.54.82-2.771.82-3.864 0-.405-.026-.78-.07-1.11m-7.981.105c.647-.03 1.232-.105 1.232-.105.582-.075.514-.93-.067-.899 0 0-1.755.135-2.88.135-1.064 0-2.85-.15-2.85-.15-.584-.03-.661.854-.075.884 0 0 .54.061 1.125.09l1.68 4.605-2.37 7.08L5.354 6.9c.649-.03 1.234-.1 1.234-.1.585-.075.516-.93-.065-.896 0 0-1.746.138-2.874.138-.2 0-.438-.008-.69-.015C4.911 3.15 8.235 1.215 12 1.215c2.809 0 5.365 1.072 7.286 2.833-.046-.003-.091-.009-.141-.009-1.06 0-1.812.923-1.812 1.914 0 .89.513 1.643 1.06 2.531.411.72.89 1.643.89 2.977 0 .915-.354 1.994-.821 3.479l-1.075 3.585-3.9-11.61.001.014z"/>
-                            </svg>
-                            WordPress
-                        </a>
+                        @if($provider === 'wordpress')
+                            <!-- WP-specifika genvägar -->
+                            <a href="{{ route('sites.wordpress', $site) }}" class="inline-flex items-center justify-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 shadow-sm hover:shadow-md">
+                                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M21.469 6.825c.84 1.537 1.318 3.3 1.318 5.175 0 3.979-2.156 7.456-5.363 9.325l3.295-9.527c.615-1.54.82-2.771.82-3.864 0-.405-.026-.78-.07-1.11m-7.981.105c.647-.03 1.232-.105 1.232-.105.582-.075.514-.93-.067-.899 0 0-1.755.135-2.88.135-1.064 0-2.85-.15-2.85-.15-.584-.03-.661.854-.075.884 0 0 .54.061 1.125.09l1.68 4.605-2.37 7.08L5.354 6.9c.649-.03 1.234-.1 1.234-.1.585-.075.516-.93-.065-.896 0 0-1.746.138-2.874.138-.2 0-.438-.008-.69-.015C4.911 3.15 8.235 1.215 12 1.215c2.809 0 5.365 1.072 7.286 2.833-.046-.003-.091-.009-.141-.009-1.06 0-1.812.923-1.812 1.914 0 .89.513 1.643 1.06 2.531.411.72.89 1.643.89 2.977 0 .915-.354 1.994-.821 3.479l-1.075 3.585-3.9-11.61.001.014z"/>
+                                </svg>
+                                WordPress
+                            </a>
 
-                        <a href="{{ route('wp.posts.index', $site) }}" class="inline-flex items-center justify-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 shadow-sm hover:shadow-md col-span-2">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
-                            WP-inlägg
-                        </a>
+                            <a href="{{ route('wp.posts.index', $site) }}" class="inline-flex items-center justify-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 shadow-sm hover:shadow-md col-span-2">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                WP-inlägg
+                            </a>
+                        @else
+                            <!-- Generisk integrationsknapp för Shopify/Custom -->
+                            <a href="{{ route('sites.integrations.connect', ['site' => $site->id]) }}"
+                               class="inline-flex items-center justify-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 shadow-sm hover:shadow-md">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v4m0 8v4m8-8h-4M8 12H4"/>
+                                </svg>
+                                Hantera koppling
+                            </a>
+                            <div></div>
+                        @endif
                     </div>
                 </div>
             @empty

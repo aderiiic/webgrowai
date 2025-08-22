@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Sites;
 
+use App\Models\Integration;
 use App\Models\SeoAudit;
 use App\Support\CurrentCustomer;
 use Livewire\Attributes\Layout;
@@ -11,6 +12,7 @@ use Livewire\Component;
 class Index extends Component
 {
     public array $latestBySite = [];
+    public array $integrationsBySite = []; // ['site_id' => ['provider'=>'wordpress|shopify|custom', 'status'=>'connected|error|...']]
 
     public function mount(CurrentCustomer $current): void
     {
@@ -28,6 +30,13 @@ class Index extends Component
             ->toArray();
 
         $this->latestBySite = $latest;
+
+        // Hämta integration per site (enligt din modell: en rad per sajt i integrations-tabellen)
+        $this->integrationsBySite = Integration::whereIn('site_id', $siteIds)
+            ->get(['site_id','provider','status'])
+            ->keyBy('site_id')
+            ->map(fn($it) => ['provider' => $it->provider, 'status' => $it->status])
+            ->toArray();
     }
 
     public function render(CurrentCustomer $current)
@@ -38,6 +47,7 @@ class Index extends Component
         return view('livewire.sites.index', [
             'sites' => $customer->sites()->latest()->get(),
             'latestBySite' => $this->latestBySite,
+            'integrationsBySite' => $this->integrationsBySite,
         ]);
     }
 }
