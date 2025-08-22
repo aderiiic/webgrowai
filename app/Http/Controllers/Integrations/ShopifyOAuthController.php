@@ -109,8 +109,8 @@ class ShopifyOAuthController extends Controller
         $integration->save();
 
         return redirect()
-            ->route('sites.integrations.connect', ['site' => $siteId])
-            ->with('success', 'Shopify anslutet.');
+            ->route('onboarding', ['step' => 3])
+            ->with('success', 'Shopify anslutet – fortsätt i steg 3.');
     }
 
     private function failBack(string $message)
@@ -121,10 +121,10 @@ class ShopifyOAuthController extends Controller
 
         if ($siteId) {
             return redirect()
-                ->route('sites.integrations.connect', ['site' => $siteId])
+                ->route('onboarding', ['step' => 3])
                 ->with('error', $message);
         }
 
-        return redirect()->route('sites.index')->with('error', $message);
+        return redirect()->route('onboarding')->with('error', $message);
     }
 }

@@ -1,6 +1,6 @@
 <div>
     <div class="min-h-screen flex items-center justify-center px-4 py-8">
-        <div class="w-full max-w-2xl">
+        <div class="w-full max-w-3xl">
             <!-- Progress: 1..7 -->
             <div class="mb-8">
                 <div class="flex items-center justify-center space-x-4">
@@ -57,20 +57,13 @@
                             <div class="space-y-5">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Sajtnamn *</label>
-                                    <div class="relative">
-                                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M5 7v10a2 2 0 002 2h10a2 2 0 002-2V7"/>
-                                            </svg>
-                                        </span>
-                                        <input
-                                            type="text"
-                                            wire:model.defer="site_name"
-                                            class="w-full pl-10 pr-4 py-3 rounded-2xl border border-gray-300 bg-white/80 shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400 transition"
-                                            placeholder="Min Webbplats"
-                                            @disabled($sitesQuotaExceeded)
-                                        >
-                                    </div>
+                                    <input
+                                        type="text"
+                                        wire:model.defer="site_name"
+                                        class="w-full px-4 py-3 rounded-2xl border border-gray-300 bg-white/80 shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400 transition"
+                                        placeholder="Min Webbplats"
+                                        @disabled($sitesQuotaExceeded)
+                                    >
                                     @error('site_name')
                                     <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                                     @enderror
@@ -78,20 +71,13 @@
 
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">URL *</label>
-                                    <div class="relative">
-                                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9"/>
-                                            </svg>
-                                        </span>
-                                        <input
-                                            type="url"
-                                            wire:model.defer="site_url"
-                                            class="w-full pl-10 pr-4 py-3 rounded-2xl border border-gray-300 bg-white/80 shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400 transition"
-                                            placeholder="https://example.com"
-                                            @disabled($sitesQuotaExceeded)
-                                        >
-                                    </div>
+                                    <input
+                                        type="url"
+                                        wire:model.defer="site_url"
+                                        class="w-full px-4 py-3 rounded-2xl border border-gray-300 bg-white/80 shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400 transition"
+                                        placeholder="https://example.com"
+                                        @disabled($sitesQuotaExceeded)
+                                    >
                                     @error('site_url')
                                     <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                                     @enderror
@@ -114,9 +100,6 @@
                                     wire:target="createSite"
                                     @disabled($sitesQuotaExceeded)
                                 >
-                                    <svg class="w-5 h-5 mr-2 hidden" wire:loading.class.remove="hidden" wire:target="createSite" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path class="animate-spin origin-center" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v2m4.95 1.05l-1.414 1.414M20 12h-2m-1.05 4.95l-1.414-1.414M12 20v-2m-4.95-1.05l1.414-1.414M4 12h2m1.05-4.95l1.414 1.414"/>
-                                    </svg>
                                     <span>Fortsätt</span>
                                     <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -151,6 +134,12 @@
                                 </label>
                             </div>
 
+                            @if($integrationConnected && $connectedProvider)
+                                <div class="p-3 mt-2 rounded-xl bg-emerald-50 border border-emerald-200 text-sm text-emerald-800">
+                                    Redan kopplad plattform: <strong>{{ ucfirst($connectedProvider) }}</strong>. Du kan byta val om du vill, men nuvarande koppling används.
+                                </div>
+                            @endif
+
                             <div class="pt-2 flex items-center justify-between">
                                 <button wire:click="prev" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50">
                                     Tillbaka
@@ -169,7 +158,7 @@
                         <div class="space-y-6">
                             <div class="text-center">
                                 <h2 class="text-2xl font-bold text-gray-900 mb-2">
-                                    Steg 3: Koppla {{ $provider === 'wordpress' ? 'WordPress' : ($provider === 'shopify' ? 'Shopify' : 'Custom') }}
+                                    Steg 3: Koppla {{ $this->providerLabel() }}
                                 </h2>
                                 <p class="text-gray-600">Koppla din sajt för att kunna publicera innehåll och köra analyser</p>
                             </div>
@@ -185,7 +174,7 @@
                                     <div class="flex items-center space-x-3">
                                         @if($primarySiteId)
                                             <button wire:click="goConnect" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50">
-                                                Öppna koppling
+                                                Hantera koppling
                                             </button>
                                         @endif
                                         <button wire:click="refreshStatus" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50">
@@ -197,7 +186,7 @@
                                 <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
 
-                                @if($provider === 'shopify')
+                                @if($provider === 'shopify' && !$integrationConnected)
                                     <div class="mt-4 grid md:grid-cols-3 gap-3">
                                         <div class="md:col-span-2">
                                             <label class="block text-sm font-medium mb-1">Shop domain</label>
@@ -213,11 +202,42 @@
                                     <p class="mt-2 text-xs text-gray-600">
                                         Du omdirigeras till Shopify för att godkänna behörigheter. Efteråt återvänder du hit.
                                     </p>
-                                @elseif($provider === 'custom')
+                                @elseif($provider === 'custom' && !$integrationConnected)
                                     <p class="mt-3 text-xs text-gray-600">
-                                        Tips: För Custom kan du välja sitemap‑läge eller API‑läge på kopplingssidan.
+                                        Tips: För Custom kan du välja sitemap‑läge eller API‑läge när du öppnar kopplingen.
                                     </p>
                                 @endif
+                            </div>
+
+                            <!-- Vad kan du göra härnäst? (insiktskort) -->
+                            <div class="mt-6">
+                                <h3 class="text-lg font-semibold mb-3">Vad kan du göra härnäst?</h3>
+                                <div class="grid md:grid-cols-2 gap-4">
+                                    <a href="{{ route('seo.audit.history') }}" class="block p-4 rounded-xl border hover:shadow transition">
+                                        <div class="font-semibold">SEO Audits</div>
+                                        <div class="text-sm text-gray-600">Mät Core Web Vitals, tillgänglighet och SEO‑poäng.</div>
+                                    </a>
+                                    <a href="{{ route('seo.keywords.index') }}" class="block p-4 rounded-xl border hover:shadow transition">
+                                        <div class="font-semibold">Nyckelordsförslag</div>
+                                        <div class="text-sm text-gray-600">Hämta rankingar och få AI‑förslag på titlar och metas.</div>
+                                    </a>
+                                    <a href="{{ route('ai.list') }}" class="block p-4 rounded-xl border hover:shadow transition">
+                                        <div class="font-semibold">AI Innehåll</div>
+                                        <div class="text-sm text-gray-600">Skapa artiklar och publicera dem till din sajt.</div>
+                                    </a>
+                                    <a href="{{ route('publications.index') }}" class="block p-4 rounded-xl border hover:shadow transition">
+                                        <div class="font-semibold">Publiceringar</div>
+                                        <div class="text-sm text-gray-600">Se publiceringsköer och status för innehåll.</div>
+                                    </a>
+                                    <a href="{{ route('leads.index') }}" class="block p-4 rounded-xl border hover:shadow transition">
+                                        <div class="font-semibold">Leads</div>
+                                        <div class="text-sm text-gray-600">Följ upp intresseanmälningar och förfrågningar.</div>
+                                    </a>
+                                    <a href="{{ route('settings.weekly') }}" class="block p-4 rounded-xl border hover:shadow transition">
+                                        <div class="font-semibold">Veckodigest</div>
+                                        <div class="text-sm text-gray-600">Skicka veckovisa sammanfattningar till teamet.</div>
+                                    </a>
+                                </div>
                             </div>
 
                             <div class="pt-4 flex items-center justify-between">

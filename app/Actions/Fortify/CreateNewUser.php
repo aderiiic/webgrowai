@@ -42,7 +42,7 @@ class CreateNewUser implements CreatesNewUsers
             'email'    => $input['email'],
             'password' => Hash::make($input['password']),
             'role'     => 'user',
-            'onboarding_step' => 3, // direkt klar för MVP
+            'onboarding_step' => 1, // direkt klar för MVP
         ]);
 
         // Skapa kund + trial (Starter 14d)

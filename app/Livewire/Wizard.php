@@ -19,10 +19,10 @@ class Wizard extends Component
     public string $site_name = '';
     public string $site_url = '';
 
-    public string $provider = 'wordpress'; // wordpress|shopify|custom
+    public string $provider = 'wordpress';
+    public ?string $connectedProvider = null;
 
-    // NYTT: Shopify butiksvärde i onboarding
-    public string $shopify_shop = ''; // ex. my-shop.myshopify.com
+    public string $shopify_shop = '';
 
     public bool $integrationConnected = false;
     public bool $wpConnected = false;
@@ -44,12 +44,19 @@ class Wizard extends Component
             $this->step = max(1, min(7, (int) $user->onboarding_step ?: 1));
         }
 
+        // NYTT: tillåt explicit steg via ?step=3 i query (från Shopify-callback)
+        $reqStep = (int) request()->query('step', 0);
+        if ($reqStep >= 1 && $reqStep <= 7) {
+            $this->step = $reqStep;
+        }
+
         $this->refreshStatus($current);
 
         if ($this->primarySiteId && $this->step < 2) {
             $this->step = 2;
-            $this->persistStep();
         }
+
+        $this->persistStep();
     }
 
     public function refreshStatus(CurrentCustomer $current = null): void
@@ -63,9 +70,16 @@ class Wizard extends Component
 
         $this->primarySiteId = $customer?->sites()->value('id');
 
-        $this->integrationConnected = $this->primarySiteId
-            ? Integration::where('site_id', $this->primarySiteId)->exists()
-            : false;
+        $integration = $this->primarySiteId
+            ? Integration::where('site_id', $this->primarySiteId)->first()
+            : null;
+
+        $this->integrationConnected = (bool) $integration;
+        $this->connectedProvider = $integration?->provider;
+
+        if ($this->integrationConnected && $this->connectedProvider) {
+            $this->provider = $this->connectedProvider;
+        }
 
         $this->wpConnected = $this->primarySiteId
             ? WpIntegration::where('site_id', $this->primarySiteId)->exists()
@@ -158,7 +172,6 @@ class Wizard extends Component
         $this->redirectRoute('sites.integrations.connect', ['site' => $this->primarySiteId]);
     }
 
-    // NYTT: starta Shopify-OAuth direkt från onboarding steg 3
     public function startShopifyConnect(): void
     {
         if (!$this->primarySiteId) return;
@@ -178,9 +191,13 @@ class Wizard extends Component
         $this->redirect($url, navigate: false);
     }
 
-    public function markLeadTrackerReady(): void
+    public function providerLabel(): string
     {
-        $this->leadTrackerReady = true;
+        return match ($this->provider) {
+            'shopify'   => 'Shopify',
+            'custom'    => 'Custom',
+            default     => 'WordPress',
+        };
     }
 
     public function render(CurrentCustomer $current): View
