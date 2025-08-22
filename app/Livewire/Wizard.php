@@ -221,6 +221,12 @@ class Wizard extends Component
         $this->persistStep();
     }
 
+    public function markLeadTrackerReady(): void
+    {
+        $this->leadTrackerReady = true;
+        $this->persistStep();
+    }
+
     public function markWeeklyConfigured(): void
     {
         $this->weeklyConfigured = true;

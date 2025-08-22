@@ -271,7 +271,7 @@
                                         <a href="{{ route('onboarding.tracker') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-800 rounded-xl hover:bg-gray-50">
                                             Öppna installationsguide
                                         </a>
-                                        <button wire:click="markLeadTrackerReady" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700">
+                                        <button wire:click.prevent="markLeadTrackerReady" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700">
                                             Markera som klart
                                         </button>
                                         <button wire:click="refreshStatus" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-800 rounded-xl hover:bg-gray-50">
