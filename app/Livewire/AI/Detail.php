@@ -8,6 +8,7 @@ use App\Jobs\PublishToInstagramJob;
 use App\Jobs\PublishToLinkedInJob;
 use App\Models\AiContent;
 use App\Models\ContentPublication;
+use App\Services\Sites\IntegrationManager;
 use App\Support\CurrentCustomer;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Carbon;
@@ -69,9 +70,14 @@ class Detail extends Component
             $iso = Carbon::parse($this->publishAt)->toIso8601String();
         }
 
+        $client = app(IntegrationManager::class)->forSite($this->publishSiteId);
+        $provider = $client->provider();
+
+        $target = $provider === 'shopify' ? 'shopify' : 'wp';
+
         $pub = ContentPublication::create([
             'ai_content_id' => $this->content->id,
-            'target'        => 'wp',
+            'target'        => $target,
             'status'        => 'queued',
             'scheduled_at'  => $iso ? Carbon::parse($this->publishAt) : null,
             'message'       => null,
@@ -90,7 +96,9 @@ class Detail extends Component
             publicationId: $pub->id
         ))->onQueue('publish');
 
-        session()->flash('success', 'WP-publicering köad.');
+        $platform = $provider === 'shopify' ? 'Shopify' : 'WordPress';
+
+        session()->flash('success', $platform.'-publicering köad.');
     }
 
     public function quickDraft(): void

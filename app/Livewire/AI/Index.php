@@ -34,6 +34,8 @@ class Index extends Component
                 ->where('metric_key', 'ai.generate')
                 ->value('used_value') ?? 0);
 
+            // Lämnar denna som är – dashboarden visar fortfarande "Publicerade till WordPress"
+            // Om du vill inkludera Shopify också kan du summera både 'ai.publish.wp' och 'ai.publish.site'
             $this->monthPublishTotal = (int) (UsageMetric::query()
                 ->where('customer_id', $customer->id)
                 ->where('period', $period)

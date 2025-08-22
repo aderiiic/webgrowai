@@ -18,7 +18,7 @@ class ShopifyAdapter implements SiteIntegrationClient
     public function supports(string $capability): bool
     {
         // Första versionen: endast läsning för analys
-        return in_array($capability, ['list','fetch'], true);
+        return in_array($capability, ['list','fetch','publish'], true);
     }
 
     private function http(): Client
@@ -148,6 +148,45 @@ class ShopifyAdapter implements SiteIntegrationClient
 
     public function publish(array $payload): array
     {
-        throw new \RuntimeException('publish stöds inte för Shopify ännu');
+        $http = $this->http();
+
+        // 1) Hämta ett blogId (använder första bloggen i butiken som standard)
+        $blogsRes = $http->get('blogs.json', ['query' => ['limit' => 1]]);
+        $blogs    = json_decode((string)$blogsRes->getBody(), true);
+        $blogId   = $blogs['blogs'][0]['id'] ?? null;
+        if (!$blogId) {
+            throw new \RuntimeException('Ingen Shopify-blogg hittades att publicera till.');
+        }
+
+        // 2) Mappa payload → Shopify article
+        $status = (string)($payload['status'] ?? 'draft');
+        $article = [
+            'title'     => (string)($payload['title'] ?? ''),
+            'body_html' => (string)($payload['content'] ?? ''),
+        ];
+
+        if ($status === 'publish') {
+            $article['published'] = true;
+        } elseif ($status === 'draft') {
+            $article['published'] = false;
+        } elseif ($status === 'future' && !empty($payload['date'])) {
+            // Notera: Shopify kan respektera published_at; om den ligger i framtiden behandlas det som schemaläggning
+            $article['published']    = true;
+            $article['published_at'] = $payload['date'];
+        } else {
+            $article['published'] = false;
+        }
+
+        // 3) Skapa artikel
+        $res  = $http->post("blogs/{$blogId}/articles.json", [
+            'json' => ['article' => $article],
+        ]);
+        $json = json_decode((string)$res->getBody(), true);
+        $a    = $json['article'] ?? [];
+
+        return [
+            'id'  => $a['id']  ?? null,
+            'url' => $a['url'] ?? null,
+        ];
     }
 }

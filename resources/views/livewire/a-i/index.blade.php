@@ -153,12 +153,12 @@
                         </div>
 
                         @php
-                            // Summera status per target
                             $pubs = $c->relationLoaded('publications') ? $c->publications : ($c->publications ?? collect());
                             $byTarget = [
-                                'wp' => $pubs->where('target','wp'),
+                                'wp'       => $pubs->where('target','wp'),
+                                'shopify'  => $pubs->where('target','shopify'),
                                 'facebook' => $pubs->where('target','facebook'),
-                                'instagram' => $pubs->where('target','instagram'),
+                                'instagram'=> $pubs->where('target','instagram'),
                                 'linkedin' => $pubs->where('target','linkedin'),
                             ];
                             $state = function($col) {
@@ -176,12 +176,15 @@
                         @endphp
 
                         <div class="mt-3 flex items-center gap-4">
-                            @foreach(['wp'=>'WordPress','facebook'=>'Facebook','instagram'=>'Instagram','linkedin'=>'LinkedIn'] as $t=>$label)
+                            @foreach(['wp'=>'WordPress','shopify'=>'Shopify','facebook'=>'Facebook','instagram'=>'Instagram','linkedin'=>'LinkedIn'] as $t=>$label)
                                 @php $st = $state($byTarget[$t]); @endphp
                                 <div class="flex items-center gap-1">
                                     <svg class="w-4 h-4 {{ $statusToColor($st) }}" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                                         @if($t === 'wp')
                                             <path d="M10 1.25A8.75 8.75 0 1018.75 10 8.76 8.76 0 0010 1.25zm0 1.5A7.25 7.25 0 1117.25 10 7.26 7.26 0 0110 2.75zM6.1 7.5l2.6 7.2.9-2.7-1.7-4.5H6.1zm4.2 0l2.6 7.2c1.5-.8 2.4-2.5 2.4-4.4 0-1.1-.4-2-.8-2.8h-1.9l-1.4 4.3-1-4.3H10.3z"/>
+                                        @elseif($t === 'shopify')
+                                            <!-- Enkel "bag" ikon som Shopify-markör -->
+                                            <path d="M6 2a2 2 0 00-2 2v1H3a1 1 0 00-1 .8L1 9a2 2 0 002 2h14a2 2 0 002-2l-2-3.2A1 1 0 0016 5h-1V4a2 2 0 00-2-2H6zm7 3H7V4a1 1 0 011-1h4a1 1 0 011 1v1zM3 12v4a2 2 0 002 2h10a2 2 0 002-2v-4H3z"/>
                                         @elseif($t === 'facebook')
                                             <path d="M11 2h3a1 1 0 011 1v3h-2a1 1 0 00-1 1v2h3l-.5 3H12v7H9v-7H7V9h2V7a3 3 0 013-3z"/>
                                         @elseif($t === 'instagram')
