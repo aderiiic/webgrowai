@@ -5,6 +5,7 @@ use App\Models\Integration;
 use App\Services\Sites\SiteIntegrationClient;
 use App\Services\WordPressClient;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Str;
 
 class WordPressAdapter implements SiteIntegrationClient
@@ -20,8 +21,25 @@ class WordPressAdapter implements SiteIntegrationClient
 
     private function wp(): WordPressClient
     {
-        // Bygg WP-klienten från $this->integration->credentials
-        return WordPressClient::forLegacyArray($this->integration->credentials);
+        // Bygg WP-klienten från credentials i Integration
+        $creds = (array)($this->integration->credentials ?? []);
+
+        $baseUrl = rtrim((string)($creds['wp_url'] ?? $creds['url'] ?? ''), '/');
+        $username = (string)($creds['wp_username'] ?? $creds['username'] ?? '');
+        $rawPass  = (string)($creds['wp_app_password'] ?? $creds['app_password'] ?? '');
+
+        if ($baseUrl === '' || $username === '' || $rawPass === '') {
+            throw new \RuntimeException('Ogiltiga WordPress-uppgifter (url/användare/lösen saknas).');
+        }
+
+        // Försök dekryptera lösenordet; om det redan är plaintext, använd som det är
+        try {
+            $appPassword = Crypt::decryptString($rawPass);
+        } catch (\Throwable) {
+            $appPassword = $rawPass;
+        }
+
+        return new WordPressClient($baseUrl, $username, $appPassword);
     }
 
     public function listDocuments(array $opts = []): array
