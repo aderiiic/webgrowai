@@ -61,7 +61,6 @@
                 'failed' => 'Misslyckad',
                 default => 'Inte publicerad',
             };
-            $isShopify = ($currentProvider ?? null) === 'shopify';
         @endphp
 
         <div class="mt-2 flex items-center gap-4">
@@ -86,11 +85,55 @@
             @endforeach
         </div>
 
-        <!-- Åtgärdssektion: dynamisk rubrik/ikon/text för WP/Shopify -->
+        <!-- Success/Error notifications -->
+        @if(session('success'))
+            <div id="flash-success" class="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl">
+                <div class="flex items-center space-x-3">
+                    <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <p class="text-sm font-medium text-emerald-800">{{ session('success') }}</p>
+                </div>
+            </div>
+        @endif
+
+        @if($content->error)
+            <div class="p-4 bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl">
+                <div class="flex items-center space-x-3">
+                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <p class="text-sm font-medium text-red-800">{{ $content->error }}</p>
+                </div>
+            </div>
+        @endif
+
+        @php $mdReady = !empty($md); @endphp
+
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 overflow-hidden">
+            @if($mdReady)
+                <div class="p-8">
+                    <article class="prose prose-lg max-w-none prose-indigo prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-indigo-600 hover:prose-a:text-indigo-800 prose-strong:text-gray-900 prose-code:text-indigo-600 prose-pre:bg-gray-900 prose-pre:text-gray-100">
+                        {!! $html !!}
+                    </article>
+                </div>
+            @else
+                <div class="p-12 text-center">
+                    <div class="w-16 h-16 bg-gradient-to-br from-indigo-100 to-purple-200 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                        <svg class="w-8 h-8 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Innehåll genereras...</h3>
+                    <p class="text-gray-600">Detta kan ta upp till några minuter. Uppdatera sidan om en stund.</p>
+                </div>
+            @endif
+        </div>
+
+        <!-- Action sections -->
         <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
-            <!-- Export oförändrad -->
+            <!-- Export section -->
             <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6">
-                <!-- ... export-blocket som före ... -->
                 <div class="flex items-center space-x-4 mb-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
                         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -102,9 +145,10 @@
                         <p class="text-sm text-gray-600">Ladda ner som Markdown-fil för vidare bearbetning</p>
                     </div>
                 </div>
+
                 <div class="flex justify-end">
-                    <a href="{{ route('ai.export', $content->id) }}" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl {{ empty($md) ? 'opacity-50 cursor-not-allowed' : '' }}"
-                       @if(empty($md)) onclick="return false;" @endif>
+                    <a href="{{ route('ai.export', $content->id) }}" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl {{ !$mdReady ? 'opacity-50 cursor-not-allowed' : '' }}"
+                       @if(!$mdReady) onclick="return false;" @endif>
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
@@ -113,27 +157,17 @@
                 </div>
             </div>
 
-            <!-- Publiceringspanel (dynamisk mellan WP/Shopify) -->
+            <!-- WordPress publishing -->
             <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6">
                 <div class="flex items-center space-x-4 mb-6">
-                    <div class="w-12 h-12 {{ $isShopify ? 'bg-gradient-to-br from-emerald-500 to-teal-600' : 'bg-gradient-to-br from-emerald-500 to-teal-600' }} rounded-xl flex items-center justify-center">
+                    <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center">
                         <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            @if($isShopify)
-                                <!-- Shopify-liknande ikon -->
-                                <path d="M7 3a2 2 0 00-2 2v1H4a1 1 0 00-.96.72L2 10a2 2 0 002 2h16a2 2 0 002-2l-2.2-3.3A1 1 0 0019 6h-2V5a2 2 0 00-2-2H7zm8 3H9V5a1 1 0 011-1h4a1 1 0 011 1v1zM4 13v5a2 2 0 002 2h12a2 2 0 002-2v-5H4z"/>
-                            @else
-                                <!-- WP-liknande ikon -->
-                                <path d="M21.469 6.825c.84 1.537 1.318 3.3 1.318 5.175 0 3.979-2.156 7.456-5.363 9.325l3.295-9.527c.615-1.54.82-2.771.82-3.864 0-.405-.026-.78-.07-1.11m-7.981.105c.647-.03 1.232-.105 1.232-.105.582-.075.514-.93-.067-.899 0 0-1.755.135-2.88.135-1.064 0-2.85-.15-2.85-.15-.584-.03-.661.854-.075.884 0 0 .54.061 1.125.09l1.68 4.605-2.37 7.08L5.354 6.9c.649-.03 1.234-.1 1.234-.1.585-.075.516-.93-.065-.896 0 0-1.746.138-2.874.138-.2 0-.438-.008-.69-.015C4.911 3.15 8.235 1.215 12 1.215c2.809 0 5.365 1.072 7.286 2.833-.046-.003-.091-.009-.141-.009-1.06 0-1.812.923-1.812 1.914 0 .89.513 1.643 1.06 2.531.411.72.89 1.643.89 2.977 0 .915-.354 1.994-.821 3.479l-1.075 3.585-3.9-11.61.001.014z"/>
-                            @endif
+                            <path d="M21.469 6.825c.84 1.537 1.318 3.3 1.318 5.175 0 3.979-2.156 7.456-5.363 9.325l3.295-9.527c.615-1.54.82-2.771.82-3.864 0-.405-.026-.78-.07-1.11m-7.981.105c.647-.03 1.232-.105 1.232-.105.582-.075.514-.93-.067-.899 0 0-1.755.135-2.88.135-1.064 0-2.85-.15-2.85-.15-.584-.03-.661.854-.075.884 0 0 .54.061 1.125.09l1.68 4.605-2.37 7.08L5.354 6.9c.649-.03 1.234-.1 1.234-.1.585-.075.516-.93-.065-.896 0 0-1.746.138-2.874.138-.2 0-.438-.008-.69-.015C4.911 3.15 8.235 1.215 12 1.215c2.809 0 5.365 1.072 7.286 2.833-.046-.003-.091-.009-.141-.009-1.06 0-1.812.923-1.812 1.914 0 .89.513 1.643 1.06 2.531.411.72.89 1.643.89 2.977 0 .915-.354 1.994-.821 3.479l-1.075 3.585-3.9-11.61.001.014z"/>
                         </svg>
                     </div>
                     <div>
-                        <h2 class="text-xl font-bold text-gray-900">
-                            {{ $isShopify ? 'Shopify' : 'WordPress' }}
-                        </h2>
-                        <p class="text-sm text-gray-600">
-                            {{ $isShopify ? 'Publicera direkt till din Shopify-butik' : 'Publicera direkt till din WordPress-sajt' }}
-                        </p>
+                        <h2 class="text-xl font-bold text-gray-900">WordPress</h2>
+                        <p class="text-sm text-gray-600">Publicera direkt till din WordPress-sajt</p>
                     </div>
                 </div>
 
@@ -166,7 +200,6 @@
                     </div>
 
                     <div class="flex justify-between items-center pt-4 border-t border-gray-200">
-                        @php $mdReady = !empty($md); @endphp
                         @if($mdReady && $publishSiteId)
                             <button wire:click="quickDraft" class="inline-flex items-center px-4 py-2 bg-emerald-100 text-emerald-800 font-medium rounded-lg hover:bg-emerald-200 transition-colors duration-200 text-sm">
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
