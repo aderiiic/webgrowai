@@ -170,14 +170,20 @@
                         <span>Uppgradera plan</span>
                     </a>
 
-                    <li>
-                        <a href="{{ route('sites.index') }}" class="block px-3 py-2 hover:bg-gray-100">Mina sajter</a>
-                    </li>
+                    <a href="{{ route('sites.index') }}" class="flex items-center space-x-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 {{ request()->routeIs('sites.index') ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg' : 'text-gray-700 hover:text-indigo-700 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50' }}">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/>
+                        </svg>
+                        <span>Mina sajter</span>
+                    </a>
 
                     @if($canAddSite)
-                        <li>
-                            <a href="{{ route('sites.create') }}" class="block px-3 py-2 hover:bg-gray-100">Lägg till sajt</a>
-                        </li>
+                        <a href="{{ route('sites.create') }}" class="flex items-center space-x-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 {{ request()->routeIs('sites.create') ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg' : 'text-gray-700 hover:text-indigo-700 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50' }}">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6"/>
+                            </svg>
+                            <span>Lägg till sajt</span>
+                        </a>
                     @endif
                 </div>
             </div>
