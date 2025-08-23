@@ -43,19 +43,42 @@ class PublishAiContentJob implements ShouldQueue
                 'scheduled_at'  => $scheduledAt,
                 'message'       => null,
                 'payload'       => [
-                    'site_id' => $this->siteId,
-                    'status'  => $this->status,
-                    'date'    => $this->scheduleAtIso,
-                    'provider'=> $this->preferredProvider,
+                    'site_id'  => $this->siteId,
+                    'status'   => $this->status,
+                    'date'     => $this->scheduleAtIso,
+                    'provider' => $this->preferredProvider,
                 ],
             ]);
         }
 
         $pub->update(['status' => 'processing', 'message' => null]);
 
-        // Använd preferred provider om satt, annars fallback
-        $client = $integrations->forSiteWithProvider($this->siteId, $this->preferredProvider);
+        // Hämta provider via IntegrationManager
+        $client   = $integrations->forSite($this->siteId);
+        $provider = $client->provider();
 
+        // Spegla target
+        if ($this->publicationId) {
+            ContentPublication::whereKey($this->publicationId)->update(['target' => $provider]);
+        }
+
+        // NYTT: Delegera till WP-specifikt jobb om provider = wordpress
+        if ($provider === 'wordpress') {
+            // Låt WP-jobbet hantera app-lösen, media, block, mm
+            dispatch(new \App\Jobs\PublishAiContentToWpJob(
+                aiContentId: $this->aiContentId,
+                siteId: $this->siteId,
+                status: $this->status,
+                scheduleAtIso: $this->scheduleAtIso,
+                publicationId: $pub->id
+            ))->onQueue('publish');
+
+            // Markera denna rad som “överlåten” så vi inte fortsätter här
+            $pub->update(['message' => 'Delegated to WP job']);
+            return;
+        }
+
+        // Annars kör vi generiskt via adapter (t.ex. Shopify)
         if (!$client->supports('publish')) {
             $pub->update(['status' => 'failed', 'message' => 'Plattformen stödjer ännu inte publicering via API.']);
             return;
@@ -87,16 +110,14 @@ class PublishAiContentJob implements ShouldQueue
                 'status' => $this->status === 'draft' ? 'ready' : 'published',
             ]);
 
-            $provider = $client->provider();
             $metric = match ($provider) {
-                'wordpress' => 'ai.publish.wp',
                 'shopify'   => 'ai.publish.shopify',
                 default     => 'ai.publish.site',
             };
             $usage->increment($content->customer_id, $metric);
             $usage->increment($content->customer_id, 'ai.publish');
         } catch (\Throwable $e) {
-            Log::error('[Publish] misslyckades', ['err' => $e->getMessage()]);
+            Log::error('[Publish] misslyckades', ['err' => $e->getMessage(), 'provider' => $provider]);
             $pub->update(['status' => 'failed', 'message' => $e->getMessage(), 'payload' => $payload]);
             throw $e;
         }

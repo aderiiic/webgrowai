@@ -62,6 +62,15 @@ class PublishAiContentToWpJob implements ShouldQueue
         $pub->update(['status' => 'processing', 'message' => null]);
         $client = WordPressClient::for($integration);
 
+        try {
+            $me = $client->getMe();
+            \Log::debug('[WP Publish] Auth OK', ['user' => $me['name'] ?? $me['slug'] ?? null, 'id' => $me['id'] ?? null]);
+        } catch (\Throwable $e) {
+            $pub->update(['status' => 'failed', 'message' => 'WP-auth misslyckades: '.$e->getMessage()]);
+            throw $e;
+        }
+
+
         $md = $this->normalizeMd($content->body_md ?? '');
         $blocks = $this->toGutenbergBlocks($md);
         $htmlFallback = \Illuminate\Support\Str::of($md)->markdown();

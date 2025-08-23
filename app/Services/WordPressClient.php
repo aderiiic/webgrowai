@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\WpIntegration;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 use Illuminate\Support\Facades\Crypt;
 
 class WordPressClient
@@ -30,6 +31,12 @@ class WordPressClient
         );
     }
 
+    public function getMe(): array
+    {
+        $res = $this->client->get('/wp-json/wp/v2/users/me', ['query' => ['context' => 'edit']]);
+        return json_decode((string) $res->getBody(), true);
+    }
+
     public function getPosts(array $params = []): array
     {
         $query = array_merge(['per_page' => 10, 'status' => 'any', 'orderby' => 'date', 'order' => 'desc'], $params);
@@ -39,14 +46,24 @@ class WordPressClient
 
     public function createPost(array $payload): array
     {
-        $res = $this->client->post('/wp-json/wp/v2/posts', ['json' => $payload]);
-        return json_decode((string) $res->getBody(), true);
+        try {
+            $res = $this->client->post('/wp-json/wp/v2/posts', ['json' => $payload]);
+            return json_decode((string) $res->getBody(), true);
+        } catch (ClientException $e) {
+            $body = (string) ($e->getResponse()?->getBody() ?? '');
+            throw new \RuntimeException('WP createPost misslyckades: '.$body, $e->getCode(), $e);
+        }
     }
 
     public function updatePost(int $id, array $payload): array
     {
-        $res = $this->client->post("/wp-json/wp/v2/posts/{$id}", ['json' => $payload]);
-        return json_decode((string) $res->getBody(), true);
+        try {
+            $res = $this->client->post("/wp-json/wp/v2/posts/{$id}", ['json' => $payload]);
+            return json_decode((string) $res->getBody(), true);
+        } catch (ClientException $e) {
+            $body = (string) ($e->getResponse()?->getBody() ?? '');
+            throw new \RuntimeException('WP updatePost misslyckades: '.$body, $e->getCode(), $e);
+        }
     }
 
     public function getPost(int $id): array
@@ -70,11 +87,15 @@ class WordPressClient
 
     public function updatePage(int $id, array $payload): array
     {
-        $res = $this->client->post("/wp-json/wp/v2/pages/{$id}", ['json' => $payload]);
-        return json_decode((string) $res->getBody(), true);
+        try {
+            $res = $this->client->post("/wp-json/wp/v2/pages/{$id}", ['json' => $payload]);
+            return json_decode((string) $res->getBody(), true);
+        } catch (ClientException $e) {
+            $body = (string) ($e->getResponse()?->getBody() ?? '');
+            throw new \RuntimeException('WP updatePage misslyckades: '.$body, $e->getCode(), $e);
+        }
     }
 
-    // Längre timeout för tunga uppladdningar + stäng "Expect: 100-continue"
     public function uploadMedia(string $bytes, string $filename, string $mime = 'image/png'): array
     {
         $res = $this->client->post('/wp-json/wp/v2/media', [

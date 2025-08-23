@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Session;
 class CurrentCustomer
 {
     const SESSION_KEY = 'current_customer_id';
+    const SITE_SESSION_KEY = 'current_site_id';
 
     public function get(): ?Customer
     {
@@ -21,11 +22,35 @@ class CurrentCustomer
     public function set(int $customerId): void
     {
         Session::put(self::SESSION_KEY, $customerId);
+        Session::forget(self::SITE_SESSION_KEY);
     }
 
     public function clear(): void
     {
         Session::forget(self::SESSION_KEY);
+        Session::forget(self::SITE_SESSION_KEY);
+    }
+
+    public function getSiteId(): ?int
+    {
+        $sid = Session::get(self::SITE_SESSION_KEY);
+        return $sid ? (int)$sid : null;
+    }
+
+    public function setSiteId(int $siteId): void
+    {
+        Session::put(self::SITE_SESSION_KEY, $siteId);
+    }
+
+    public function getSite(): ?Site
+    {
+        $sid = $this->getSiteId();
+        return $sid ? Site::find($sid) : null;
+    }
+
+    public function clearSite(): void
+    {
+        Session::forget(self::SITE_SESSION_KEY);
     }
 
     public function resolveDefaultForUser(): ?Customer

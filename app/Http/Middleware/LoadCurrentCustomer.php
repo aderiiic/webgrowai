@@ -14,17 +14,13 @@ class LoadCurrentCustomer
         $current = app(CurrentCustomer::class);
         $user = $request->user();
 
-        // Om ingen aktiv kund satt i sessionen
         if (!$current->get() && $user) {
-            // Admin-fallback: välj första kunden om sådan finns
             if (method_exists($user, 'isAdmin') && $user->isAdmin()) {
                 $first = Customer::orderBy('id')->first();
                 if ($first) {
                     $current->set($first->id);
                 }
-                // Finns ingen kund ännu? Låt flödet fortsätta – onboarding/GUI får be användaren skapa en kund.
             } else {
-                // Icke-admin: om användaren har kopplade kunder, välj första
                 if (method_exists($user, 'customers')) {
                     $firstOwned = $user->customers()->orderBy('customers.id')->first();
                     if ($firstOwned) {
@@ -32,6 +28,27 @@ class LoadCurrentCustomer
                     }
                 }
             }
+        }
+
+        // Säkerställ att aktiv site är konsistent med aktiv kund
+        $customer = $current->get();
+        if ($customer) {
+            $siteId = $current->getSiteId();
+
+            $siteQuery = $customer->sites()->orderBy('sites.id');
+
+            // Om ingen site vald eller den inte tillhör kunden → välj första
+            if (!$siteId || !$siteQuery->clone()->whereKey($siteId)->exists()) {
+                $firstSiteId = $siteQuery->value('id');
+                if ($firstSiteId) {
+                    $current->setSiteId((int)$firstSiteId);
+                } else {
+                    // Ingen site för kunden – rensa ev. gammalt värde
+                    $current->clearSite();
+                }
+            }
+        } else {
+            $current->clearSite();
         }
 
         return $next($request);
