@@ -427,3 +427,7 @@ Route::post('/webhooks/shopify/customers/redact', [ShopifyWebhookController::cla
 
 Route::post('/webhooks/shopify/shop/redact', [ShopifyWebhookController::class, 'shopRedact'])
     ->withoutMiddleware(VerifyCsrfToken::class);
+
+Route::get('/gratis-hemsida', function () {
+    return view('free-website');
+});

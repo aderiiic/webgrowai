@@ -625,6 +625,7 @@
         </section>
 
         <!-- Testimonials -->
+        <!-- Testimonials -->
         <section id="testimonials" class="py-20 bg-white">
             <div class="max-w-7xl mx-auto px-4">
                 <div class="text-center mb-16">
@@ -720,72 +721,255 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Trusted by section -->
+                <div class="mt-20">
+                    <div class="text-center mb-12">
+                        <p class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-8">Används av flera svenska företag</p>
+                    </div>
+
+                    <!-- Logo carousel with rotation effect -->
+                    <div class="relative overflow-hidden bg-gradient-to-r from-slate-50 via-white to-slate-50 rounded-2xl py-12">
+                        <div class="flex animate-scroll">
+                            <!-- First set of logos -->
+                            <div class="flex items-center justify-center min-w-max px-8">
+                                <!-- Svenska företag logotyper - gråskala med rotation -->
+                                <div class="group mx-8">
+                                    <div class="w-32 h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-500 hover:shadow-lg animate-float-1">
+                                        <img src="https://carilo.se/wp-content/uploads/2024/09/LOGGA-CARILO-PNG.png" alt="Carilo" class="max-w-24 max-h-12 object-contain">
+                                    </div>
+                                </div>
+                                <div class="group mx-8">
+                                    <div class="w-32 h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-500 hover:shadow-lg animate-float-2">
+                                        <img src="https://webbi.se/wp-content/uploads/2025/07/Webbi-Logotype-Original-Blue.png" alt="Webbi" class="max-w-24 max-h-12 object-contain">
+                                    </div>
+                                </div>
+                                <div class="group mx-8">
+                                    <div class="w-32 h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-500 hover:shadow-lg animate-float-3">
+                                        <img src="https://caronspot.com/storage/img/logotype-no-bg.png" alt="CarOnSpot" class="max-w-24 max-h-12 object-contain">
+                                    </div>
+                                </div>
+                                <div class="group mx-8">
+                                    <div class="w-32 h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-500 hover:shadow-lg animate-float-4">
+                                        <img src="https://rabattello-bucket.s3.eu-north-1.amazonaws.com/webbiqr/webbiqr_logo.png" alt="CarOnSpot" class="max-w-24 max-h-12 object-contain">
+                                    </div>
+                                </div>
+                                <div class="group mx-8">
+                                    <div class="w-32 h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-500 hover:shadow-lg animate-float-5">
+                                        <img src="https://darm.se/cdn/shop/files/Darm-NoBG.png?v=1755973519&width=120" alt="CarOnSpot" class="max-w-24 max-h-12 object-contain">
+                                    </div>
+                                </div>
+                                <div class="group mx-8">
+                                    <div class="w-32 h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-500 hover:shadow-lg animate-float-6">
+                                        <img src="https://bymoi.se/cdn/shop/files/With_background_Black_logo_version_01_aa1d876f-2703-47e2-9e03-f9e136167492_650x326.png?v=1735120259" alt="CarOnSpot" class="max-w-24 max-h-12 object-contain">
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Duplicate set for seamless loop -->
+                            <div class="flex items-center justify-center min-w-max px-8">
+                                <div class="group mx-8">
+                                    <div class="w-32 h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-500 hover:shadow-lg animate-float-1">
+                                        <img src="https://carilo.se/wp-content/uploads/2024/09/LOGGA-CARILO-PNG.png" alt="Carilo" class="max-w-24 max-h-12 object-contain">
+                                    </div>
+                                </div>
+                                <div class="group mx-8">
+                                    <div class="w-32 h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-500 hover:shadow-lg animate-float-2">
+                                        <img src="https://webbi.se/wp-content/uploads/2025/07/Webbi-Logotype-Original-Blue.png" alt="Webbi" class="max-w-24 max-h-12 object-contain">
+                                    </div>
+                                </div>
+                                <div class="group mx-8">
+                                    <div class="w-32 h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-500 hover:shadow-lg animate-float-3">
+                                        <img src="https://caronspot.com/storage/img/logotype-no-bg.png" alt="CarOnSpot" class="max-w-24 max-h-12 object-contain">
+                                    </div>
+                                </div>
+                                <div class="group mx-8">
+                                    <div class="w-32 h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-500 hover:shadow-lg animate-float-4">
+                                        <img src="https://rabattello-bucket.s3.eu-north-1.amazonaws.com/webbiqr/webbiqr_logo.png" alt="CarOnSpot" class="max-w-24 max-h-12 object-contain">
+                                    </div>
+                                </div>
+                                <div class="group mx-8">
+                                    <div class="w-32 h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-500 hover:shadow-lg animate-float-5">
+                                        <img src="https://darm.se/cdn/shop/files/Darm-NoBG.png?v=1755973519&width=120" alt="CarOnSpot" class="max-w-24 max-h-12 object-contain">
+                                    </div>
+                                </div>
+                                <div class="group mx-8">
+                                    <div class="w-32 h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-500 hover:shadow-lg animate-float-6">
+                                        <img src="https://bymoi.se/cdn/shop/files/With_background_Black_logo_version_01_aa1d876f-2703-47e2-9e03-f9e136167492_650x326.png?v=1735120259" alt="CarOnSpot" class="max-w-24 max-h-12 object-contain">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Fade effects -->
+                        <div class="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-white via-white/80 to-transparent pointer-events-none"></div>
+                        <div class="absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-white via-white/80 to-transparent pointer-events-none"></div>
+                    </div>
+                </div>
             </div>
         </section>
 
+
         <!-- FAQ -->
-        <section id="faq" class="py-20 bg-gradient-to-br from-slate-50 to-indigo-50">
-            <div class="max-w-4xl mx-auto px-4">
+        <section id="faq" class="py-20 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 relative overflow-hidden">
+            <!-- Subtle decorative elements -->
+            <div class="absolute top-20 right-20 w-32 h-32 bg-indigo-200/30 rounded-full blur-3xl"></div>
+            <div class="absolute bottom-40 left-10 w-24 h-24 bg-blue-200/40 rounded-full blur-2xl"></div>
+
+            <div class="max-w-4xl mx-auto px-4 relative">
                 <div class="text-center mb-16">
-                    <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-4">Vanliga frågor</h2>
-                    <p class="text-xl text-slate-600">Få svar på det du undrar över</p>
+                    <div class="inline-flex items-center px-4 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-indigo-200/50 mb-6">
+                        <svg class="w-4 h-4 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span class="text-indigo-700 font-medium text-sm">Får vi ofta frågor</span>
+                    </div>
+                    <h2 class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-slate-800 via-indigo-800 to-purple-800 bg-clip-text text-transparent mb-4">
+                        Svar på det viktigaste
+                    </h2>
+                    <p class="text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
+                        Här hittar du svar på frågor som nästan alla ställer när de överväger WebGrow AI
+                    </p>
                 </div>
-                <div class="space-y-4">
-                    <details class="group bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
-                        <summary class="cursor-pointer p-6 font-semibold text-slate-800 flex items-center justify-between">
-                            <span>Behöver jag låsa upp allt från start?</span>
-                            <svg class="w-5 h-5 text-slate-500 group-open:rotate-180 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                <div class="space-y-6">
+                    <details class="group bg-white/70 backdrop-blur-sm border border-indigo-200/50 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
+                        <summary class="cursor-pointer p-8 font-semibold text-slate-800 flex items-center justify-between hover:bg-indigo-50/50 transition-all duration-200">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-gradient-to-r from-emerald-500 to-green-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-200">
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                                    </svg>
+                                </div>
+                                <span>Måste jag välja den dyraste planen från början?</span>
+                            </div>
+                            <svg class="w-6 h-6 text-indigo-500 group-open:rotate-180 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </summary>
-                        <div class="px-6 pb-6">
-                            <p class="text-slate-600 leading-relaxed">Nej, du kan börja på Starter och uppgradera när behoven växer. Alla planer ger dig full tillgång till plattformen – bara med olika volymer och funktioner.</p>
+                        <div class="px-8 pb-8 border-t border-indigo-100/50">
+                            <p class="text-slate-600 leading-relaxed text-lg pt-6">
+                                Absolut inte! De flesta börjar med <strong>Starter</strong> för att känna efter. Du kan uppgradera när som helst – mitt i månaden om du vill. Alla planer ger samma kraftfulla funktioner, bara med olika volymer. Perfekt för att växa i din egen takt.
+                            </p>
                         </div>
                     </details>
-                    <details class="group bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
-                        <summary class="cursor-pointer p-6 font-semibold text-slate-800 flex items-center justify-between">
-                            <span>Hur fungerar publiceringen till WordPress och Shopify?</span>
-                            <svg class="w-5 h-5 text-slate-500 group-open:rotate-180 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                    <details class="group bg-white/70 backdrop-blur-sm border border-indigo-200/50 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
+                        <summary class="cursor-pointer p-8 font-semibold text-slate-800 flex items-center justify-between hover:bg-indigo-50/50 transition-all duration-200">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-200">
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                                    </svg>
+                                </div>
+                                <span>Hur svårt är det att koppla WordPress och Shopify?</span>
+                            </div>
+                            <svg class="w-6 h-6 text-indigo-500 group-open:rotate-180 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </summary>
-                        <div class="px-6 pb-6">
-                            <p class="text-slate-600 leading-relaxed">Du kopplar din WP med ett säkert app‑lösenord eller Shopify via oAuth. Därefter kan du tillämpa AI‑förslag direkt till sidor/texter med ett klick. Ingen FTP eller teknisk kunskap krävs.</p>
+                        <div class="px-8 pb-8 border-t border-indigo-100/50">
+                            <p class="text-slate-600 leading-relaxed text-lg pt-6">
+                                Enklare än du tror! För <strong>WordPress</strong> behöver du bara skapa ett app-lösenord (visar vi hur), och för <strong>Shopify</strong> är det bara att klicka "Anslut". Sedan kan du tillämpa AI-förslag med ett enda klick – ingen kod, inget krångel. Tar max 5 minuter att sätta upp.
+                            </p>
                         </div>
                     </details>
-                    <details class="group bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
-                        <summary class="cursor-pointer p-6 font-semibold text-slate-800 flex items-center justify-between">
-                            <span>Är det bindningstid?</span>
-                            <svg class="w-5 h-5 text-slate-500 group-open:rotate-180 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                    <details class="group bg-white/70 backdrop-blur-sm border border-indigo-200/50 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
+                        <summary class="cursor-pointer p-8 font-semibold text-slate-800 flex items-center justify-between hover:bg-indigo-50/50 transition-all duration-200">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-200">
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                    </svg>
+                                </div>
+                                <span>Tänk om jag vill sluta efter några månader?</span>
+                            </div>
+                            <svg class="w-6 h-6 text-indigo-500 group-open:rotate-180 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </summary>
-                        <div class="px-6 pb-6">
-                            <p class="text-slate-600 leading-relaxed">Ingen bindningstid alls. 14 dagar gratis att testa – avsluta när som helst. Vi tror på att leverera värde, inte att låsa in kunder.</p>
+                        <div class="px-8 pb-8 border-t border-indigo-100/50">
+                            <p class="text-slate-600 leading-relaxed text-lg pt-6">
+                                Inga problem alls! Vi har <strong>noll bindningstid</strong> – avsluta när du vill, även mitt i månaden. Vi tjänar bara pengar om du får värde, och det är så vi vill ha det. 14 dagar gratis att testa, sedan månadsbetalt tills du säger stopp.
+                            </p>
                         </div>
                     </details>
-                    <details class="group bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
-                        <summary class="cursor-pointer p-6 font-semibold text-slate-800 flex items-center justify-between">
-                            <span>Vad händer om jag överskrider mina kvoter?</span>
-                            <svg class="w-5 h-5 text-slate-500 group-open:rotate-180 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                    <details class="group bg-white/70 backdrop-blur-sm border border-indigo-200/50 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
+                        <summary class="cursor-pointer p-8 font-semibold text-slate-800 flex items-center justify-between hover:bg-indigo-50/50 transition-all duration-200">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-200">
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                                    </svg>
+                                </div>
+                                <span>Vad händer om jag använder mer än min plan tillåter?</span>
+                            </div>
+                            <svg class="w-6 h-6 text-indigo-500 group-open:rotate-180 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </summary>
-                        <div class="px-6 pb-6">
-                            <p class="text-slate-600 leading-relaxed">Du kan antingen uppgradera till nästa plan eller betala för extra användning enligt våra tilläggspriser. Du får alltid en varning innan något debiteras.</p>
+                        <div class="px-8 pb-8 border-t border-indigo-100/50">
+                            <p class="text-slate-600 leading-relaxed text-lg pt-6">
+                                Du får alltid en <strong>varning i förväg</strong> innan något händer! Sedan kan du antingen uppgradera till nästa plan (gör det direkt i appen) eller betala för extra enligt våra schyssta tilläggspriser. Inga överraskningar på fakturan – löfte!
+                            </p>
                         </div>
                     </details>
-                    <details class="group bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
-                        <summary class="cursor-pointer p-6 font-semibold text-slate-800 flex items-center justify-between">
-                            <span>Hur fungerar det gratis webbsideprogrammet?</span>
-                            <svg class="w-5 h-5 text-slate-500 group-open:rotate-180 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                    <details class="group bg-white/70 backdrop-blur-sm border border-indigo-200/50 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
+                        <summary class="cursor-pointer p-8 font-semibold text-slate-800 flex items-center justify-between hover:bg-indigo-50/50 transition-all duration-200">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-200">
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                    </svg>
+                                </div>
+                                <span>Hur funkar det där med gratis webbsida egentligen?</span>
+                            </div>
+                            <svg class="w-6 h-6 text-indigo-500 group-open:rotate-180 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </summary>
-                        <div class="px-6 pb-6">
-                            <p class="text-slate-600 leading-relaxed">När du prenumererar på Growth årsplan bygger vårt team en professionell webbsida åt dig helt gratis. Den är SEO-optimerad och integrerad med WebGrow AI från start. Normalt värde 25 000-50 000 kr.</p>
+                        <div class="px-8 pb-8 border-t border-indigo-100/50">
+                            <p class="text-slate-600 leading-relaxed text-lg pt-6">
+                                Så här funkar det: du prenumererar på <strong>Growth årsplan</strong>, sen bygger vårt team en riktig professionell WordPress-webbsida åt dig – helt gratis! Max 8 sidor, SEO-klar och med WebGrow AI redan kopplat. Normalt skulle det kosta 15-25k, men för dig kostar det noll extra.
+                            </p>
                         </div>
                     </details>
+
+                    <details class="group bg-white/70 backdrop-blur-sm border border-indigo-200/50 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
+                        <summary class="cursor-pointer p-8 font-semibold text-slate-800 flex items-center justify-between hover:bg-indigo-50/50 transition-all duration-200">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-200">
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                                    </svg>
+                                </div>
+                                <span>Kommer AI:n att låta som en robot på svenska?</span>
+                            </div>
+                            <svg class="w-6 h-6 text-indigo-500 group-open:rotate-180 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </summary>
+                        <div class="px-8 pb-8 border-t border-indigo-100/50">
+                            <p class="text-slate-600 leading-relaxed text-lg pt-6">
+                                Raka motsatsen! Vi har tränat AI:n specifikt för <strong>svensk marknadsföring</strong> med rätt ton och känsla. Den förstår svenska SEO-mönster och skriver naturligt, engagerande innehåll. Många av våra kunder säger att texterna känns mer professionella än vad de själva skriver.
+                            </p>
+                        </div>
+                    </details>
+                </div>
+
+                <!-- Call to action at bottom -->
+                <div class="mt-16 text-center">
+                    <div class="bg-gradient-to-r from-indigo-600/10 via-purple-600/10 to-pink-600/10 rounded-2xl p-8 border border-indigo-200/50 backdrop-blur-sm">
+                        <h3 class="text-xl font-bold text-slate-800 mb-3">Har du andra frågor?</h3>
+                        <p class="text-slate-600 mb-6">Vi svarar gärna på allt du undrar – inga dumma frågor!</p>
+                        <button @click="demoOpen=true" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                            </svg>
+                            Boka demo med oss
+                        </button>
+                    </div>
                 </div>
             </div>
         </section>

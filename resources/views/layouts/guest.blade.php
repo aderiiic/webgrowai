@@ -52,6 +52,81 @@
 
     @vite(['resources/css/app.css','resources/js/app.js'])
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <style>
+        @keyframes scroll {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        @keyframes float1 {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-8px) rotate(1deg); }
+            66% { transform: translateY(4px) rotate(-0.5deg); }
+        }
+
+        @keyframes float2 {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            25% { transform: translateY(-6px) rotate(-1deg); }
+            75% { transform: translateY(6px) rotate(1deg); }
+        }
+
+        @keyframes float3 {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            40% { transform: translateY(-10px) rotate(0.5deg); }
+            80% { transform: translateY(2px) rotate(-1deg); }
+        }
+
+        @keyframes float4 {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-5px) rotate(-0.5deg); }
+            75% { transform: translateY(8px) rotate(1deg); }
+        }
+
+        @keyframes float5 {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            30% { transform: translateY(-12px) rotate(1deg); }
+            60% { transform: translateY(3px) rotate(-0.5deg); }
+        }
+
+        @keyframes float6 {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            45% { transform: translateY(-7px) rotate(-1deg); }
+            85% { transform: translateY(5px) rotate(0.5deg); }
+        }
+
+        .animate-scroll {
+            animation: scroll 40s linear infinite;
+        }
+
+        .animate-float-1 {
+            animation: float1 6s ease-in-out infinite;
+        }
+
+        .animate-float-2 {
+            animation: float2 7s ease-in-out infinite;
+        }
+
+        .animate-float-3 {
+            animation: float3 8s ease-in-out infinite;
+        }
+
+        .animate-float-4 {
+            animation: float4 5.5s ease-in-out infinite;
+        }
+
+        .animate-float-5 {
+            animation: float5 6.5s ease-in-out infinite;
+        }
+
+        .animate-float-6 {
+            animation: float6 7.5s ease-in-out infinite;
+        }
+    </style>
 </head>
 <body class="bg-slate-50 text-slate-900 antialiased">
 
