@@ -200,6 +200,7 @@
 
         <!-- Free Website Program -->
         <!-- Free Website Program - Refined Premium Version -->
+        <!-- Free Website Program - Refined Premium Version -->
         <section class="py-32 bg-slate-900 relative overflow-hidden">
             <!-- Subtle background elements -->
             <div class="absolute inset-0">
@@ -216,7 +217,7 @@
                         <!-- Clean badge -->
                         <div class="inline-flex items-center px-6 py-2 rounded-full bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm">
                             <div class="w-2 h-2 bg-indigo-400 rounded-full mr-3 animate-pulse"></div>
-                            <span class="text-slate-300 font-medium">Exklusivt erbjudande</span>
+                            <span class="text-slate-300 font-medium">Begränsat erbjudande</span>
                         </div>
 
                         <div class="space-y-8">
@@ -226,7 +227,7 @@
                             </h2>
 
                             <p class="text-xl text-slate-400 leading-relaxed max-w-xl">
-                                Prenumerera på Growth årsplan och få en helt gratis, professionell webbsida byggd av vårt team. Designad för konvertering och SEO-optimerad från start.
+                                Prenumerera på Growth årsplan och få en professionell webbsida byggd av vårt team. Designad för konvertering och SEO-optimerad från start.
                             </p>
                         </div>
 
@@ -239,8 +240,20 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <h4 class="text-white font-semibold mb-1">Professionell design & utveckling</h4>
-                                    <p class="text-slate-500 text-sm">Byggs av vårt expertteam med fokus på konvertering</p>
+                                    <h4 class="text-white font-semibold mb-1">Standard WordPress-mall</h4>
+                                    <p class="text-slate-500 text-sm">Professionell mall anpassad till ditt varumärke och innehåll</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start">
+                                <div class="w-6 h-6 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center mr-4 mt-1 flex-shrink-0">
+                                    <svg class="w-3 h-3 text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 class="text-white font-semibold mb-1">Upp till 8 sidor</h4>
+                                    <p class="text-slate-500 text-sm">Hem, Om, Tjänster, Kontakt + 4 valfria sidor</p>
                                 </div>
                             </div>
 
@@ -263,23 +276,21 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <h4 class="text-white font-semibold mb-1">Fullständigt integrerat</h4>
-                                    <p class="text-slate-500 text-sm">WebGrow AI fungerar direkt utan extra konfiguration</p>
+                                    <h4 class="text-white font-semibold mb-1">WebGrow AI integrerat</h4>
+                                    <p class="text-slate-500 text-sm">Fungerar direkt utan extra konfiguration</p>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Minimal value proposition -->
-                        <div class="bg-slate-800/30 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-slate-500 text-sm mb-1">Normalt värde</p>
-                                    <p class="text-slate-300 text-2xl font-bold">25 000 - 50 000 kr</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="text-indigo-400 text-sm font-medium mb-1">För dig</p>
-                                    <p class="text-white text-2xl font-bold">Helt gratis</p>
-                                </div>
+                            <!-- Begränsningar -->
+                            <div class="bg-slate-800/20 rounded-lg p-4 border border-slate-700/30">
+                                <h5 class="text-slate-300 font-medium mb-2 text-sm">Vad som ingår:</h5>
+                                <ul class="text-xs text-slate-400 space-y-1">
+                                    <li>• Standard WordPress-installation på vårt webbhotell</li>
+                                    <li>• Professionell mall från vårt urval</li>
+                                    <li>• Grundläggande anpassning (färger, logotyp, text)</li>
+                                    <li>• Max 8 sidor (startsida + 7 undersidor)</li>
+                                    <li>• Standardfunktioner (kontaktformulär, Google Maps)</li>
+                                </ul>
                             </div>
                         </div>
                     </div>
@@ -314,9 +325,23 @@
                                 </button>
 
                                 <p class="text-xs text-slate-500 text-center">
-                                    Vi kontaktar dig inom 24h med mer information om programmet och nästa steg.
+                                    Begränsat antal platser. Vi kontaktar dig inom 24h med mer information om programmet och nästa steg.
                                 </p>
                             </form>
+                        </div>
+
+                        <!-- Minimal value proposition -->
+                        <div class="bg-slate-800/30 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50 mt-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-slate-500 text-sm mb-1">Normalt värde</p>
+                                    <p class="text-slate-300 text-2xl font-bold">15 000 - 25 000 kr</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-indigo-400 text-sm font-medium mb-1">För dig</p>
+                                    <p class="text-white text-2xl font-bold">Helt gratis</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -377,7 +402,7 @@
                             <svg class="w-4 h-4 mr-2 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
                             </svg>
-                            15% rabatt vid årsprenumeration på alla planer
+                            10% rabatt vid årsprenumeration på alla planer
                         </span>
                     </div>
                 </div>
@@ -389,12 +414,12 @@
                             <h3 class="text-lg font-semibold text-slate-600 mb-2">Starter</h3>
                             <div class="mb-4">
                                 <div class="flex items-center justify-center gap-2 mb-2">
-                                    <span class="text-lg text-slate-400 line-through">1 290 kr</span>
-                                    <span class="text-4xl font-bold text-slate-800">790 kr</span>
+                                    <span class="text-lg text-slate-400 line-through">590 kr</span>
+                                    <span class="text-4xl font-bold text-slate-800">390 kr</span>
                                     <span class="text-slate-600">/mån</span>
                                 </div>
-                                <div class="text-xs text-orange-600 font-medium">Founders-pris första året</div>
-                                <div class="text-xs text-slate-500 mt-1">Sedan 1 290 kr/mån • 1 098 kr/mån (årlig)</div>
+                                <div class="text-xs text-orange-600 font-medium">Founders-pris livstid</div>
+                                <div class="text-xs text-slate-500 mt-1">Sedan 590 kr/mån • 531 kr/mån (årlig)</div>
                             </div>
                             <p class="text-slate-600 mb-6">För mindre sajter som vill igång snabbt.</p>
                         </div>
@@ -460,12 +485,12 @@
                             <h3 class="text-lg font-semibold text-indigo-600 mb-2">Growth</h3>
                             <div class="mb-4">
                                 <div class="flex items-center justify-center gap-2 mb-2">
-                                    <span class="text-lg text-slate-400 line-through">3 990 kr</span>
-                                    <span class="text-4xl font-bold text-slate-800">2 490 kr</span>
+                                    <span class="text-lg text-slate-400 line-through">2 490 kr</span>
+                                    <span class="text-4xl font-bold text-slate-800">1 490 kr</span>
                                     <span class="text-slate-600">/mån</span>
                                 </div>
-                                <div class="text-xs text-orange-600 font-medium">Founders-pris första året</div>
-                                <div class="text-xs text-slate-500 mt-1">Sedan 3 990 kr/mån • 3 392 kr/mån (årlig)</div>
+                                <div class="text-xs text-orange-600 font-medium">Founders-pris</div>
+                                <div class="text-xs text-slate-500 mt-1">Sedan 2 490 kr/mån • 2 241 kr/mån (årlig)</div>
                             </div>
                             <p class="text-slate-600 mb-6">För växande bolag med flera flöden.</p>
                         </div>
@@ -532,12 +557,12 @@
                             <h3 class="text-lg font-semibold text-slate-600 mb-2">Pro</h3>
                             <div class="mb-4">
                                 <div class="flex items-center justify-center gap-2 mb-2">
-                                    <span class="text-lg text-slate-400 line-through">12 900 kr</span>
-                                    <span class="text-4xl font-bold text-slate-800">8 900 kr</span>
+                                    <span class="text-lg text-slate-400 line-through">7 990 kr</span>
+                                    <span class="text-4xl font-bold text-slate-800">4 990 kr</span>
                                     <span class="text-slate-600">/mån</span>
                                 </div>
-                                <div class="text-xs text-orange-600 font-medium">Founders-pris första året</div>
-                                <div class="text-xs text-slate-500 mt-1">Sedan 12 900 kr/mån • 10 965 kr/mån (årlig)</div>
+                                <div class="text-xs text-orange-600 font-medium">Founders-pris</div>
+                                <div class="text-xs text-slate-500 mt-1">Sedan 7 990 kr/mån • 7 191 kr/mån (årlig)</div>
                             </div>
                             <p class="text-slate-600 mb-6">För byråer och större team.</p>
                         </div>
