@@ -2,9 +2,11 @@
 
 use App\Jobs\GenerateWeeklyDigestJob;
 use App\Jobs\GenerateWeeklyPlanJob;
+use App\Jobs\RecalculateLeadScoresJob;
 use App\Models\Customer;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
@@ -43,3 +45,15 @@ Schedule::command('social:process-scheduled')->everyMinute()->withoutOverlapping
 
 Schedule::job(new \App\Jobs\ProcessScheduledPublicationsJob())->everyMinute();
 Schedule::job(new \App\Jobs\RecalculateLeadScoresJob())->cron('0 */6 * * *')->withoutOverlapping()->onOneServer();
+
+Artisan::command('leads:recalculate {--sync}', function () {
+    $job = new RecalculateLeadScoresJob();
+
+    if ($this->option('sync')) {
+        Bus::dispatchSync($job);
+        $this->info('Körde RecalculateLeadScoresJob synkront.');
+    } else {
+        dispatch($job); // ev. ->onQueue('default')
+        $this->info('Köade RecalculateLeadScoresJob.');
+    }
+})->describe('Recalculate lead scores for all leads now');
