@@ -57,3 +57,11 @@ Artisan::command('leads:recalculate {--sync}', function () {
         $this->info('Köade RecalculateLeadScoresJob.');
     }
 })->describe('Recalculate lead scores for all leads now');
+
+Artisan::command('weekly:digest:one {customerId} {tag=monday}', function (int $customerId, string $tag) {
+    $valid = in_array($tag, ['monday','friday'], true) ? $tag : 'monday';
+
+    dispatch(new App\Jobs\GenerateWeeklyDigestJob($customerId, $valid))->onQueue('ai');
+
+    $this->info("Köade veckodigest ({$valid}) för kund {$customerId}.");
+})->describe('Queue weekly digest for one customer');
