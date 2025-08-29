@@ -22,15 +22,15 @@ class PublishToFacebookJob implements ShouldQueue
 
     public function handle(Usage $usage, ImageGenerator $images): void
     {
-        $pub = ContentPublication::with('aiContent')->findOrFail($this->publicationId);
+        // Viktigt: använd rätt relation 'content'
+        $pub = ContentPublication::with('content')->findOrFail($this->publicationId);
         if ($pub->status !== 'queued') return;
 
-        $content = $pub->aiContent;
+        $content = $pub->content; // relationen heter 'content'
         $customerId = $content?->customer_id;
         $siteId     = $content?->site_id;
         abort_unless($customerId && $siteId, 422);
 
-        // Hämta integration per SAJT
         $integration = SocialIntegration::where('site_id', $siteId)
             ->where('provider', 'facebook')
             ->firstOrFail();

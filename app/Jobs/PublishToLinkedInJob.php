@@ -18,17 +18,16 @@ class PublishToLinkedInJob implements ShouldQueue
 
     public function handle(LinkedInService $li, ImageGenerator $images, Usage $usage): void
     {
-        $pub = ContentPublication::findOrFail($this->publicationId);
+        $pub = ContentPublication::with('content')->findOrFail($this->publicationId);
         if ($pub->status !== 'queued') return;
 
         $pub->update(['status' => 'processing']);
 
-        $content = $pub->aiContent()->first();
+        $content = $pub->content; // rätt relation
         $customerId = $content?->customer_id;
         $siteId     = $content?->site_id;
         abort_unless($customerId && $siteId, 422);
 
-        // Hämta integration per SAJT (inte kund)
         $si = SocialIntegration::where('site_id', $siteId)->where('provider', 'linkedin')->firstOrFail();
         $accessToken = $si->access_token;
         $ownerUrn    = $si->page_id ?: '';

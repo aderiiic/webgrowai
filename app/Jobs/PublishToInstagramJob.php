@@ -23,10 +23,10 @@ class PublishToInstagramJob implements ShouldQueue
 
     public function handle(Usage $usage, ImageGenerator $images): void
     {
-        $pub = ContentPublication::findOrFail($this->publicationId);
+        $pub = ContentPublication::with('content')->findOrFail($this->publicationId);
         if ($pub->status !== 'queued') return;
 
-        $content = $pub->aiContent()->first();
+        $content = $pub->content; // rätt relation
         $customerId = $content?->customer_id;
         $siteId     = $content?->site_id;
         abort_unless($customerId && $siteId, 422);
@@ -43,9 +43,9 @@ class PublishToInstagramJob implements ShouldQueue
         try {
             $imagesEnabled = config('features.image_generation', false);
 
-            // IG kräver media – generera bild om inte payload redan innehåller något
-            $wantImage = (bool)($payload['image']['generate'] ?? $content->inputs['image']['generate'] ?? true);
-            $wantImage = $imagesEnabled && $wantImage;
+            if (!($payload['image']['generate'] ?? $content->inputs['image']['generate'] ?? true)) {
+                throw new \RuntimeException('Instagram kräver bild eller video – aktivera bildgenerering.');
+            }
 
             $imagePrompt = $payload['image_prompt']
                 ?? $payload['image']['prompt']
@@ -54,20 +54,13 @@ class PublishToInstagramJob implements ShouldQueue
 
             $client = new InstagramClient($integration->access_token);
 
-            if (!($wantImage || ($imagesEnabled && $imagePrompt))) {
-                throw new \RuntimeException('Instagram kräver bild eller video – aktivera bildgenerering.');
-            }
-
-            // 1) Generera bytes -> spara temporärt publikt -> få URL
             $prompt = $imagePrompt ?: $this->buildAutoPrompt($content->title, $content->body_md ?? '', $content->inputs ?? []);
-            $bytes  = $images->generate($prompt, '1536x1536'); // fyrkantig
+            $bytes  = $images->generate($prompt, '1536x1536');
             $filename = 'ig/' . now()->format('Y/m/') . Str::uuid()->toString() . '.jpg';
 
-            // Använd public-disk (måste vara webbtillgänglig)
             Storage::disk('public')->put($filename, $bytes);
             $publicUrl = asset(Storage::url($filename));
 
-            // 2) Skapa container + publicera
             $container = $client->createImageContainer($integration->ig_user_id, $publicUrl, $caption);
             $creationId = $container['id'] ?? null;
             if (!$creationId) {
