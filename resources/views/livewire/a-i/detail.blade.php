@@ -87,7 +87,7 @@
             @endforeach
         </div>
 
-        <!-- Success/Error notifications -->
+        <!-- Success/Error -->
         @if(session('success'))
             <div id="flash-success" class="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl">
                 <div class="flex items-center space-x-3">
@@ -129,6 +129,7 @@
 
         @php $mdReady = !empty($md); @endphp
 
+            <!-- Förhandsvisning -->
         <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 overflow-hidden">
             @if($mdReady)
                 <div class="p-8">
@@ -149,34 +150,52 @@
             @endif
         </div>
 
-        <!-- Action sections -->
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
-            <!-- Export section -->
-            <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6">
-                <div class="flex items-center space-x-4 mb-6">
-                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
+        <!-- Bildsektion: ENDAST bildbank -->
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M4 5a2 2 0 012-2h6l2 2h4a2 2 0 012 2v2H4V5zm0 4h20v8a2 2 0 01-2 2H6l-2-2H2a2 2 0 01-2-2V9h4z"/>
                         </svg>
                     </div>
                     <div>
-                        <h2 class="text-xl font-bold text-gray-900">Exportera innehåll</h2>
-                        <p class="text-sm text-gray-600">Ladda ner som Markdown-fil för vidare bearbetning</p>
+                        <h2 class="text-xl font-bold text-gray-900">Bild från bildbank</h2>
+                        <p class="text-sm text-gray-600">Välj en bild att använda vid publicering.</p>
                     </div>
                 </div>
-
-                <div class="flex justify-end">
-                    <a href="{{ route('ai.export', $content->id) }}" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl {{ !$mdReady ? 'opacity-50 cursor-not-allowed' : '' }}"
-                       @if(!$mdReady) onclick="return false;" @endif>
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                        Ladda ner Markdown
-                    </a>
+                <div class="text-sm text-gray-600">
+                    @if($selectedImageAssetId)
+                        Vald bild: #{{ $selectedImageAssetId }}
+                    @else
+                        Ingen bild vald
+                    @endif
                 </div>
             </div>
 
-            <!-- WordPress/Shopify publishing -->
+            <div class="flex flex-wrap gap-3 items-center">
+                <button type="button"
+                        class="px-3 py-2 border rounded-lg"
+                        x-data
+                        @click="$dispatch('media-picker:open')">
+                    Öppna mediaväljare
+                </button>
+
+                @if($selectedImageAssetId)
+                    <div class="flex items-center gap-3">
+                        <img class="w-16 h-16 rounded-lg border object-cover" src="{{ route('assets.thumb', $selectedImageAssetId) }}" alt="Vald bild">
+                        <button class="text-sm text-gray-600 underline" wire:click="$set('selectedImageAssetId', 0)">Rensa val</button>
+                    </div>
+                @endif
+
+                <div class="text-xs text-gray-500">
+                    Instagram kräver att en bild är vald.
+                </div>
+            </div>
+        </div>
+
+        <!-- WordPress/Shopify publishing -->
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
             <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6">
                 <div class="flex items-center space-x-4 mb-6">
                     <div class="w-12 h-12 {{ $isShopify ? 'bg-gradient-to-br from-emerald-500 to-teal-600' : 'bg-gradient-to-br from-emerald-500 to-teal-600' }} rounded-xl flex items-center justify-center">
@@ -249,63 +268,63 @@
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Social media publishing -->
-        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6">
-            <div class="flex items-center space-x-4 mb-6">
-                <div class="w-12 h-12 bg-gradient-to-br from-pink-500 to-purple-600 rounded-xl flex items-center justify-center">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V1a1 1 0 011-1h2a1 1 0 011 1v2m0 0v2a1 1 0 01-1 1H8a1 1 0 01-1-1V4z"/>
+            <!-- Social media publishing -->
+            <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6">
+                <div class="flex items-center space-x-4 mb-6">
+                    <div class="w-12 h-12 bg-gradient-to-br from-pink-500 to-purple-600 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V1a1 1 0 011-1h2a1 1 0 011 1v2m0 0v2a1 1 0 01-1 1H8a1 1 0 01-1-1V4z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900">Sociala kanaler</h2>
+                        <p class="text-sm text-gray-600">Publicera till Facebook och Instagram</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Kanal</label>
+                        <select wire:model="socialTarget" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200" @if($publishQuotaReached) disabled @endif>
+                            <option value="facebook">Facebook</option>
+                            <option value="instagram">Instagram</option>
+                        </select>
+                        @error('socialTarget')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Publiceringstid (valfritt)</label>
+                        <input type="datetime-local" wire:model="socialScheduleAt" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200" @if($publishQuotaReached) disabled @endif>
+                        @error('socialScheduleAt')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="text-xs text-gray-600 mb-4 p-3 bg-gray-50 rounded-lg">
+                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
-                </div>
-                <div>
-                    <h2 class="text-xl font-bold text-gray-900">Sociala kanaler</h2>
-                    <p class="text-sm text-gray-600">Publicera till Facebook och Instagram</p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Kanal</label>
-                    <select wire:model="socialTarget" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200" @if($publishQuotaReached) disabled @endif>
-                        <option value="facebook">Facebook</option>
-                        <option value="instagram">Instagram</option>
-                        {{-- Lägg ev. till LinkedIn här om du vill kunna välja det i samma select --}}
-                    </select>
-                    @error('socialTarget')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
+                    Lämna publiceringstid tom för omedelbar publicering.
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Publiceringstid (valfritt)</label>
-                    <input type="datetime-local" wire:model="socialScheduleAt" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200" @if($publishQuotaReached) disabled @endif>
-                    @error('socialScheduleAt')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
+                <div class="flex justify-end">
+                    <button wire:click="queueSocial" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-semibold rounded-xl hover:from-pink-700 hover:to-purple-700 focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl {{ (!$mdReady || $publishQuotaReached) ? 'opacity-50 cursor-not-allowed' : '' }}"
+                            @if(!$mdReady || $publishQuotaReached) disabled @endif>
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                        </svg>
+                        Köa till {{ ucfirst($socialTarget) }}
+                    </button>
                 </div>
-            </div>
-
-            <div class="text-xs text-gray-600 mb-4 p-3 bg-gray-50 rounded-lg">
-                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                Lämna publiceringstid tom för omedelbar publicering.
-            </div>
-
-            <div class="flex justify-end">
-                <button wire:click="queueSocial" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-semibold rounded-xl hover:from-pink-700 hover:to-purple-700 focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl {{ (!$mdReady || $publishQuotaReached) ? 'opacity-50 cursor-not-allowed' : '' }}"
-                        @if(!$mdReady || $publishQuotaReached) disabled @endif>
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                    </svg>
-                    Köa till {{ ucfirst($socialTarget) }}
-                </button>
             </div>
         </div>
 
+        <!-- Snabb publicering – LinkedIn (utan bildprompt) -->
         <div class="mt-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6">
             <div class="flex items-center space-x-3 mb-4">
                 <div class="w-10 h-10 bg-gradient-to-br from-sky-600 to-blue-700 rounded-xl flex items-center justify-center">
@@ -315,25 +334,17 @@
                 </div>
                 <div>
                     <h3 class="text-lg font-semibold text-gray-900">Snabb publicering – LinkedIn</h3>
-                    <p class="text-sm text-gray-600">Använd titeln eller klistra in din text, välj ev. schemaläggning eller bildprompt.</p>
+                    <p class="text-sm text-gray-600">Använd titeln eller klistra in din text. Bild kan väljas via bildbanken ovan.</p>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <input type="text" wire:model.defer="liQuickText" class="md:col-span-3 w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm" placeholder="Inläggstext" @if($publishQuotaReached) disabled @endif>
                 <input type="datetime-local" wire:model.defer="liQuickScheduleAt" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm" placeholder="Schemalägg (valfritt)" @if($publishQuotaReached) disabled @endif>
-                <input type="text" wire:model.defer="liQuickImagePrompt" class="md:col-span-2 w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm" placeholder="Bildprompt (valfritt)" @if($publishQuotaReached) disabled @endif>
-            </div>
-
-            <div class="mt-4 flex justify-end">
-                <button wire:click="queueLinkedInQuick" class="inline-flex items-center px-4 py-2 bg-sky-600 text-white font-semibold rounded-xl hover:bg-sky-700 focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition-all duration-200 shadow-md {{ $publishQuotaReached ? 'opacity-50 cursor-not-allowed' : '' }}" @if($publishQuotaReached) disabled @endif>
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
-                    </svg>
-                    Publicera till LinkedIn
-                </button>
             </div>
         </div>
+
+        <livewire:media-picker wire:model.live="selectedImageAssetId" />
     </div>
 </div>
 

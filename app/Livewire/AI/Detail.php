@@ -2,7 +2,7 @@
 
 namespace App\Livewire\AI;
 
-use App\Jobs\PublishAiContentJob; // Byt till generiska jobbet
+use App\Jobs\PublishAiContentJob;
 use App\Jobs\PublishToFacebookJob;
 use App\Jobs\PublishToInstagramJob;
 use App\Jobs\PublishToLinkedInJob;
@@ -32,12 +32,21 @@ class Detail extends Component
 
     public string $liQuickText = '';
     public ?string $liQuickScheduleAt = null;
-    public string $liQuickImagePrompt = '';
+
+    // Bildbank (endast)
+    public int $selectedImageAssetId = 0;
 
     // UI-hjälp: om kvot är nådd (beräknas i render)
     public bool $publishQuotaReached = false;
     public ?int $publishQuotaLimit = null;
     public int $publishQuotaUsed = 0;
+
+    #[On('media-selected')]
+    public function setSelectedImage(int $id): void
+    {
+        $this->selectedImageAssetId = $id;
+        session()->flash('success', "Bild vald: #{$id}");
+    }
 
     public function mount(int $id, CurrentCustomer $current): void
     {
@@ -71,25 +80,15 @@ class Detail extends Component
             $customer = $current->get();
         }
 
-        // Kvotkontroll för publiceringar (månad)
-        // Om ingen plan/limit hittas: obegränsat
+        // Kvot
         $limit = null;
-        try {
-            $limit = optional(optional($customer)->plan)->publication_quota;
-        } catch (\Throwable) {
-            $limit = null;
-        }
-
+        try { $limit = optional(optional($customer)->plan)->publication_quota; } catch (\Throwable) { $limit = null; }
         if ($limit !== null) {
             $start = Carbon::now()->startOfMonth();
             $end   = Carbon::now()->endOfMonth();
-
             $used = ContentPublication::whereBetween('created_at', [$start, $end])
-                ->whereHas('aiContent', function ($q) use ($customer) {
-                    $q->when($customer, fn($q2) => $q2->where('customer_id', $customer->id));
-                })
+                ->whereHas('aiContent', fn($q) => $q->when($customer, fn($q2) => $q2->where('customer_id', $customer->id)))
                 ->count();
-
             if ($used >= (int)$limit) {
                 session()->flash('success', 'Kvotgräns för publiceringar är uppnådd för din plan.');
                 return;
@@ -101,11 +100,21 @@ class Detail extends Component
             $iso = Carbon::parse($this->publishAt)->toIso8601String();
         }
 
-        // Hämta provider för vald sajt (styr target och feedback)
+        // Provider
         $client = app(IntegrationManager::class)->forSite($this->publishSiteId);
         $provider = $client->provider(); // 'wordpress' | 'shopify' | 'custom'
-        // Viktigt: spara target = provider för konsistens
         $target = $provider;
+
+        $payload = [
+            'site_id' => $this->publishSiteId,
+            'status'  => $this->publishStatus,
+            'date'    => $iso,
+        ];
+
+        // ENDAST bildbank: lägg till om vald
+        if ($this->selectedImageAssetId > 0) {
+            $payload['image_asset_id'] = (int)$this->selectedImageAssetId;
+        }
 
         $pub = ContentPublication::create([
             'ai_content_id' => $this->content->id,
@@ -113,15 +122,9 @@ class Detail extends Component
             'status'        => 'queued',
             'scheduled_at'  => $iso ? Carbon::parse($this->publishAt) : null,
             'message'       => null,
-            'payload'       => [
-                'site_id' => $this->publishSiteId,
-                'status'  => $this->publishStatus,
-                // Låt datum vara ISO8601 – jobbet mappar till rätt fält (date/date_gmt/publication_time) per provider
-                'date'    => $iso,
-            ],
+            'payload'       => $payload,
         ]);
 
-        // Publicera via generiskt jobb (IntegrationManager hanterar Shopify/WordPress)
         dispatch(new PublishAiContentJob(
             aiContentId: $this->content->id,
             siteId: $this->publishSiteId,
@@ -150,8 +153,22 @@ class Detail extends Component
             'socialScheduleAt' => 'nullable|date',
         ]);
 
+        // Om Instagram: kräver bild
+        if ($this->socialTarget === 'instagram' && $this->selectedImageAssetId <= 0) {
+            session()->flash('success', 'Instagram kräver en vald bild från bildbanken.');
+            return;
+        }
+
         $now = Carbon::now();
         $scheduledAt = $this->socialScheduleAt ? Carbon::parse($this->socialScheduleAt) : null;
+
+        $payload = [
+            'text' => $this->extractPlainText((string) ($this->content->body_md ?? '')),
+        ];
+
+        if ($this->selectedImageAssetId > 0) {
+            $payload['image_asset_id'] = (int)$this->selectedImageAssetId;
+        }
 
         $pub = ContentPublication::create([
             'ai_content_id' => $this->content->id,
@@ -159,25 +176,18 @@ class Detail extends Component
             'status'        => 'queued',
             'scheduled_at'  => $scheduledAt,
             'message'       => null,
-            'payload'       => [
-                'text'   => $this->extractPlainText((string) ($this->content->body_md ?? '')),
-                // valfria bildnycklar kan sättas här om du vill gemensam hantering
-            ],
+            'payload'       => $payload,
         ]);
 
-        // Direktpublicering (ingen tid eller dåtid): sätt processing direkt och dispatcha
         if (!$scheduledAt || $scheduledAt->lte($now)) {
             $pub->update(['status' => 'processing']);
-
             if ($this->socialTarget === 'facebook') {
                 dispatch(new PublishToFacebookJob($pub->id))->onQueue('social');
             } else {
                 dispatch(new PublishToInstagramJob($pub->id))->onQueue('social');
             }
-
             session()->flash('success', ucfirst($this->socialTarget).' publicering startad.');
         } else {
-            // Schemalagt: social:process-scheduled tar den vid rätt tid
             session()->flash('success', ucfirst($this->socialTarget)." schemalagd till {$scheduledAt->format('Y-m-d H:i')}.");
         }
     }
@@ -186,15 +196,15 @@ class Detail extends Component
     {
         Gate::authorize('update', $this->content);
 
-        // validera enkel input (text kan vara tom -> använd titel som fallback i jobbet)
         $scheduledAt = $this->liQuickScheduleAt ? Carbon::parse($this->liQuickScheduleAt) : null;
         $now = Carbon::now();
 
         $payload = [
             'text' => $this->liQuickText ? $this->extractPlainText($this->liQuickText) : null,
         ];
-        if ($this->liQuickImagePrompt) {
-            $payload['image'] = ['generate' => true, 'prompt' => $this->liQuickImagePrompt];
+
+        if ($this->selectedImageAssetId > 0) {
+            $payload['image_asset_id'] = (int)$this->selectedImageAssetId;
         }
 
         $pub = ContentPublication::create([
@@ -220,26 +230,20 @@ class Detail extends Component
         $this->content->refresh();
 
         $md = $this->normalizeMd((string) ($this->content->body_md ?? ''));
-        $html = $md !== '' ? Str::of($md)->markdown() : '';
+        $html = $md !== '' ? \Illuminate\Support\Str::of($md)->markdown() : '';
 
-        // Ta reda på provider för nuvarande vald sajt så vi kan visa rätt paneltext/ikon
         $currentProvider = null;
         try {
             if ($this->publishSiteId) {
-                $currentProvider = app(IntegrationManager::class)->forSite((int)$this->publishSiteId)->provider(); // 'shopify' | 'wordpress' | null
+                $currentProvider = app(IntegrationManager::class)->forSite((int)$this->publishSiteId)->provider();
             }
         } catch (\Throwable) {
             $currentProvider = null;
         }
 
-        // Beräkna kvotläge för UI
         $customer = app(CurrentCustomer::class)->get();
         $limit = null;
-        try {
-            $limit = optional(optional($customer)->plan)->publication_quota;
-        } catch (\Throwable) {
-            $limit = null;
-        }
+        try { $limit = optional(optional($customer)->plan)->publication_quota; } catch (\Throwable) { $limit = null; }
 
         $used = 0;
         if ($limit !== null && $customer) {
@@ -255,13 +259,13 @@ class Detail extends Component
         $this->publishQuotaReached = $limit !== null ? ($used >= (int)$limit) : false;
 
         return view('livewire.a-i.detail', [
-            'sites'                 => $this->sites,
-            'md'                    => $md,
-            'html'                  => $html,
-            'currentProvider'       => $currentProvider, // 'shopify' | 'wordpress' | null
-            'publishQuotaReached'   => $this->publishQuotaReached,
-            'publishQuotaLimit'     => $this->publishQuotaLimit,
-            'publishQuotaUsed'      => $this->publishQuotaUsed,
+            'sites'               => $this->sites,
+            'md'                  => $md,
+            'html'                => $html,
+            'currentProvider'     => $currentProvider,
+            'publishQuotaReached' => $this->publishQuotaReached,
+            'publishQuotaLimit'   => $this->publishQuotaLimit,
+            'publishQuotaUsed'    => $this->publishQuotaUsed,
         ]);
     }
 
@@ -293,8 +297,7 @@ class Detail extends Component
                 $len = strlen(str_replace("\t", '    ', $m[0]));
                 $minIndent = $minIndent === null ? $len : min($minIndent, $len);
             } else {
-                $minIndent = 0;
-                break;
+                $minIndent = 0; break;
             }
         }
         if ($minIndent && $minIndent > 0) {

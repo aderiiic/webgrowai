@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\ContentPublication;
+use App\Models\ImageAsset;
 use App\Models\SocialIntegration;
 use App\Services\ImageGenerator;
 use App\Services\Social\InstagramClient;
@@ -48,24 +49,39 @@ class PublishToInstagramJob implements ShouldQueue
         try {
             $imagesEnabled = config('features.image_generation', false);
 
-            if (!($payload['image']['generate'] ?? $content->inputs['image']['generate'] ?? true) || !$imagesEnabled) {
-                throw new \RuntimeException('Instagram kräver bild eller video – aktivera bildgenerering.');
+            $imageAssetId = $payload['image_asset_id'] ?? null;
+            $publicUrl = null;
+            $prompt    = null;
+
+            if ($imageAssetId) {
+                // Bild från bildbank – skapa temporär URL från S3
+                $asset = ImageAsset::findOrFail((int)$imageAssetId);
+                if ((int)$asset->customer_id !== (int)$customerId) {
+                    throw new \RuntimeException('Otillåten bild.');
+                }
+                $disk = Storage::disk($asset->disk);
+                $publicUrl = $disk->temporaryUrl($asset->path, now()->addMinutes(30));
+            } else {
+                if (!($payload['image']['generate'] ?? $content->inputs['image']['generate'] ?? true) || !$imagesEnabled) {
+                    throw new \RuntimeException('Instagram kräver bild eller video – aktivera bildgenerering eller välj bild från bildbank.');
+                }
+
+                $imagePrompt = $payload['image_prompt']
+                    ?? $payload['image']['prompt']
+                    ?? $content->inputs['image']['prompt']
+                    ?? null;
+
+                $client = new InstagramClient($integration->access_token);
+
+                $prompt = $imagePrompt ?: $this->buildAutoPrompt($content->title, $content->body_md ?? '', $content->inputs ?? []);
+                $bytes  = $images->generate($prompt, '1536x1536');
+                $filename = 'ig/' . now()->format('Y/m/') . Str::uuid()->toString() . '.jpg';
+
+                Storage::disk('public')->put($filename, $bytes);
+                $publicUrl = asset(Storage::url($filename));
             }
 
-            $imagePrompt = $payload['image_prompt']
-                ?? $payload['image']['prompt']
-                ?? $content->inputs['image']['prompt']
-                ?? null;
-
             $client = new InstagramClient($integration->access_token);
-
-            $prompt = $imagePrompt ?: $this->buildAutoPrompt($content->title, $content->body_md ?? '', $content->inputs ?? []);
-            $bytes  = $images->generate($prompt, '1536x1536');
-            $filename = 'ig/' . now()->format('Y/m/') . Str::uuid()->toString() . '.jpg';
-
-            Storage::disk('public')->put($filename, $bytes);
-            $publicUrl = asset(Storage::url($filename));
-
             $container = $client->createImageContainer($integration->ig_user_id, $publicUrl, $caption);
             $creationId = $container['id'] ?? null;
             if (!$creationId) {
@@ -74,12 +90,27 @@ class PublishToInstagramJob implements ShouldQueue
 
             $resp = $client->publishContainer($integration->ig_user_id, $creationId);
 
+            $updatePayload = $payload;
+            if ($imageAssetId) {
+                $updatePayload['image_asset_id'] = (int)$imageAssetId;
+                // Spara även path för att kunna visa thumb i listor (URL löper ut)
+                $updatePayload['image_bank_path'] = $asset->path;
+            } else {
+                $updatePayload['image_used'] = true;
+                $updatePayload['prompt'] = $prompt;
+                $updatePayload['image_url'] = $publicUrl;
+            }
+
             $pub->update([
                 'status'      => 'published',
                 'external_id' => $resp['id'] ?? $creationId,
-                'payload'     => array_merge($payload, ['image_used' => true, 'prompt' => $prompt, 'image_url' => $publicUrl]),
+                'payload'     => $updatePayload,
                 'message'     => 'OK (image)',
             ]);
+
+            if ($imageAssetId) {
+                ImageAsset::markUsed((int)$imageAssetId, $pub->id);
+            }
 
             $usage->increment($customerId, 'ai.publish.instagram');
             $usage->increment($customerId, 'ai.publish');

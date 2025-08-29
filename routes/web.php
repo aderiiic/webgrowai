@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ImageAssetController;
 use App\Http\Controllers\Integrations\ShopifyOAuthController;
 use App\Http\Controllers\LinkedInSuggestionController;
 use App\Http\Controllers\ShopifyWebhookController;
@@ -297,6 +298,10 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
 
         return back()->with('success', 'CRO‑analys köad för '.$site->name.'. Uppdatera om en stund.');
     })->name('sites.cro.analyze')->whereNumber('site');
+
+    Route::get('/media/assets', [ImageAssetController::class, 'index'])->name('assets.index');
+    Route::post('/media/assets', [ImageAssetController::class, 'store'])->name('assets.store');
+    Route::get('/media/assets/{asset}/thumb', [ImageAssetController::class, 'thumb'])->name('assets.thumb');
 });
 
 Route::middleware(['auth','verified','can:admin'])->prefix('admin')->name('admin.')->group(function () {
