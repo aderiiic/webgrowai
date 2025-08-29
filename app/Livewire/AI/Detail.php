@@ -144,11 +144,13 @@ class Detail extends Component
     public function queueSocial(): void
     {
         Gate::authorize('update', $this->content);
+
         $this->validate([
-            'socialTarget' => 'required|in:facebook,instagram,linkedin',
+            'socialTarget' => 'required|in:facebook,instagram',
             'socialScheduleAt' => 'nullable|date',
         ]);
 
+        $now = Carbon::now();
         $scheduledAt = $this->socialScheduleAt ? Carbon::parse($this->socialScheduleAt) : null;
 
         $pub = ContentPublication::create([
@@ -158,20 +160,24 @@ class Detail extends Component
             'scheduled_at'  => $scheduledAt,
             'message'       => null,
             'payload'       => [
-                'text' => $this->extractPlainText((string) ($this->content->body_md ?? '')),
+                'text'   => $this->extractPlainText((string) ($this->content->body_md ?? '')),
+                // valfria bildnycklar kan sättas här om du vill gemensam hantering
             ],
         ]);
 
-        if (!$scheduledAt || $scheduledAt->isPast()) {
+        // Direktpublicering (ingen tid eller dåtid): sätt processing direkt och dispatcha
+        if (!$scheduledAt || $scheduledAt->lte($now)) {
+            $pub->update(['status' => 'processing']);
+
             if ($this->socialTarget === 'facebook') {
                 dispatch(new PublishToFacebookJob($pub->id))->onQueue('social');
-            } elseif ($this->socialTarget === 'instagram') {
-                dispatch(new PublishToInstagramJob($pub->id))->onQueue('social');
             } else {
-                dispatch(new PublishToLinkedInJob($pub->id))->onQueue('social');
+                dispatch(new PublishToInstagramJob($pub->id))->onQueue('social');
             }
+
             session()->flash('success', ucfirst($this->socialTarget).' publicering startad.');
         } else {
+            // Schemalagt: social:process-scheduled tar den vid rätt tid
             session()->flash('success', ucfirst($this->socialTarget)." schemalagd till {$scheduledAt->format('Y-m-d H:i')}.");
         }
     }
@@ -180,13 +186,16 @@ class Detail extends Component
     {
         Gate::authorize('update', $this->content);
 
-        $this->validate([
-            'liQuickText' => 'required|string',
-            'liQuickScheduleAt' => 'nullable|date',
-            'liQuickImagePrompt' => 'nullable|string|max:500',
-        ]);
-
+        // validera enkel input (text kan vara tom -> använd titel som fallback i jobbet)
         $scheduledAt = $this->liQuickScheduleAt ? Carbon::parse($this->liQuickScheduleAt) : null;
+        $now = Carbon::now();
+
+        $payload = [
+            'text' => $this->liQuickText ? $this->extractPlainText($this->liQuickText) : null,
+        ];
+        if ($this->liQuickImagePrompt) {
+            $payload['image'] = ['generate' => true, 'prompt' => $this->liQuickImagePrompt];
+        }
 
         $pub = ContentPublication::create([
             'ai_content_id' => $this->content->id,
@@ -194,13 +203,11 @@ class Detail extends Component
             'status'        => 'queued',
             'scheduled_at'  => $scheduledAt,
             'message'       => null,
-            'payload'       => [
-                'text' => $this->liQuickText,
-                'image_prompt' => $this->liQuickImagePrompt ?: null,
-            ],
+            'payload'       => $payload,
         ]);
 
-        if (!$scheduledAt || $scheduledAt->isPast()) {
+        if (!$scheduledAt || $scheduledAt->lte($now)) {
+            $pub->update(['status' => 'processing']);
             dispatch(new PublishToLinkedInJob($pub->id))->onQueue('social');
             session()->flash('success', 'LinkedIn publicering startad.');
         } else {
