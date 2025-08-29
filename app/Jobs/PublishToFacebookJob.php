@@ -9,7 +9,9 @@ use App\Services\Social\FacebookClient;
 use App\Support\Usage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Throwable;
 
 class PublishToFacebookJob implements ShouldQueue
 {
@@ -24,31 +26,35 @@ class PublishToFacebookJob implements ShouldQueue
     {
         $pub = ContentPublication::with('content')->findOrFail($this->publicationId);
 
-        // Tillåt både queued och processing (schemalagd väg sätter processing innan dispatch)
         if (!in_array($pub->status, ['queued','processing'], true)) {
             return;
         }
 
-        $content = $pub->content;
-        $customerId = $content?->customer_id;
-        $siteId     = $content?->site_id;
-        abort_unless($customerId && $siteId, 422);
-
-        $integration = SocialIntegration::where('site_id', $siteId)
-            ->where('provider', 'facebook')
-            ->firstOrFail();
-
-        $message = trim(($content->title ? $content->title . "\n\n" : '') . ($content->body_md ?? ''));
-        $payload = $pub->payload ?? [];
-
-        // Sätt processing om den inte redan är det
+        // Sätt processing om den inte redan är det (direktpublicering sätter ofta redan detta)
         if ($pub->status === 'queued') {
             $pub->update(['status' => 'processing']);
         }
 
         try {
-            $imagesEnabled = config('features.image_generation', false);
+            $content = $pub->content;
+            $customerId = $content?->customer_id;
+            $siteId     = $content?->site_id;
+            if (!$customerId || !$siteId) {
+                throw new \RuntimeException('Saknar customer_id eller site_id på innehållet.');
+            }
 
+            $integration = SocialIntegration::where('site_id', $siteId)
+                ->where('provider', 'facebook')
+                ->first();
+
+            if (!$integration) {
+                throw new \RuntimeException('Ingen Facebook‑integration hittad för denna sajt.');
+            }
+
+            $message = trim(($content->title ? $content->title . "\n\n" : '') . ($content->body_md ?? ''));
+            $payload = $pub->payload ?? [];
+
+            $imagesEnabled = config('features.image_generation', false);
             $wantImage = (bool)($payload['image']['generate'] ?? $content->inputs['image']['generate'] ?? false);
             $wantImage = $imagesEnabled && $wantImage;
 
@@ -86,7 +92,11 @@ class PublishToFacebookJob implements ShouldQueue
 
             $usage->increment($customerId, 'ai.publish.facebook');
             $usage->increment($customerId, 'ai.publish');
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
+            Log::warning('[PublishToFacebookJob] Misslyckades', [
+                'pub_id' => $this->publicationId,
+                'msg'    => $e->getMessage(),
+            ]);
             $pub->update(['status' => 'failed', 'message' => $e->getMessage()]);
             throw $e;
         }
