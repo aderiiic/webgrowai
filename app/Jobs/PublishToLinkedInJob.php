@@ -27,6 +27,14 @@ class PublishToLinkedInJob implements ShouldQueue
 
         $pub = ContentPublication::with('content')->findOrFail($this->publicationId);
 
+        Log::info('[PublishToLinkedInJob] Hittade publication', [
+            'pub_id' => $this->publicationId,
+            'status' => $pub->status,
+            'target' => $pub->target,
+            'scheduled_at' => $pub->scheduled_at?->toISOString(),
+            'has_content' => !is_null($pub->content)
+        ]);
+
         if (!in_array($pub->status, ['queued','processing'], true)) {
             Log::info('[PublishToLinkedInJob] Hoppar över, fel status', [
                 'pub_id' => $this->publicationId,
@@ -48,7 +56,8 @@ class PublishToLinkedInJob implements ShouldQueue
             Log::info('[PublishToLinkedInJob] Content info', [
                 'pub_id' => $this->publicationId,
                 'customer_id' => $customerId,
-                'site_id' => $siteId
+                'site_id' => $siteId,
+                'content_title' => $content?->title
             ]);
 
             if (!$customerId || !$siteId) {
@@ -67,20 +76,33 @@ class PublishToLinkedInJob implements ShouldQueue
             Log::info('[PublishToLinkedInJob] Hittade LinkedIn-integration', [
                 'pub_id' => $this->publicationId,
                 'integration_id' => $si->id,
-                'owner_urn' => $si->page_id
+                'owner_urn' => $si->page_id,
+                'has_access_token' => !empty($si->access_token)
             ]);
 
             $accessToken = $si->access_token;
             $ownerUrn    = $si->page_id ?: '';
 
+            if (empty($accessToken)) {
+                throw new \RuntimeException('Access token är tomt för LinkedIn-integrationen.');
+            }
+
+            if (empty($ownerUrn)) {
+                throw new \RuntimeException('Owner URN är tomt för LinkedIn-integrationen.');
+            }
+
             $payload = $pub->payload ?? [];
             $text = $payload['text'] ?? $content?->title ?? 'Inlägg';
+
+            if (empty(trim($text))) {
+                throw new \RuntimeException('Inläggstext är tom.');
+            }
 
             Log::info('[PublishToLinkedInJob] Förbereder publicering', [
                 'pub_id' => $this->publicationId,
                 'text_length' => strlen($text),
-                'has_access_token' => !empty($accessToken),
-                'owner_urn' => $ownerUrn
+                'owner_urn' => $ownerUrn,
+                'payload_keys' => array_keys($payload)
             ]);
 
             $assetUrn = null;
@@ -94,52 +116,109 @@ class PublishToLinkedInJob implements ShouldQueue
                 ?? $content->inputs['image']['prompt']
                 ?? null;
 
+            Log::info('[PublishToLinkedInJob] Bildhantering', [
+                'pub_id' => $this->publicationId,
+                'images_enabled' => $imagesEnabled,
+                'want_image' => $want,
+                'has_prompt' => !empty($prompt)
+            ]);
+
             if ($want || ($imagesEnabled && $prompt)) {
-                Log::info('[PublishToLinkedInJob] Genererar bild', [
+                Log::info('[PublishToLinkedInJob] Börjar bildgenerering', [
                     'pub_id' => $this->publicationId,
                     'prompt' => $prompt
                 ]);
 
-                $prompt = $prompt ?: $this->buildAutoPrompt($content->title, $content->inputs ?? []);
-                $bytes  = $images->generate($prompt, '1536x1024');
-
-                $reg = $li->registerImageUpload($accessToken, $ownerUrn);
-                if (!empty($reg['uploadUrl']) && !empty($reg['asset'])) {
-                    $li->uploadToLinkedInUrl($reg['uploadUrl'], $bytes, 'image/png');
-                    $assetUrn = $reg['asset'];
-                    Log::info('[PublishToLinkedInJob] Bild uppladdad', [
+                try {
+                    $prompt = $prompt ?: $this->buildAutoPrompt($content->title, $content->inputs ?? []);
+                    Log::info('[PublishToLinkedInJob] Genererar bild med prompt', [
                         'pub_id' => $this->publicationId,
-                        'asset_urn' => $assetUrn
+                        'final_prompt' => $prompt
                     ]);
+
+                    $bytes = $images->generate($prompt, '1536x1024');
+                    Log::info('[PublishToLinkedInJob] Bild genererad', [
+                        'pub_id' => $this->publicationId,
+                        'bytes_length' => strlen($bytes)
+                    ]);
+
+                    Log::info('[PublishToLinkedInJob] Registrerar bilduppladdning', ['pub_id' => $this->publicationId]);
+                    $reg = $li->registerImageUpload($accessToken, $ownerUrn);
+
+                    Log::info('[PublishToLinkedInJob] Registrerings-svar', [
+                        'pub_id' => $this->publicationId,
+                        'registration_response' => $reg
+                    ]);
+
+                    if (!empty($reg['uploadUrl']) && !empty($reg['asset'])) {
+                        Log::info('[PublishToLinkedInJob] Laddar upp bild', ['pub_id' => $this->publicationId]);
+                        $li->uploadToLinkedInUrl($reg['uploadUrl'], $bytes, 'image/png');
+                        $assetUrn = $reg['asset'];
+                        Log::info('[PublishToLinkedInJob] Bild uppladdad', [
+                            'pub_id' => $this->publicationId,
+                            'asset_urn' => $assetUrn
+                        ]);
+                    } else {
+                        Log::warning('[PublishToLinkedInJob] Bilduppladdning misslyckades - saknar uploadUrl eller asset', [
+                            'pub_id' => $this->publicationId,
+                            'reg' => $reg
+                        ]);
+                    }
+                } catch (Throwable $imageError) {
+                    Log::error('[PublishToLinkedInJob] Bildhantering misslyckades', [
+                        'pub_id' => $this->publicationId,
+                        'error' => $imageError->getMessage(),
+                        'trace' => $imageError->getTraceAsString()
+                    ]);
+                    // Fortsätt utan bild istället för att misslyckas helt
                 }
             }
 
-            Log::info('[PublishToLinkedInJob] Anropar LinkedIn API', [
+            Log::info('[PublishToLinkedInJob] Anropar LinkedIn publishPost API', [
                 'pub_id' => $this->publicationId,
-                'has_image' => !empty($assetUrn)
+                'has_image' => !empty($assetUrn),
+                'text_preview' => substr($text, 0, 100) . (strlen($text) > 100 ? '...' : '')
             ]);
 
-            $resp = $li->publishPost($accessToken, $ownerUrn, $text, $assetUrn);
+            try {
+                $resp = $li->publishPost($accessToken, $ownerUrn, $text, $assetUrn);
 
-            Log::info('[PublishToLinkedInJob] LinkedIn API-svar', [
-                'pub_id' => $this->publicationId,
-                'response' => $resp
-            ]);
+                Log::info('[PublishToLinkedInJob] LinkedIn API-svar', [
+                    'pub_id' => $this->publicationId,
+                    'response_keys' => array_keys($resp ?? []),
+                    'response' => $resp
+                ]);
 
-            $pub->update([
-                'status'      => 'published',
-                'external_id' => $resp['id'] ?? ($resp['ugcPost'] ?? null),
-                'message'     => 'Publicerat till LinkedIn',
-                'payload'     => array_merge($payload, ['asset_urn' => $assetUrn]),
-            ]);
+                if (empty($resp) || (!isset($resp['id']) && !isset($resp['ugcPost']))) {
+                    throw new \RuntimeException('LinkedIn API returnerade tomt svar eller saknar ID. Svar: ' . json_encode($resp));
+                }
 
-            $usage->increment($customerId, 'ai.publish.linkedin');
-            $usage->increment($customerId, 'ai.publish');
+                $pub->update([
+                    'status'      => 'published',
+                    'external_id' => $resp['id'] ?? ($resp['ugcPost'] ?? null),
+                    'message'     => 'Publicerat till LinkedIn',
+                    'payload'     => array_merge($payload, ['asset_urn' => $assetUrn]),
+                ]);
 
-            Log::info('[PublishToLinkedInJob] Slutfört framgångsrikt', ['pub_id' => $this->publicationId]);
+                $usage->increment($customerId, 'ai.publish.linkedin');
+                $usage->increment($customerId, 'ai.publish');
+
+                Log::info('[PublishToLinkedInJob] Slutfört framgångsrikt', [
+                    'pub_id' => $this->publicationId,
+                    'external_id' => $resp['id'] ?? ($resp['ugcPost'] ?? null)
+                ]);
+
+            } catch (Throwable $apiError) {
+                Log::error('[PublishToLinkedInJob] LinkedIn API-anrop misslyckades', [
+                    'pub_id' => $this->publicationId,
+                    'api_error' => $apiError->getMessage(),
+                    'api_trace' => $apiError->getTraceAsString()
+                ]);
+                throw $apiError;
+            }
 
         } catch (Throwable $e) {
-            Log::error('[PublishToLinkedInJob] Misslyckades', [
+            Log::error('[PublishToLinkedInJob] Jobbet misslyckades', [
                 'pub_id' => $this->publicationId,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
