@@ -22,12 +22,18 @@ class PublishToFacebookJob implements ShouldQueue
 
     public function handle(Usage $usage, ImageGenerator $images): void
     {
-        $pub = ContentPublication::with('content.customer')->findOrFail($this->publicationId);
+        $pub = ContentPublication::with('aiContent')->findOrFail($this->publicationId);
         if ($pub->status !== 'queued') return;
 
-        $content = $pub->content;
-        $integration = SocialIntegration::where('customer_id', $content->customer_id)
-            ->where('provider', 'facebook')->firstOrFail();
+        $content = $pub->aiContent;
+        $customerId = $content?->customer_id;
+        $siteId     = $content?->site_id;
+        abort_unless($customerId && $siteId, 422);
+
+        // Hämta integration per SAJT
+        $integration = SocialIntegration::where('site_id', $siteId)
+            ->where('provider', 'facebook')
+            ->firstOrFail();
 
         $message = trim(($content->title ? $content->title . "\n\n" : '') . ($content->body_md ?? ''));
         $payload = $pub->payload ?? [];
@@ -49,7 +55,7 @@ class PublishToFacebookJob implements ShouldQueue
 
             if ($wantImage || ($imagesEnabled && $imagePrompt)) {
                 $prompt = $imagePrompt ?: $this->buildAutoPrompt($content->title, $content->body_md ?? '', $content->inputs ?? []);
-                $bytes  = $images->generate($prompt, '1536x1024'); // giltig storlek
+                $bytes  = $images->generate($prompt, '1536x1024');
                 $resp   = $client->createPagePhoto($integration->page_id, $bytes, 'image-' . Str::random(8) . '.png', $message);
 
                 $pub->update([
@@ -72,8 +78,8 @@ class PublishToFacebookJob implements ShouldQueue
                 ]);
             }
 
-            $usage->increment($content->customer_id, 'ai.publish.facebook');
-            $usage->increment($content->customer_id, 'ai.publish');
+            $usage->increment($customerId, 'ai.publish.facebook');
+            $usage->increment($customerId, 'ai.publish');
         } catch (\Throwable $e) {
             $pub->update(['status' => 'failed', 'message' => $e->getMessage()]);
             throw $e;

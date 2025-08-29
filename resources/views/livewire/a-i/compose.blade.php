@@ -202,6 +202,7 @@
                             </div>
                             <label class="text-lg font-semibold text-gray-900">Kopplad sajt</label>
                         </div>
+
                         <select wire:model="site_id" class="w-full px-4 py-3 bg-white border border-teal-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200">
                             <option value="">Ingen sajt vald</option>
                             @foreach($sites as $s)

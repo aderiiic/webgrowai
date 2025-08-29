@@ -19,10 +19,15 @@ class KeywordSuggestionsIndex extends Component
     {
         $customer = $current->get();
         abort_unless($customer, 403);
-        $siteIds = $customer->sites()->pluck('id');
 
-        $q = KeywordSuggestion::whereIn('site_id', $siteIds)->latest();
-        if ($this->status !== 'all') $q->where('status', $this->status);
+        // Filtrera på aktiv (vald) sajt
+        $siteId = $current->getSiteId();
+        abort_unless($siteId && $customer->sites()->whereKey($siteId)->exists(), 404, 'Ingen sajt vald.');
+
+        $q = KeywordSuggestion::where('site_id', $siteId)->latest();
+        if ($this->status !== 'all') {
+            $q->where('status', $this->status);
+        }
 
         return view('livewire.seo.keyword-suggestions-index', [
             'rows' => $q->paginate(15),

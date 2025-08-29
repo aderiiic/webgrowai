@@ -9,6 +9,7 @@ use App\Models\Invoice;
 use App\Models\Post;
 use App\Models\WpIntegration;
 use App\Services\Billing\InvoicePdf;
+use App\Support\CurrentCustomer;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Route;
@@ -200,53 +201,63 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
 
     // Flytta knappar (fetch/analyze) före den parameteriserade routen för att undvika krockar
     Route::get('/seo/keywords', KeywordSuggestionsIndex::class)->name('seo.keywords.index');
-
-    Route::get('/seo/keywords/fetch', function () {
-        $customer = app(\App\Support\CurrentCustomer::class)->get();
-        abort_unless($customer, 403);
-        $siteId = $customer->sites()->value('id');
-        abort_unless($siteId, 404, 'Ingen sajt.');
-        dispatch(new FetchRankingsJob($siteId))->onQueue('default');
-        return back()->with('success', 'Hämtning av rankingar köad.');
-    })->name('seo.keywords.fetch');
-
-    Route::get('/seo/keywords/analyze', function () {
-        $customer = app(\App\Support\CurrentCustomer::class)->get();
-        abort_unless($customer, 403);
-        $siteId = $customer->sites()->value('id');
-        abort_unless($siteId, 404, 'Ingen sajt.');
-
-        // Nytt: kräver WP-koppling
-        $hasAnyIntegration = Integration::where('site_id', $siteId)->exists();
-        if (!$hasAnyIntegration) {
-            return back()->with('success', 'Koppla din WordPress-sajt under “Sajter → WordPress” för att köra SEO‑analysen av nyckelord.');
-        }
-
-        dispatch(new AnalyzeKeywordsJob($siteId))->onQueue('ai');
-        return back()->with('success', 'AI-analys köad.');
-    })->name('seo.keywords.analyze');
+//
+//    Route::get('/seo/keywords/fetch', function () {
+//        $ctx = app(CurrentCustomer::class);
+//        $customer = $ctx->get();
+//        abort_unless($customer, 403);
+//
+//        // Använd vald sajt
+//        $siteId = $ctx->getSiteId();
+//        abort_unless($siteId && $customer->sites()->whereKey($siteId)->exists(), 404, 'Ingen sajt vald.');
+//
+//        dispatch(new FetchRankingsJob($siteId))->onQueue('default');
+//        return back()->with('success', 'Hämtning av rankingar köad.');
+//    })->name('seo.keywords.fetch');
+//
+//    Route::get('/seo/keywords/analyze', function () {
+//        $ctx = app(CurrentCustomer::class);
+//        $customer = $ctx->get();
+//        abort_unless($customer, 403);
+//
+//        // Använd vald sajt
+//        $siteId = $ctx->getSiteId();
+//        abort_unless($siteId && $customer->sites()->whereKey($siteId)->exists(), 404, 'Ingen sajt vald.');
+//
+//        // Kräver valfri integration (behövs typiskt för att kunna hämta/skriva mot källsystem)
+//        $hasAnyIntegration = Integration::where('site_id', $siteId)->exists();
+//        if (!$hasAnyIntegration) {
+//            return back()->with('success', 'Koppla din WordPress-sajt under “Sajter → WordPress” för att köra SEO‑analysen av nyckelord.');
+//        }
+//
+//        dispatch(new AnalyzeKeywordsJob($siteId))->onQueue('ai');
+//        return back()->with('success', 'AI-analys köad.');
+//    })->name('seo.keywords.analyze');
 
     Route::get('/seo/keywords/fetch-analyze', function () {
-        $customer = app(\App\Support\CurrentCustomer::class)->get();
+        $ctx = app(CurrentCustomer::class);
+        $customer = $ctx->get();
         abort_unless($customer, 403);
-        $siteId = $customer->sites()->value('id');
-        abort_unless($siteId, 404, 'Ingen sajt.');
 
-        // Säkerställ att någon integration finns (oavsett provider)
-        $hasAnyIntegration = Integration::where('site_id', $siteId)->exists();
+        $siteId = $ctx->getSiteId();
+        abort_unless($siteId && $customer->sites()->whereKey($siteId)->exists(), 404, 'Ingen sajt vald.');
 
-        if (!$hasAnyIntegration) {
-            return back()->with('error', 'Koppla din sajt under “Sajter → Integrationer” (WordPress, Shopify eller Custom) för att hämta rankingar och köra AI‑analys.');
+        // Endast WP kräver connected integration; Shopify/övriga får köra utan
+        $integration = Integration::where('site_id', $siteId)->first();
+        if ($integration && $integration->provider === 'wordpress' && $integration->status !== 'connected') {
+            return back()->with('error', 'Koppla din WordPress‑sajt under “Sajter → WordPress” innan du kör analysen.');
         }
 
-        // Kör i kedja: först hämta rankingar (default-kö), sedan AI-analys (ai-kö).
-        // Om jobben själva definierar queue() kan de använda rätt kö ändå.
+        // Tillåt parameter för hur många sidor vi behandlar (default 20, max 50)
+        $limit = (int) request('limit', 20);
+        $limit = max(5, min($limit, 50));
+
         Bus::chain([
-            new FetchRankingsJob($siteId),
+            new FetchRankingsJob($siteId, $limit),
             new AnalyzeKeywordsJob($siteId),
         ])->dispatch();
 
-        return back()->with('success', 'Hämtning av rankingar och AI‑analys har köats.');
+        return back()->with('success', "Hämtning av rankingar (upp till {$limit} sidor) och AI‑analys har köats.");
     })->name('seo.keywords.fetch_analyze');
 
     // Den parameteriserade routen kommer sist + begränsad till numeriskt id
@@ -254,19 +265,20 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
     Route::get('/seo/keywords/{id}', KeywordSuggestionDetail::class)->name('seo.keywords.detail')->whereNumber('id');
 
     Route::get('/cro/analyze/run', function () {
-        $customer = app(\App\Support\CurrentCustomer::class)->get();
+        /** @var CurrentCustomer $ctx */
+        $ctx = app(CurrentCustomer::class);
+        $customer = $ctx->get();
         abort_unless($customer, 403);
-        $siteId = $customer->sites()->value('id');
-        abort_unless($siteId, 404, 'Ingen sajt.');
 
-        // Nytt: acceptera vilken integration som helst (wordpress|shopify|custom)
-        $hasAnyIntegration = Integration::where('site_id', $siteId)->exists();
-        if (!$hasAnyIntegration) {
-            return back()->with('error', 'Koppla din sajt under “Sajter → Integrationer” (WordPress, Shopify eller Custom) för att köra CRO‑analysen.');
-        }
+        $siteId = $ctx->getSiteId();
+        abort_unless($siteId && $customer->sites()->whereKey($siteId)->exists(), 404, 'Ingen sajt vald.');
 
-        dispatch(new AnalyzeConversionJob($siteId))->onQueue('default');
-        return back()->with('success', 'Analys köad. Uppdatera sidan om en stund.');
+        $limit = (int) request('limit', 12); // styr hur många sidor vi försöker analysera
+        $limit = max(1, min($limit, 50));
+
+        dispatch(new AnalyzeConversionJob($siteId, $limit))->onQueue('default');
+
+        return back()->with('success', "Analys köad för vald sajt (upp till {$limit} sidor). Uppdatera sidan om en stund.");
     })->name('cro.analyze.run');
 
     Route::post('/sites/{site}/cro/analyze', function (\App\Models\Site $site) {
