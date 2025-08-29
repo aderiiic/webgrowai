@@ -24,21 +24,43 @@ class PublishToFacebookJob implements ShouldQueue
 
     public function handle(Usage $usage, ImageGenerator $images): void
     {
+        Log::info('[PublishToFacebookJob] Startar', ['pub_id' => $this->publicationId]);
+
         $pub = ContentPublication::with('content')->findOrFail($this->publicationId);
 
+        Log::info('[PublishToFacebookJob] Hittade publication', [
+            'pub_id' => $this->publicationId,
+            'status' => $pub->status,
+            'target' => $pub->target,
+            'scheduled_at' => $pub->scheduled_at?->toISOString()
+        ]);
+
         if (!in_array($pub->status, ['queued','processing'], true)) {
+            Log::info('[PublishToFacebookJob] Hoppar över, fel status', [
+                'pub_id' => $this->publicationId,
+                'status' => $pub->status
+            ]);
             return;
         }
 
         // Sätt processing om den inte redan är det (direktpublicering sätter ofta redan detta)
         if ($pub->status === 'queued') {
             $pub->update(['status' => 'processing']);
+            Log::info('[PublishToFacebookJob] Uppdaterat till processing', ['pub_id' => $this->publicationId]);
         }
 
         try {
             $content = $pub->content;
             $customerId = $content?->customer_id;
             $siteId     = $content?->site_id;
+
+            Log::info('[PublishToFacebookJob] Content info', [
+                'pub_id' => $this->publicationId,
+                'customer_id' => $customerId,
+                'site_id' => $siteId,
+                'has_content' => !is_null($content)
+            ]);
+
             if (!$customerId || !$siteId) {
                 throw new \RuntimeException('Saknar customer_id eller site_id på innehållet.');
             }
@@ -48,11 +70,28 @@ class PublishToFacebookJob implements ShouldQueue
                 ->first();
 
             if (!$integration) {
+                Log::warning('[PublishToFacebookJob] Ingen Facebook-integration hittad', [
+                    'pub_id' => $this->publicationId,
+                    'site_id' => $siteId
+                ]);
                 throw new \RuntimeException('Ingen Facebook‑integration hittad för denna sajt.');
             }
 
+            Log::info('[PublishToFacebookJob] Hittade Facebook-integration', [
+                'pub_id' => $this->publicationId,
+                'integration_id' => $integration->id,
+                'page_id' => $integration->page_id,
+                'has_access_token' => !empty($integration->access_token)
+            ]);
+
             $message = trim(($content->title ? $content->title . "\n\n" : '') . ($content->body_md ?? ''));
             $payload = $pub->payload ?? [];
+
+            Log::info('[PublishToFacebookJob] Förbereder meddelande', [
+                'pub_id' => $this->publicationId,
+                'message_length' => strlen($message),
+                'payload_keys' => array_keys($payload)
+            ]);
 
             $imagesEnabled = config('features.image_generation', false);
             $wantImage = (bool)($payload['image']['generate'] ?? $content->inputs['image']['generate'] ?? false);
@@ -63,12 +102,27 @@ class PublishToFacebookJob implements ShouldQueue
                 ?? $content->inputs['image']['prompt']
                 ?? null;
 
+            Log::info('[PublishToFacebookJob] Bildhantering', [
+                'pub_id' => $this->publicationId,
+                'images_enabled' => $imagesEnabled,
+                'want_image' => $wantImage,
+                'has_image_prompt' => !empty($imagePrompt),
+                'is_scheduled' => $pub->scheduled_at && $pub->scheduled_at->isFuture()
+            ]);
+
             $client = new FacebookClient($integration->access_token);
 
             if ($wantImage || ($imagesEnabled && $imagePrompt)) {
+                Log::info('[PublishToFacebookJob] Skapar inlägg med bild', ['pub_id' => $this->publicationId]);
+
                 $prompt = $imagePrompt ?: $this->buildAutoPrompt($content->title, $content->body_md ?? '', $content->inputs ?? []);
                 $bytes  = $images->generate($prompt, '1536x1024');
                 $resp   = $client->createPagePhoto($integration->page_id, $bytes, 'image-' . Str::random(8) . '.png', $message);
+
+                Log::info('[PublishToFacebookJob] Facebook foto-svar', [
+                    'pub_id' => $this->publicationId,
+                    'response' => $resp
+                ]);
 
                 $pub->update([
                     'status'      => 'published',
@@ -78,10 +132,21 @@ class PublishToFacebookJob implements ShouldQueue
                 ]);
             } else {
                 if ($pub->scheduled_at && $pub->scheduled_at->isFuture()) {
+                    Log::info('[PublishToFacebookJob] Schemalägger inlägg', [
+                        'pub_id' => $this->publicationId,
+                        'timestamp' => $pub->scheduled_at->timestamp
+                    ]);
                     $resp = $client->schedulePagePost($integration->page_id, $message, $pub->scheduled_at->timestamp);
                 } else {
+                    Log::info('[PublishToFacebookJob] Skapar omedelbart inlägg', ['pub_id' => $this->publicationId]);
                     $resp = $client->createPagePost($integration->page_id, $message);
                 }
+
+                Log::info('[PublishToFacebookJob] Facebook inläggs-svar', [
+                    'pub_id' => $this->publicationId,
+                    'response' => $resp
+                ]);
+
                 $pub->update([
                     'status'      => 'published',
                     'external_id' => $resp['id'] ?? null,
@@ -92,10 +157,17 @@ class PublishToFacebookJob implements ShouldQueue
 
             $usage->increment($customerId, 'ai.publish.facebook');
             $usage->increment($customerId, 'ai.publish');
-        } catch (Throwable $e) {
-            Log::warning('[PublishToFacebookJob] Misslyckades', [
+
+            Log::info('[PublishToFacebookJob] Slutfört framgångsrikt', [
                 'pub_id' => $this->publicationId,
-                'msg'    => $e->getMessage(),
+                'external_id' => $pub->fresh()->external_id
+            ]);
+
+        } catch (Throwable $e) {
+            Log::error('[PublishToFacebookJob] Misslyckades', [
+                'pub_id' => $this->publicationId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
             $pub->update(['status' => 'failed', 'message' => $e->getMessage()]);
             throw $e;
