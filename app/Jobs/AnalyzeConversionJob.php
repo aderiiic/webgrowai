@@ -33,79 +33,45 @@ class AnalyzeConversionJob implements ShouldQueue
         $site = Site::with('customer')->findOrFail($this->siteId);
         $customer = $site->customer;
 
-        // 1) Hämta valfri integration (wordpress|shopify|custom)
+        $pages = [];
         $integration = Integration::where('site_id', $site->id)->first();
 
-        if (!$integration) {
-            Log::warning('[AnalyzeConversion] ingen integration kopplad, hoppar över', [
-                'customer_id' => $customer?->id,
-                'site_id'     => $site->id,
-            ]);
-            return;
-        }
-
-        // 2) Försök hämta landningssidor
-        $pages = [];
-        try {
-            // a) Om WordPress: använd befintligt flöde för sidor
-            if ($integration->provider === 'wordpress') {
-                // Använd adapterklient via IntegrationManager om tillgängligt
+        // 1) Om integration finns, försök via adapter
+        if ($integration) {
+            try {
                 $client = $integrations->forIntegration($integration);
-
-                // Antag att adaptern har en metod getPages eller listPages. Försök båda.
                 if (method_exists($client, 'getPages')) {
                     $pages = $client->getPages(['per_page' => $this->limit, 'orderby' => 'modified']);
                 } elseif (method_exists($client, 'listPages')) {
                     $pages = $client->listPages($this->limit);
                 }
-            } else {
-                // b) Icke-WP: försök via adapter först...
-                try {
-                    $client = $integrations->forIntegration($integration);
-                    if (method_exists($client, 'getPages')) {
-                        $pages = $client->getPages(['limit' => $this->limit]);
-                    } elseif (method_exists($client, 'listPages')) {
-                        $pages = $client->listPages($this->limit);
-                    }
-                } catch (\Throwable $e) {
-                    // Adapter saknas eller kastar fel – vi faller tillbaka på startsidan nedan
-                }
+            } catch (\Throwable $e) {
+                Log::info('[AnalyzeConversion] adapter misslyckades, faller tillbaka', [
+                    'site_id'  => $site->id,
+                    'provider' => $integration->provider ?? 'unknown',
+                    'error'    => $e->getMessage(),
+                ]);
             }
-        } catch (\Throwable $e) {
-            Log::warning('[AnalyzeConversion] kunde inte hämta sidor via adapter', [
-                'customer_id' => $customer?->id,
-                'site_id'     => $site->id,
-                'provider'    => $integration->provider,
-                'error'       => $e->getMessage(),
+        } else {
+            Log::info('[AnalyzeConversion] ingen integration – använder publik upptäckt (sitemap/crawl)', [
+                'site_id' => $site->id,
             ]);
         }
 
-        // Fallback: om inga sidor kunde hämtas via integration, analysera åtminstone startsidan
+        // 2) Fallback: hitta publika sidor att analysera
         if (empty($pages)) {
-            try {
-                $http = new HttpClient(['timeout' => 10]);
-                $res = $http->get($site->url);
-                $html = (string) $res->getBody();
-
-                $title = '';
-                if (preg_match('/<title[^>]*>(.*?)<\/title>/is', $html, $m)) {
-                    $title = Str::of($m[1])->stripTags()->squish()->toString();
-                }
-
-                $pages = [[
-                    'id'      => 0,
-                    'link'    => $site->url,
-                    'title'   => ['rendered' => $title],
-                    'content' => ['rendered' => $html],
-                ]];
-            } catch (\Throwable $e) {
-                Log::warning('[AnalyzeConversion] kunde inte hämta startsidan', [
-                    'site_id' => $site->id,
-                    'url'     => $site->url,
-                    'error'   => $e->getMessage(),
-                ]);
-                return;
+            $urls = $this->discoverPublicUrls($site, $this->limit);
+            if (empty($urls)) {
+                // Som sista utväg – analysera startsidan
+                $urls = [$site->url];
             }
+
+            $pages = $this->fetchPublicPages($urls);
+        }
+
+        if (empty($pages)) {
+            Log::warning('[AnalyzeConversion] inga sidor att analysera', ['site_id' => $site->id]);
+            return;
         }
 
         // 3) Kör AI-analysen per sida
@@ -126,11 +92,11 @@ class AnalyzeConversionJob implements ShouldQueue
             }
 
             $pid = (int)($p['id'] ?? 0);
-            $url = (string)($p['link'] ?? $site->url);
-            $title = trim(strip_tags(Arr::get($p, 'title.rendered', '')));
-            $html = (string)Arr::get($p, 'content.rendered', '');
+            $url = (string)($p['link'] ?? $p['url'] ?? $site->url);
+            $title = trim(strip_tags(Arr::get($p, 'title.rendered', $p['title'] ?? '')));
+            $html = (string) (Arr::get($p, 'content.rendered', $p['html'] ?? ''));
 
-            $text = Str::of($html)->replace(['<script','</script>'], ' ')->stripTags()->squish()->limit(4000);
+            $text = Str::of($html)->replace(['<script','</script>','<style','</style>'], ' ')->stripTags()->squish()->limit(4000);
 
             $prompt = $guidelines."\n\n".
                 "Analys av sida (titel + innehåll, utdrag nedan). Du ska föreslå:\n".
@@ -138,17 +104,17 @@ class AnalyzeConversionJob implements ShouldQueue
                 "- CTA: primär knapptext (max 25 tecken) och placering (above fold/sektion)\n".
                 "- Formulär: placering och antal fält (maximisera konvertering)\n".
                 "- Kort motivering (punktlista)\n\n".
+                "URL: {$url}\n".
                 "Titel: \"{$title}\"\nInnehåll (trimmat):\n{$text}\n\n".
                 "Returnera ENDAST JSON med strukturen:\n".
                 "{\n".
                 "  \"insights\": [\"...\",\"...\"],\n".
-                "  \"title\": {\"current\": \"...\", \"suggested\": \"...\", \"subtitle\": \"...\"},\n".
+                "  \"title\": {\"current\": \"...\", \"suggested\": \"...\", \"subtitle\": \"\"},\n".
                 "  \"cta\": {\"current\": \"...\", \"suggested\": \"...\", \"placement\": \"above_fold|section_2|footer\"},\n".
                 "  \"form\": {\"current\": \"...\", \"suggested\": {\"placement\": \"above_fold|sidebar|section_2\", \"fields\": [\"name\",\"email\",\"phone\"]}}\n".
                 "}\n";
 
             $json = $prov->generate($prompt, ['max_tokens' => 700, 'temperature' => 0.5]);
-            // Rensa ev. icke-JSON och försök parse:a
             $json = trim(Str::of($json)->after('{')->beforeLast('}'));
             $json = '{'.$json.'}';
 
@@ -171,5 +137,150 @@ class AnalyzeConversionJob implements ShouldQueue
 
             $usage->increment($customer->id, 'ai.generate', now()->format('Y-m'), 1);
         }
+    }
+
+    /**
+     * Försök hitta publika sid-URL:er:
+     * - sitemap.xml (inkl. undersitemaps) – särskilt effektivt för Shopify
+     * - annars: startsida → extrahera interna länkar
+     */
+    private function discoverPublicUrls(Site $site, int $limit = 12): array
+    {
+        $http = new HttpClient(['timeout' => 12]);
+        $base = rtrim((string) $site->url, '/');
+        $host = parse_url($base, PHP_URL_HOST) ?: '';
+
+        $urls = [];
+
+        // 1) sitemap.xml
+        try {
+            $sitemapUrl = $base.'/sitemap.xml';
+            $res = $http->get($sitemapUrl);
+            $xml = (string) $res->getBody();
+
+            // Hämta undersitemaps (t.ex. pages_sitemap.xml, articles_sitemap.xml)
+            preg_match_all('#<loc>([^<]+)</loc>#i', $xml, $m);
+            $locs = array_map('trim', $m[1] ?? []);
+            $sitemaps = [];
+            foreach ($locs as $loc) {
+                // Om filen verkar vara en undersitemap, hämta den
+                if (str_ends_with($loc, '.xml') && count($sitemaps) < 10) {
+                    $sitemaps[] = $loc;
+                }
+            }
+            if (empty($sitemaps)) {
+                // om huvud-sitemap redan listar URL:er
+                $urls = $this->extractUrlsFromSitemapXml($xml, $host, $limit);
+            } else {
+                foreach ($sitemaps as $sm) {
+                    try {
+                        $r = $http->get($sm);
+                        $urls = array_merge($urls, $this->extractUrlsFromSitemapXml((string)$r->getBody(), $host, $limit - count($urls)));
+                        if (count($urls) >= $limit) break;
+                    } catch (\Throwable) {
+                        // Ignorera enstaka fel
+                    }
+                }
+            }
+        } catch (\Throwable) {
+            // ignorera, går vidare till crawl
+        }
+
+        $urls = array_values(array_unique(array_filter($urls)));
+        if (count($urls) >= $limit) {
+            return array_slice($urls, 0, $limit);
+        }
+
+        // 2) Enkel crawl av startsidan (om vi fortfarande saknar URL:er)
+        try {
+            $res  = $http->get($base);
+            $html = (string) $res->getBody();
+            $more = $this->extractInternalLinks($html, $base, $host, $limit - count($urls));
+            $urls = array_values(array_unique(array_merge($urls, $more)));
+        } catch (\Throwable) {
+            // ignore
+        }
+
+        if (empty($urls)) {
+            $urls[] = $base;
+        }
+
+        return array_slice($urls, 0, $limit);
+    }
+
+    private function extractUrlsFromSitemapXml(string $xml, string $host, int $max): array
+    {
+        if ($max <= 0) return [];
+        preg_match_all('#<loc>([^<]+)</loc>#i', $xml, $m);
+        $locs = array_map('trim', $m[1] ?? []);
+        $urls = [];
+        foreach ($locs as $loc) {
+            $uHost = parse_url($loc, PHP_URL_HOST) ?: '';
+            if ($uHost && $host && str_ends_with($uHost, $host)) {
+                $urls[] = $loc;
+                if (count($urls) >= $max) break;
+            }
+        }
+        return $urls;
+    }
+
+    private function extractInternalLinks(string $html, string $base, string $host, int $max): array
+    {
+        if ($max <= 0) return [];
+        $urls = [];
+        if (preg_match_all('#<a\s[^>]*href=["\']([^"\']+)#i', $html, $m)) {
+            foreach ($m[1] as $href) {
+                $href = trim($href);
+                if ($href === '' || str_starts_with($href, 'javascript:') || str_starts_with($href, '#')) {
+                    continue;
+                }
+                // Absolut vs relativ
+                if (str_starts_with($href, 'http://') || str_starts_with($href, 'https://')) {
+                    $uHost = parse_url($href, PHP_URL_HOST) ?: '';
+                    if ($uHost && ($uHost === $host || str_ends_with($uHost, '.'.$host))) {
+                        $urls[] = rtrim($href, '/');
+                    }
+                } else {
+                    // relativ länk
+                    $urls[] = rtrim($base.'/'.ltrim($href, '/'), '/');
+                }
+                if (count($urls) >= $max) break;
+            }
+        }
+        return $urls;
+    }
+
+    /**
+     * Hämta HTML och sidtitel för en lista URL:er.
+     */
+    private function fetchPublicPages(array $urls): array
+    {
+        $http = new HttpClient(['timeout' => 12]);
+        $out  = [];
+        $i    = 0;
+
+        foreach ($urls as $u) {
+            try {
+                $res  = $http->get($u, ['headers' => ['User-Agent' => 'WebbiBot/1.0']]);
+                $html = (string) $res->getBody();
+
+                $title = '';
+                if (preg_match('/<title[^>]*>(.*?)<\/title>/is', $html, $m)) {
+                    $title = Str::of($m[1])->stripTags()->squish()->toString();
+                }
+
+                $out[] = [
+                    'id'      => $i++,
+                    'link'    => $u,
+                    'title'   => ['rendered' => $title],
+                    'content' => ['rendered' => $html],
+                ];
+            } catch (\Throwable $e) {
+                // hoppa över enstaka fel
+                Log::info('[AnalyzeConversion] kunde inte hämta publik sida', ['url' => $u, 'error' => $e->getMessage()]);
+            }
+        }
+
+        return $out;
     }
 }

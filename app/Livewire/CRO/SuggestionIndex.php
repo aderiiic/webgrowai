@@ -4,11 +4,10 @@ namespace App\Livewire\CRO;
 
 use App\Models\ConversionSuggestion;
 use App\Support\CurrentCustomer;
-use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-#[Layout('layouts.app')]
+#[\Livewire\Attributes\Layout('layouts.app')]
 class SuggestionIndex extends Component
 {
     use WithPagination;
@@ -20,10 +19,14 @@ class SuggestionIndex extends Component
         $customer = $current->get();
         abort_unless($customer, 403);
 
-        $siteIds = $customer->sites()->pluck('id');
+        $siteId = $current->getSiteId();
+        // Säkerställ att vald sajt tillhör aktiva kunden
+        abort_unless($siteId && $customer->sites()->whereKey($siteId)->exists(), 404, 'Ingen sajt vald.');
 
-        $q = ConversionSuggestion::whereIn('site_id', $siteIds)->latest();
-        if ($this->status !== 'all') $q->where('status', $this->status);
+        $q = ConversionSuggestion::where('site_id', $siteId)->latest();
+        if ($this->status !== 'all') {
+            $q->where('status', $this->status);
+        }
 
         return view('livewire.cro.suggestion-index', [
             'sugs' => $q->paginate(15),
