@@ -25,6 +25,18 @@ class NewsletterCompose extends Component
         $c = $current->get();
         abort_unless($c, 403);
 
+        $site = $c->sites()->whereKey($current->getSiteId())->first();
+        if (!$site) {
+            session()->flash('error', 'Ingen sajt vald.');
+            return;
+        }
+
+        // Kräv kopplat Mailchimp-konto på SAJTEN
+        if (!$site->mailchimp_api_key || !$site->mailchimp_audience_id || !$site->mailchimp_from_name || !$site->mailchimp_reply_to) {
+            session()->flash('error', 'Du måste ansluta ett konto.');
+            return;
+        }
+
         dispatch(new GenerateNewsletterFromAIJob(
             customerId: $c->id,
             subject: $this->subject,

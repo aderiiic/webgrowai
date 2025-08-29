@@ -38,8 +38,12 @@ class SocialAuthController extends Controller
         abort_unless($req->query('state') === $savedState, 400, 'Ogiltig state');
 
         $customer = $current->get();
-        Log::info('[FB] Callback', ['customer' => $customer]);
+        Log::info('[FB] Callback', ['customer' => $customer?->id]);
         abort_unless($customer, 403);
+
+        // Viktigt: läs aktiv sajt och säkerställ att vi sparar per SAJT
+        $siteId = $current->getSiteId();
+        abort_unless($siteId, 400, 'Ingen aktiv sajt vald vid koppling.');
 
         $code = $req->query('code');
         abort_unless($code, 400, 'Saknar code');
@@ -49,7 +53,7 @@ class SocialAuthController extends Controller
         $client = new Client(['timeout' => 30]);
 
         try {
-            // 1) Byt code -> User access token
+            // 1) code -> user access token
             $tokenRes = $client->get('https://graph.facebook.com/v19.0/oauth/access_token', [
                 'query' => [
                     'client_id'     => config('services.facebook.client_id'),
@@ -58,17 +62,11 @@ class SocialAuthController extends Controller
                     'code'          => $code,
                 ],
             ]);
-
-            $tokenBody = (string) $tokenRes->getBody();
-            Log::info('[FB] Token res body', ['body' => $tokenBody]);
-
-            $token = json_decode($tokenBody, true);
+            $token = json_decode((string) $tokenRes->getBody(), true);
             $userAccessToken = $token['access_token'] ?? null;
             abort_unless($userAccessToken, 400, 'Kunde inte hämta user access token');
 
-            Log::info('[FB] User access token erhållet');
-
-            // (Valfritt) Byt till long-lived user token för robustare flöde
+            // 2) försök long-lived
             try {
                 $llRes = $client->get('https://graph.facebook.com/v19.0/oauth/access_token', [
                     'query' => [
@@ -81,13 +79,12 @@ class SocialAuthController extends Controller
                 $llBody = json_decode((string) $llRes->getBody(), true);
                 if (!empty($llBody['access_token'])) {
                     $userAccessToken = $llBody['access_token'];
-                    Log::info('[FB] Long-lived user token erhållet');
                 }
             } catch (\Throwable $e) {
-                Log::info('[FB] Kunde inte byta till long-lived token', ['error' => $e->getMessage()]);
+                Log::info('[FB] Long-lived token misslyckades', ['error' => $e->getMessage()]);
             }
 
-            // 2) Hämta sidor för användaren
+            // 3) Hämta sidor + välj en (du kan utöka UI för att välja)
             $pagesRes = $client->get('https://graph.facebook.com/v19.0/me/accounts', [
                 'query' => [
                     'access_token' => $userAccessToken,
@@ -95,37 +92,26 @@ class SocialAuthController extends Controller
                     'limit'        => 50,
                 ],
             ]);
-            $pagesBody = (string) $pagesRes->getBody();
-            Log::info('[FB] /me/accounts body', ['body' => $pagesBody]);
-
-            $pages = json_decode($pagesBody, true);
+            $pages = json_decode((string) $pagesRes->getBody(), true);
             $firstPage = $pages['data'][0] ?? null;
 
             if (!$firstPage) {
-                // Visa vänligt fel i UI i stället för 400 så användaren vet vad som saknas
                 return redirect()
                     ->route('settings.social')
-                    ->with('error', 'Inga sidor hittades. Säkerställ att du är admin/redaktör för en Facebook-sida och att du godkänner behörigheterna: pages_show_list, pages_manage_metadata, pages_read_engagement. Om appen inte är i Live-läge måste ditt konto vara Admin/Developer/Tester i appen.');
+                    ->with('error', 'Inga Facebook-sidor hittades för kontot.');
             }
 
             $pageId = $firstPage['id'] ?? null;
             $pageAccessToken = $firstPage['access_token'] ?? null;
+            abort_unless($pageId && $pageAccessToken, 400, 'Sidan saknar giltigt Page Access Token');
 
-            Log::info('[FB] Page vald', ['pageId' => $pageId, 'hasToken' => (bool)$pageAccessToken]);
-
-            if (!$pageId || !$pageAccessToken) {
-                return redirect()
-                    ->route('settings.social')
-                    ->with('error', 'Sidan hittades men inget giltigt Page Access Token returnerades. Säkerställ att permissions inkluderar pages_manage_metadata och prova igen.');
-            }
-
-            // 3) Spara facebook-integration
+            // 4) Spara Facebook per SAJT
             SocialIntegration::updateOrCreate(
-                ['customer_id' => $customer->id, 'provider' => 'facebook'],
+                ['customer_id' => $customer->id, 'site_id' => $siteId, 'provider' => 'facebook'],
                 ['page_id' => $pageId, 'access_token' => $pageAccessToken, 'status' => 'active']
             );
 
-            // 4) Försök även få IG Business User kopplad till sidan
+            // 5) Försök även IG Business User för samma sida per SAJT
             try {
                 $igRes = $client->get("https://graph.facebook.com/v19.0/{$pageId}", [
                     'query' => ['access_token' => $pageAccessToken, 'fields' => 'instagram_business_account'],
@@ -135,7 +121,7 @@ class SocialAuthController extends Controller
 
                 if ($igUserId) {
                     SocialIntegration::updateOrCreate(
-                        ['customer_id' => $customer->id, 'provider' => 'instagram'],
+                        ['customer_id' => $customer->id, 'site_id' => $siteId, 'provider' => 'instagram'],
                         ['ig_user_id' => $igUserId, 'access_token' => $pageAccessToken, 'status' => 'active']
                     );
                 }
@@ -143,7 +129,7 @@ class SocialAuthController extends Controller
                 Log::info('[IG Link] Ingen IG business eller fel', ['error' => $e->getMessage()]);
             }
 
-            return redirect()->route('settings.social')->with('success', 'Facebook ansluten. (Och Instagram om kopplad till sidan)');
+            return redirect()->route('settings.social')->with('success', 'Facebook ansluten för denna sajt. (Instagram om kopplad)');
         } catch (ClientException $e) {
             $resp = $e->getResponse();
             $body = $resp ? (string) $resp->getBody() : null;
@@ -159,6 +145,12 @@ class SocialAuthController extends Controller
         }
     }
 
+    public function instagramCallback(Request $req, CurrentCustomer $current)
+    {
+        // Återanvänd FB-flödet – nu sparas det per sajt i facebookCallback
+        return $this->facebookCallback($req, $current);
+    }
+
 
     // Instagram via direkt FB-login-flöde: vi återanvänder facebookRedirect/callback.
     // Alternativ callback om du vill ha separat knapp/flow:
@@ -166,12 +158,6 @@ class SocialAuthController extends Controller
     {
         // Reuse Facebook scopes/flow men länka från “Anslut Instagram”
         return $this->facebookRedirect(request());
-    }
-
-    public function instagramCallback(Request $req, CurrentCustomer $current)
-    {
-        // Reuse FB callback – det löser IG också om sidan kopplad
-        return $this->facebookCallback($req, $current);
     }
 
     public function linkedinRedirect(Request $req)

@@ -9,6 +9,8 @@ use App\Services\Social\InstagramClient;
 use App\Support\Usage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class PublishToInstagramJob implements ShouldQueue
 {
@@ -29,7 +31,6 @@ class PublishToInstagramJob implements ShouldQueue
         $siteId     = $content?->site_id;
         abort_unless($customerId && $siteId, 422);
 
-        // Hämta integration per SAJT
         $integration = SocialIntegration::where('site_id', $siteId)
             ->where('provider', 'instagram')
             ->firstOrFail();
@@ -42,7 +43,7 @@ class PublishToInstagramJob implements ShouldQueue
         try {
             $imagesEnabled = config('features.image_generation', false);
 
-            // IG kräver bild/video. Om ingen prompt och inga bilduppladdningar -> generera bild.
+            // IG kräver media – generera bild om inte payload redan innehåller något
             $wantImage = (bool)($payload['image']['generate'] ?? $content->inputs['image']['generate'] ?? true);
             $wantImage = $imagesEnabled && $wantImage;
 
@@ -53,24 +54,34 @@ class PublishToInstagramJob implements ShouldQueue
 
             $client = new InstagramClient($integration->access_token);
 
-            $mediaId = null;
-            if ($wantImage || ($imagesEnabled && $imagePrompt)) {
-                $prompt = $imagePrompt ?: $this->buildAutoPrompt($content->title, $content->body_md ?? '', $content->inputs ?? []);
-                $bytes  = $images->generate($prompt, '1536x1536'); // fyrkantig bild för IG
-                $mediaId = $client->uploadImage($integration->ig_user_id, $bytes, 'image/jpeg'); // anpassa MIME om nödvändigt
-                $client->publishMedia($integration->ig_user_id, $mediaId, $caption);
-
-                $pub->update([
-                    'status'      => 'published',
-                    'external_id' => $mediaId,
-                    'payload'     => array_merge($payload, ['image_used' => true, 'prompt' => $prompt]),
-                    'message'     => 'OK (image)',
-                ]);
-            } else {
-                // Fallback om du stödjer redan uppladdat media i payload
-                // $mediaId = $payload['media_id'] ?? null; ...
-                throw new \RuntimeException('Instagram kräver bild eller video – ingen bild genererades.');
+            if (!($wantImage || ($imagesEnabled && $imagePrompt))) {
+                throw new \RuntimeException('Instagram kräver bild eller video – aktivera bildgenerering.');
             }
+
+            // 1) Generera bytes -> spara temporärt publikt -> få URL
+            $prompt = $imagePrompt ?: $this->buildAutoPrompt($content->title, $content->body_md ?? '', $content->inputs ?? []);
+            $bytes  = $images->generate($prompt, '1536x1536'); // fyrkantig
+            $filename = 'ig/' . now()->format('Y/m/') . Str::uuid()->toString() . '.jpg';
+
+            // Använd public-disk (måste vara webbtillgänglig)
+            Storage::disk('public')->put($filename, $bytes);
+            $publicUrl = asset(Storage::url($filename));
+
+            // 2) Skapa container + publicera
+            $container = $client->createImageContainer($integration->ig_user_id, $publicUrl, $caption);
+            $creationId = $container['id'] ?? null;
+            if (!$creationId) {
+                throw new \RuntimeException('Kunde inte skapa Instagram-container.');
+            }
+
+            $resp = $client->publishContainer($integration->ig_user_id, $creationId);
+
+            $pub->update([
+                'status'      => 'published',
+                'external_id' => $resp['id'] ?? $creationId,
+                'payload'     => array_merge($payload, ['image_used' => true, 'prompt' => $prompt, 'image_url' => $publicUrl]),
+                'message'     => 'OK (image)',
+            ]);
 
             $usage->increment($customerId, 'ai.publish.instagram');
             $usage->increment($customerId, 'ai.publish');
