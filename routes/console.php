@@ -43,7 +43,7 @@ Schedule::command('suggestions:purge-expired')->dailyAt('03:10');
 
 Schedule::command('social:process-scheduled')->everyMinute()->withoutOverlapping()->onOneServer();
 
-Schedule::job(new \App\Jobs\ProcessScheduledPublicationsJob())->everyMinute();
+//Schedule::job(new \App\Jobs\ProcessScheduledPublicationsJob())->everyMinute();
 Schedule::job(new \App\Jobs\RecalculateLeadScoresJob())->cron('0 */6 * * *')->withoutOverlapping()->onOneServer();
 
 Artisan::command('leads:recalculate {--sync}', function () {
