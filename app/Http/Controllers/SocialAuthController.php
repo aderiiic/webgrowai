@@ -183,6 +183,9 @@ class SocialAuthController extends Controller
         $customer = $current->get();
         abort_unless($customer, 403);
 
+        $siteId = $current->getSiteId();
+        abort_unless($siteId, 400, 'Ingen aktiv sajt vald vid koppling.');
+
         $code = $req->query('code');
         abort_unless($code, 400, 'Saknar code');
 
@@ -241,7 +244,7 @@ class SocialAuthController extends Controller
         // 4) Spara/uppdatera social_integrations för LinkedIn
         // Vi återanvänder page_id för att lagra "owner URN" (person eller org).
         SocialIntegration::updateOrCreate(
-            ['customer_id' => $customer->id, 'provider' => 'linkedin'],
+            ['customer_id' => $customer->id, 'site_id' => $siteId, 'provider' => 'linkedin'],
             ['page_id' => $ownerUrn, 'access_token' => $accessToken, 'status' => 'active']
         );
 

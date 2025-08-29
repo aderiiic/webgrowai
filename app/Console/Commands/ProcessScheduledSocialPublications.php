@@ -43,7 +43,7 @@ class ProcessScheduledSocialPublications extends Command
                 }
 
                 // Markera som processing (valfritt men brukar underlätta status)
-                $pub->update(['status' => 'processing']);
+                // $pub->update(['status' => 'processing']);
                 $count++;
             }
 
