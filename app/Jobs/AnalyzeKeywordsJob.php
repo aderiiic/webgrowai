@@ -122,8 +122,6 @@ class AnalyzeKeywordsJob implements ShouldQueue
 
             $out = $prov->generate($prompt, ['max_tokens' => 600, 'temperature' => 0.5]);
 
-            Log::debug('[AnalyzeKeywords] AI raw output', ['output' => $out]);
-
             // Försök plocka sista JSON-objektet
             $matches = [];
             preg_match_all('/\{(?:[^{}]|(?R))*\}/s', $out, $matches);
