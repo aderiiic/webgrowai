@@ -5,7 +5,6 @@ namespace App\Livewire\Settings;
 use App\Models\SocialIntegration;
 use App\Support\CurrentCustomer;
 use GuzzleHttp\Client;
-use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -13,6 +12,7 @@ use Livewire\Component;
 class SocialSettings extends Component
 {
     public ?int $customerId = null;
+    public ?int $siteId = null;
 
     // Facebook
     public string $fb_page_id = '';
@@ -26,8 +26,9 @@ class SocialSettings extends Component
     public ?string $ig_status = null;
     public ?string $ig_message = null;
 
-    public string $li_owner_urn = '';   // t.ex. urn:li:person:... eller urn:li:organization:...
-    public string $li_access_token = ''; // tomt om redan finns
+    // LinkedIn
+    public string $li_owner_urn = '';
+    public string $li_access_token = '';
     public ?string $li_status = null;
     public ?string $li_message = null;
 
@@ -35,23 +36,27 @@ class SocialSettings extends Component
     {
         $customer = $current->get();
         abort_unless($customer, 403);
-        $this->customerId = $customer->id;
 
-        $fb = SocialIntegration::where('customer_id', $customer->id)->where('provider','facebook')->first();
+        $this->customerId = $customer->id;
+        $this->siteId = $current->getSiteId();
+        $site = $customer->sites()->whereKey($this->siteId)->first();
+        abort_unless($site, 404);
+
+        $fb = SocialIntegration::where('site_id', $this->siteId)->where('provider','facebook')->first();
         if ($fb) {
             $this->fb_page_id = (string) ($fb->page_id ?? '');
-            // Visa inte token – låt fältet vara tomt om vi redan har ett
             $this->fb_status = $fb->status;
         }
 
-        $ig = SocialIntegration::where('customer_id', $customer->id)->where('provider','instagram')->first();
+        $ig = SocialIntegration::where('site_id', $this->siteId)->where('provider','instagram')->first();
         if ($ig) {
             $this->ig_user_id = (string) ($ig->ig_user_id ?? '');
             $this->ig_status = $ig->status;
         }
 
-        if ($li = SocialIntegration::where('customer_id', $customer->id)->where('provider','linkedin')->first()) {
-            $this->li_owner_urn = (string) ($li->page_id ?? ''); // owner URN
+        $li = SocialIntegration::where('site_id', $this->siteId)->where('provider','linkedin')->first();
+        if ($li) {
+            $this->li_owner_urn = (string) ($li->page_id ?? '');
             $this->li_status = $li->status;
         }
     }
@@ -64,9 +69,13 @@ class SocialSettings extends Component
         ]);
 
         $rec = SocialIntegration::firstOrNew([
+            'site_id'   => $this->siteId,
+            'provider'  => 'facebook',
+        ], [
             'customer_id' => $this->customerId,
-            'provider'    => 'facebook',
         ]);
+
+        $rec->customer_id = $this->customerId;
         $rec->page_id = $this->fb_page_id;
 
         if ($this->fb_access_token !== '') {
@@ -80,7 +89,7 @@ class SocialSettings extends Component
         $rec->save();
 
         $this->fb_status = $rec->status;
-        $this->fb_message = 'Facebook-inställningar sparade.';
+        $this->fb_message = 'Facebook-inställningar sparade för denna sajt.';
         session()->flash('success', 'Facebook sparad.');
     }
 
@@ -88,9 +97,8 @@ class SocialSettings extends Component
     {
         $this->fb_message = null;
         try {
-            $rec = SocialIntegration::where('customer_id', $this->customerId)->where('provider','facebook')->firstOrFail();
+            $rec = SocialIntegration::where('site_id', $this->siteId)->where('provider','facebook')->firstOrFail();
             $http = new Client(['base_uri' => 'https://graph.facebook.com/v19.0/', 'timeout' => 20]);
-            // Hämta enkel info om sidan – kräver PageID + token med rätt scopes
             $res = $http->get($rec->page_id, [
                 'query' => ['access_token' => $rec->access_token, 'fields' => 'id,name'],
             ]);
@@ -111,9 +119,13 @@ class SocialSettings extends Component
         ]);
 
         $rec = SocialIntegration::firstOrNew([
+            'site_id'  => $this->siteId,
+            'provider' => 'instagram',
+        ], [
             'customer_id' => $this->customerId,
-            'provider'    => 'instagram',
         ]);
+
+        $rec->customer_id = $this->customerId;
         $rec->ig_user_id = $this->ig_user_id;
 
         if ($this->ig_access_token !== '') {
@@ -127,7 +139,7 @@ class SocialSettings extends Component
         $rec->save();
 
         $this->ig_status = $rec->status;
-        $this->ig_message = 'Instagram-inställningar sparade.';
+        $this->ig_message = 'Instagram-inställningar sparade för denna sajt.';
         session()->flash('success', 'Instagram sparad.');
     }
 
@@ -135,9 +147,8 @@ class SocialSettings extends Component
     {
         $this->ig_message = null;
         try {
-            $rec = SocialIntegration::where('customer_id', $this->customerId)->where('provider','instagram')->firstOrFail();
+            $rec = SocialIntegration::where('site_id', $this->siteId)->where('provider','instagram')->firstOrFail();
             $http = new Client(['base_uri' => 'https://graph.facebook.com/v19.0/', 'timeout' => 20]);
-            // Hämta IG-användare (Business) med username som enkel test
             $res = $http->get($rec->ig_user_id, [
                 'query' => ['access_token' => $rec->access_token, 'fields' => 'id,username'],
             ]);
@@ -158,9 +169,13 @@ class SocialSettings extends Component
         ]);
 
         $rec = SocialIntegration::firstOrNew([
+            'site_id'  => $this->siteId,
+            'provider' => 'linkedin',
+        ], [
             'customer_id' => $this->customerId,
-            'provider'    => 'linkedin',
         ]);
+
+        $rec->customer_id = $this->customerId;
         $rec->page_id = $this->li_owner_urn;
 
         if ($this->li_access_token !== '') {
@@ -174,7 +189,7 @@ class SocialSettings extends Component
         $rec->save();
 
         $this->li_status = $rec->status;
-        $this->li_message = 'LinkedIn-inställningar sparade.';
+        $this->li_message = 'LinkedIn-inställningar sparade för denna sajt.';
         session()->flash('success', 'LinkedIn sparad.');
     }
 
@@ -182,7 +197,7 @@ class SocialSettings extends Component
     {
         $this->li_message = null;
         try {
-            $rec = SocialIntegration::where('customer_id', $this->customerId)->where('provider','linkedin')->firstOrFail();
+            $rec = SocialIntegration::where('site_id', $this->siteId)->where('provider','linkedin')->firstOrFail();
             $http = new Client(['base_uri' => 'https://api.linkedin.com/', 'timeout' => 20]);
 
             $owner = (string) ($rec->page_id ?? '');
@@ -198,7 +213,6 @@ class SocialSettings extends Component
                 $name = $data['localizedName'] ?? $orgId;
                 $this->li_message = 'OK: ' . $name . ' (' . $orgId . ')';
             } else {
-                // Person via OIDC userinfo (matchar openid/profile/email)
                 $res = $http->get('v2/userinfo', [
                     'headers' => ['Authorization' => "Bearer {$token}"],
                 ]);

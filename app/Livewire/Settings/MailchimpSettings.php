@@ -19,20 +19,25 @@ class MailchimpSettings extends Component
 
     public function mount(CurrentCustomer $current): void
     {
-        $c = $current->get();
-        abort_unless($c, 403);
+        $customer = $current->get();
+        abort_unless($customer, 403);
 
-        // Visa inte befintlig api_key i klartext
-        $this->api_key = (string) ($c->mailchimp_api_key ? '' : '');
-        $this->audience_id = (string) ($c->mailchimp_audience_id ?? '');
-        $this->from_name   = (string) ($c->mailchimp_from_name ?? '');
-        $this->reply_to    = (string) ($c->mailchimp_reply_to ?? '');
+        $site = $customer->sites()->whereKey($current->getSiteId())->first();
+        abort_unless($site, 404);
+
+        $this->api_key     = ''; // visa aldrig befintlig nyckel
+        $this->audience_id = (string) ($site->mailchimp_audience_id ?? '');
+        $this->from_name   = (string) ($site->mailchimp_from_name ?? '');
+        $this->reply_to    = (string) ($site->mailchimp_reply_to ?? '');
     }
 
     public function save(CurrentCustomer $current): void
     {
-        $c = $current->get();
-        abort_unless($c, 403);
+        $customer = $current->get();
+        abort_unless($customer, 403);
+
+        $site = $customer->sites()->whereKey($current->getSiteId())->first();
+        abort_unless($site, 404);
 
         $this->validate([
             'api_key'     => 'nullable|string|max:255',
@@ -41,7 +46,6 @@ class MailchimpSettings extends Component
             'reply_to'    => 'nullable|email',
         ]);
 
-        // ForceFill förbi mass assignment (och undvik att skriva över api_key om tom)
         $payload = [
             'mailchimp_audience_id' => $this->audience_id ?: null,
             'mailchimp_from_name'   => $this->from_name ?: null,
@@ -51,22 +55,25 @@ class MailchimpSettings extends Component
             $payload['mailchimp_api_key'] = encrypt($this->api_key);
         }
 
-        $c->forceFill($payload)->save();
+        $site->forceFill($payload)->save();
 
-        // Återställ API-fältet (visa aldrig hemligheter)
         $this->api_key = '';
-        session()->flash('success', 'Mailchimp-inställningarna sparade.');
+        session()->flash('success', 'Mailchimp-inställningarna sparade för denna sajt.');
     }
 
     public function test(CurrentCustomer $current): void
     {
         $this->message = null;
-        $c = $current->get();
-        abort_unless($c, 403);
+
+        $customer = $current->get();
+        abort_unless($customer, 403);
+
+        $site = $customer->sites()->whereKey($current->getSiteId())->first();
+        abort_unless($site, 404);
 
         $key = $this->api_key !== ''
             ? $this->api_key
-            : ($c->mailchimp_api_key ? decrypt($c->mailchimp_api_key) : '');
+            : ($site->mailchimp_api_key ? decrypt($site->mailchimp_api_key) : '');
 
         if (!$key) {
             $this->status = 'error';

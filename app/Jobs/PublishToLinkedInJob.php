@@ -18,16 +18,18 @@ class PublishToLinkedInJob implements ShouldQueue
 
     public function handle(LinkedInService $li, ImageGenerator $images, Usage $usage): void
     {
-        $pub = \App\Models\ContentPublication::findOrFail($this->publicationId);
+        $pub = ContentPublication::findOrFail($this->publicationId);
         if ($pub->status !== 'queued') return;
 
         $pub->update(['status' => 'processing']);
 
         $content = $pub->aiContent()->first();
         $customerId = $content?->customer_id;
-        abort_unless($customerId, 422);
+        $siteId     = $content?->site_id;
+        abort_unless($customerId && $siteId, 422);
 
-        $si = SocialIntegration::where('customer_id', $customerId)->where('provider', 'linkedin')->firstOrFail();
+        // Hämta integration per SAJT (inte kund)
+        $si = SocialIntegration::where('site_id', $siteId)->where('provider', 'linkedin')->firstOrFail();
         $accessToken = $si->access_token;
         $ownerUrn    = $si->page_id ?: '';
 
@@ -47,7 +49,7 @@ class PublishToLinkedInJob implements ShouldQueue
 
         if ($want || ($imagesEnabled && $prompt)) {
             $prompt = $prompt ?: $this->buildAutoPrompt($content->title, $content->inputs ?? []);
-            $bytes  = $images->generate($prompt, '1536x1024'); // giltig landskapsstorlek
+            $bytes  = $images->generate($prompt, '1536x1024');
 
             $reg = $li->registerImageUpload($accessToken, $ownerUrn);
             if (!empty($reg['uploadUrl']) && !empty($reg['asset'])) {

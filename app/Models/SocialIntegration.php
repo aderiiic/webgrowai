@@ -8,16 +8,20 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class SocialIntegration extends Model
 {
     protected $fillable = [
-        'customer_id','provider','page_id','ig_user_id','access_token','status',
+        'customer_id','site_id','provider','page_id','ig_user_id','access_token','status',
     ];
 
     protected $casts = [
-        // Kryptera tokens i databasen
         'access_token' => 'encrypted',
     ];
 
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function site(): BelongsTo
+    {
+        return $this->belongsTo(Site::class);
     }
 }

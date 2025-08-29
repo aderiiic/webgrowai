@@ -26,10 +26,14 @@ class MailchimpHistory extends Component
     private function loadCampaigns(CurrentCustomer $current): void
     {
         $this->campaigns = [];
-        $c = $current->get();
-        if (!$c || !$c->mailchimp_api_key) return;
 
-        $key = decrypt($c->mailchimp_api_key);
+        $customer = $current->get();
+        abort_unless($customer, 403);
+
+        $site = $customer->sites()->whereKey($current->getSiteId())->first();
+        if (!$site || !$site->mailchimp_api_key) return;
+
+        $key = decrypt($site->mailchimp_api_key);
         $dc  = explode('-', $key)[1] ?? config('services.mailchimp.default_dc');
         if (!$dc) return;
 
