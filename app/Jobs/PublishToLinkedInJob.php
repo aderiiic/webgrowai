@@ -14,16 +14,24 @@ class PublishToLinkedInJob implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(public int $publicationId) {}
+    public function __construct(public int $publicationId)
+    {
+        $this->onQueue('social');
+    }
 
     public function handle(LinkedInService $li, ImageGenerator $images, Usage $usage): void
     {
         $pub = ContentPublication::with('content')->findOrFail($this->publicationId);
-        if ($pub->status !== 'queued') return;
 
-        $pub->update(['status' => 'processing']);
+        if (!in_array($pub->status, ['queued','processing'], true)) {
+            return;
+        }
 
-        $content = $pub->content; // rätt relation
+        if ($pub->status === 'queued') {
+            $pub->update(['status' => 'processing']);
+        }
+
+        $content = $pub->content;
         $customerId = $content?->customer_id;
         $siteId     = $content?->site_id;
         abort_unless($customerId && $siteId, 422);

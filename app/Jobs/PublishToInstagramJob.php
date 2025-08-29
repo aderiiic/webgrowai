@@ -24,9 +24,12 @@ class PublishToInstagramJob implements ShouldQueue
     public function handle(Usage $usage, ImageGenerator $images): void
     {
         $pub = ContentPublication::with('content')->findOrFail($this->publicationId);
-        if ($pub->status !== 'queued') return;
 
-        $content = $pub->content; // rätt relation
+        if (!in_array($pub->status, ['queued','processing'], true)) {
+            return;
+        }
+
+        $content = $pub->content;
         $customerId = $content?->customer_id;
         $siteId     = $content?->site_id;
         abort_unless($customerId && $siteId, 422);
@@ -38,12 +41,14 @@ class PublishToInstagramJob implements ShouldQueue
         $caption = trim(($content->title ? $content->title . "\n\n" : '') . ($content->body_md ?? ''));
         $payload = $pub->payload ?? [];
 
-        $pub->update(['status' => 'processing']);
+        if ($pub->status === 'queued') {
+            $pub->update(['status' => 'processing']);
+        }
 
         try {
             $imagesEnabled = config('features.image_generation', false);
 
-            if (!($payload['image']['generate'] ?? $content->inputs['image']['generate'] ?? true)) {
+            if (!($payload['image']['generate'] ?? $content->inputs['image']['generate'] ?? true) || !$imagesEnabled) {
                 throw new \RuntimeException('Instagram kräver bild eller video – aktivera bildgenerering.');
             }
 

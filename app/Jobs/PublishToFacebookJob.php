@@ -22,11 +22,14 @@ class PublishToFacebookJob implements ShouldQueue
 
     public function handle(Usage $usage, ImageGenerator $images): void
     {
-        // Viktigt: använd rätt relation 'content'
         $pub = ContentPublication::with('content')->findOrFail($this->publicationId);
-        if ($pub->status !== 'queued') return;
 
-        $content = $pub->content; // relationen heter 'content'
+        // Tillåt både queued och processing (schemalagd väg sätter processing innan dispatch)
+        if (!in_array($pub->status, ['queued','processing'], true)) {
+            return;
+        }
+
+        $content = $pub->content;
         $customerId = $content?->customer_id;
         $siteId     = $content?->site_id;
         abort_unless($customerId && $siteId, 422);
@@ -38,7 +41,10 @@ class PublishToFacebookJob implements ShouldQueue
         $message = trim(($content->title ? $content->title . "\n\n" : '') . ($content->body_md ?? ''));
         $payload = $pub->payload ?? [];
 
-        $pub->update(['status' => 'processing']);
+        // Sätt processing om den inte redan är det
+        if ($pub->status === 'queued') {
+            $pub->update(['status' => 'processing']);
+        }
 
         try {
             $imagesEnabled = config('features.image_generation', false);
