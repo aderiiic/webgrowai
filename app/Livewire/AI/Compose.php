@@ -8,6 +8,7 @@ use App\Models\ContentTemplate;
 use App\Support\CurrentCustomer;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
@@ -23,13 +24,30 @@ class Compose extends Component
     public string $keywords = '';
     public string $brand_voice = '';
 
-    // Kanal/format (visas endast om generisk mall)
     public string $channel = 'auto';
 
-    // Bildgenerering
     public bool $genImage = false;
     public string $imagePromptMode = 'auto'; // auto|custom
     public ?string $imagePrompt = null;
+
+    public function mount(CurrentCustomer $current): void
+    {
+        if ($this->site_id === null) {
+            $activeSiteId = $current->getSiteId() ?? session('active_site_id') ?? session('site_id');
+            if ($activeSiteId) {
+                $this->site_id = (int) $activeSiteId;
+            } else {
+                $this->site_id = $current->get()?->sites()->orderBy('name')->value('id');
+            }
+        }
+    }
+
+    // Nytt: lyssna på topbarens event och uppdatera valet live
+    #[On('active-site-updated')]
+    public function onActiveSiteUpdated(?int $siteId): void
+    {
+        $this->site_id = $siteId;
+    }
 
     public function submit(CurrentCustomer $current)
     {
@@ -38,7 +56,6 @@ class Compose extends Component
             'title'           => 'required|string|min:3',
             'tone'            => 'required|in:short,long',
             'site_id'         => 'nullable|exists:sites,id',
-            // Channel inte längre obligatorisk; sätts från mallen om möjligt
             'channel'         => 'nullable|in:auto,blog,facebook,instagram,linkedin,campaign',
             'genImage'        => 'boolean',
             'imagePromptMode' => 'in:auto,custom',
@@ -56,10 +73,7 @@ class Compose extends Component
         $tpl = ContentTemplate::find($this->template_id);
         abort_unless($tpl, 422);
 
-        // 1) Försök mappa kanal från vald mall
         $mapped = $this->channelFromTemplateSlug($tpl->slug);
-
-        // 2) Om mallen är generisk/okänd och användaren valt kanal manuellt, ta den
         $finalChannel = $mapped ?: ($this->channel !== 'auto' ? $this->channel : 'auto');
 
         $guidelines = $this->guidelinesFor($finalChannel);
@@ -102,7 +116,7 @@ class Compose extends Component
             'social-linkedin'  => 'linkedin',
             'blog'             => 'blog',
             'campaign'         => 'campaign',
-            default            => null, // generisk/okänd -> låt användaren välja
+            default            => null,
         };
     }
 
@@ -146,8 +160,6 @@ class Compose extends Component
     {
         $templates = ContentTemplate::orderBy('name')->get();
         $sites = $current->get()?->sites()->orderBy('name')->get() ?? collect();
-
-        // Skicka med vald mall för att kunna dölja kanalvalet i Blade
         $selectedTemplate = $templates->firstWhere('id', $this->template_id);
 
         return view('livewire.a-i.compose', compact('templates','sites','selectedTemplate'));

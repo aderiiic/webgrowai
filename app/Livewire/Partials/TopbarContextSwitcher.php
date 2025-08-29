@@ -18,13 +18,11 @@ class TopbarContextSwitcher extends Component
         $this->customerId = $active?->id;
 
         if ($active) {
-            // Försök använda redan vald sajt från sessionen
             $savedSiteId = $current->getSiteId();
 
             if ($savedSiteId && $active->sites()->whereKey($savedSiteId)->exists()) {
                 $this->siteId = $savedSiteId;
             } else {
-                // Fall tillbaka till första sajt för kunden och spara den i sessionen
                 $firstId = $active->sites()->orderBy('id')->value('id');
                 $this->siteId = $firstId ?: null;
 
@@ -34,6 +32,9 @@ class TopbarContextSwitcher extends Component
                     $current->clearSite();
                 }
             }
+
+            // Nytt: signalera initialt val om vi har ett
+            $this->dispatch('active-site-updated', siteId: $this->siteId);
         }
     }
 
@@ -45,13 +46,10 @@ class TopbarContextSwitcher extends Component
         $customer = Customer::find((int) $value);
         if (!$customer) return;
 
-        // Admin får byta till valfri kund; övriga bara till sina kunder
         if ($user->isAdmin() || $user->customers()->whereKey($customer->id)->exists()) {
-            // Byt kund (nollställer site i sessionen)
             $current->set($customer->id);
             $this->customerId = $customer->id;
 
-            // Välj första sajt för kunden och SPARA den i sessionen (eller rensa om inga sajter)
             $firstSiteId = $customer->sites()->orderBy('id')->value('id');
             $this->siteId = $firstSiteId ?: null;
 
@@ -62,6 +60,10 @@ class TopbarContextSwitcher extends Component
             }
 
             session()->flash('success', 'Bytte aktiv kund.');
+
+            // Nytt: signalera att aktiv sajt bytts i samband med kundbyte
+            $this->dispatch('active-site-updated', siteId: $this->siteId);
+
             $this->dispatch('refresh');
         }
     }
@@ -70,23 +72,26 @@ class TopbarContextSwitcher extends Component
     {
         $activeCustomer = $current->get();
 
-        // Tomt värde => rensa vald sajt
         if (!$value) {
             $this->siteId = null;
             $current->clearSite();
             session()->flash('success', 'Rensade aktiv sajt.');
+
+            // Nytt: signalera rensning
+            $this->dispatch('active-site-updated', siteId: null);
             return;
         }
 
         $siteId = (int) $value;
 
-        // Validera att sajten tillhör aktiva kunden
         if ($activeCustomer && $activeCustomer->sites()->whereKey($siteId)->exists()) {
             $this->siteId = $siteId;
             $current->setSiteId($siteId);
             session()->flash('success', 'Bytte aktiv sajt.');
+
+            // Nytt: signalera giltig uppdatering
+            $this->dispatch('active-site-updated', siteId: $this->siteId);
         } else {
-            // Ogiltigt val: återställ till sparat eller första tillgängliga
             $saved = $current->getSiteId();
             if ($saved && $activeCustomer && $activeCustomer->sites()->whereKey($saved)->exists()) {
                 $this->siteId = $saved;
@@ -99,6 +104,9 @@ class TopbarContextSwitcher extends Component
                     $current->clearSite();
                 }
             }
+
+            // Nytt: signalera återställning/återval
+            $this->dispatch('active-site-updated', siteId: $this->siteId);
         }
     }
 
