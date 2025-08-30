@@ -144,6 +144,7 @@ class Detail extends Component
         $this->publish();
     }
 
+
     public function queueSocial(): void
     {
         Gate::authorize('update', $this->content);
@@ -180,7 +181,6 @@ class Detail extends Component
         ]);
 
         if (!$scheduledAt || $scheduledAt->lte($now)) {
-            // Ta bort: $pub->update(['status' => 'processing']);
             if ($this->socialTarget === 'facebook') {
                 dispatch(new PublishToFacebookJob($pub->id))->afterCommit()->onQueue('social');
             } else {
@@ -188,6 +188,13 @@ class Detail extends Component
             }
             session()->flash('success', ucfirst($this->socialTarget).' publicering startad.');
         } else {
+            // För schemalagda: dispatcha med delay
+            $delay = $scheduledAt->diffInSeconds($now);
+            if ($this->socialTarget === 'facebook') {
+                dispatch(new PublishToFacebookJob($pub->id))->delay($delay)->afterCommit()->onQueue('social');
+            } else {
+                dispatch(new PublishToInstagramJob($pub->id))->delay($delay)->afterCommit()->onQueue('social');
+            }
             session()->flash('success', ucfirst($this->socialTarget)." schemalagd till {$scheduledAt->format('Y-m-d H:i')}.");
         }
     }

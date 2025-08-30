@@ -334,7 +334,8 @@
             </div>
         </div>
 
-        <!-- Snabb publicering – LinkedIn (utan bildprompt) -->
+
+        <!-- Snabb publicering – LinkedIn -->
         <div class="mt-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6">
             <div class="flex items-center space-x-3 mb-4">
                 <div class="w-10 h-10 bg-gradient-to-br from-sky-600 to-blue-700 rounded-xl flex items-center justify-center">
@@ -343,15 +344,14 @@
                     </svg>
                 </div>
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-900">Snabb publicering – LinkedIn</h3>
-                    <p class="text-sm text-gray-600">Använd titeln eller klistra in din text. Bild kan väljas via bildbanken ovan.</p>
+                    <h3 class="text-lg font-semibold text-gray-900">LinkedIn publicering</h3>
+                    <p class="text-sm text-gray-600">Publicera direkt till LinkedIn. Bild kan väljas via bildbanken ovan.</p>
                 </div>
             </div>
 
             <div class="space-y-3">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <input type="text" wire:model.defer="liQuickText" class="md:col-span-2 w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm" placeholder="Inläggstext (lämna tom för att använda AI-innehåll)" @if($publishQuotaReached) disabled @endif>
-                    <input type="datetime-local" wire:model.defer="liQuickScheduleAt" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm" placeholder="Schemalägg (valfritt)" @if($publishQuotaReached) disabled @endif>
+                <div class="grid grid-cols-1 gap-3">
+                    <input type="text" wire:model.defer="liQuickText" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm" placeholder="Inläggstext (lämna tom för att använda AI-innehåll)" @if($publishQuotaReached) disabled @endif>
                 </div>
 
                 <div class="flex justify-end">
@@ -360,7 +360,7 @@
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
                         </svg>
-                        Köa till LinkedIn
+                        Publicera till LinkedIn
                     </button>
                 </div>
             </div>
