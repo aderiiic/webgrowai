@@ -27,8 +27,9 @@ class PublishToFacebookJob implements ShouldQueue
 
     public function handle(Usage $usage, ImageGenerator $images): void
     {
-        $pub = ContentPublication::with('content')->find($this->publicationId);
+        Log::info('[PublishToFacebookJob] Startar', ['pub_id' => $this->publicationId]);
 
+        $pub = ContentPublication::with('content')->find($this->publicationId);
         if (!$pub) {
             Log::warning('[PublishToFacebookJob] Publication saknas', [
                 'publication_id' => $this->publicationId,
@@ -37,11 +38,16 @@ class PublishToFacebookJob implements ShouldQueue
         }
 
         if (!in_array($pub->status, ['queued','processing'], true)) {
+            Log::info('[PublishToFacebookJob] Hoppar över, fel status', [
+                'pub_id' => $this->publicationId,
+                'status' => $pub->status
+            ]);
             return;
         }
 
         if ($pub->status === 'queued') {
             $pub->update(['status' => 'processing']);
+            Log::info('[PublishToFacebookJob] Uppdaterat till processing', ['pub_id' => $this->publicationId]);
         }
 
         try {
@@ -61,53 +67,70 @@ class PublishToFacebookJob implements ShouldQueue
                 throw new \RuntimeException('Ingen Facebook-integration hittad för denna sajt.');
             }
 
-            $message = trim(($content->title ? $content->title . "\n\n" : '') . ($content->body_md ?? ''));
             $payload = $pub->payload ?? [];
-
-            $imagesEnabled = config('features.image_generation', false);
-            $wantImage = (bool)($payload['image']['generate'] ?? $content->inputs['image']['generate'] ?? false);
-            $wantImage = $imagesEnabled && $wantImage;
-
-            $imagePrompt = $payload['image_prompt']
-                ?? $payload['image']['prompt']
-                ?? $content->inputs['image']['prompt']
-                ?? null;
+            $rawText = $payload['text'] ?? (($content?->title ? $content->title."\n\n" : '').($content?->body_md ?? ''));
+            $message = $this->buildCleanMessage($content?->title ?? '', $content?->body_md ?? '');
+            $message = mb_substr($message, 0, 5000); // FB limit
 
             $client = new FacebookClient($integration->access_token);
 
-            if ($wantImage || ($imagesEnabled && $imagePrompt)) {
-                Log::info('[PublishToFacebookJob] Skapar inlägg med bild', ['pub_id' => $this->publicationId]);
+            $imagesEnabled = config('features.image_generation', false);
+            $imageAssetId  = $payload['image_asset_id'] ?? null;
+            $imagePrompt   = $payload['image_prompt']
+                ?? $payload['image']['prompt']
+                ?? $content->inputs['image']['prompt']
+                ?? null;
+            $wantImage = (bool)($payload['image']['generate'] ?? $content->inputs['image']['generate'] ?? false);
+            $wantImage = $imagesEnabled && $wantImage;
 
+            $externalId = null;
+
+            if ($imageAssetId) {
+                // Publicera med redan uppladdad bild
+                $asset = ImageAsset::findOrFail((int)$imageAssetId);
+                if ((int)$asset->customer_id !== (int)$customerId) {
+                    throw new \RuntimeException('Otillåten bild.');
+                }
+                $bytes = Storage::disk($asset->disk)->get($asset->path);
+                $resp  = $client->createPagePhoto($integration->page_id, $bytes, $asset->filename ?? 'image.jpg', $message);
+                $externalId = $resp['post_id'] ?? $resp['id'] ?? null;
+
+                ImageAsset::markUsed((int)$imageAssetId, $pub->id);
+                $payload['image_asset_id'] = (int)$imageAssetId;
+
+            } elseif ($wantImage || ($imagesEnabled && $imagePrompt)) {
+                // Generera ny bild
                 $prompt = $imagePrompt ?: $this->buildAutoPrompt($content->title, $content->body_md ?? '', $content->inputs ?? []);
                 $bytes  = $images->generate($prompt, '1536x1024');
                 $resp   = $client->createPagePhoto($integration->page_id, $bytes, 'image-' . Str::random(8) . '.png', $message);
-
-                $pub->update([
-                    'status'      => 'published',
-                    'external_id' => $resp['post_id'] ?? $resp['id'] ?? null,
-                    'payload'     => array_merge($payload, ['image_used' => true, 'prompt' => $prompt]),
-                    'message'     => 'OK (photo)',
-                ]);
+                $externalId = $resp['post_id'] ?? $resp['id'] ?? null;
+                $payload = array_merge($payload, ['prompt' => $prompt]);
             } else {
+                // Text-only
                 if ($pub->scheduled_at && $pub->scheduled_at->isFuture()) {
                     $resp = $client->schedulePagePost($integration->page_id, $message, $pub->scheduled_at->timestamp);
                 } else {
                     $resp = $client->createPagePost($integration->page_id, $message);
                 }
-
-                $pub->update([
-                    'status'      => 'published',
-                    'external_id' => $resp['id'] ?? null,
-                    'payload'     => array_merge($payload, ['message' => $message]),
-                    'message'     => 'OK',
-                ]);
+                $externalId = $resp['id'] ?? null;
             }
+
+            $pub->update([
+                'status'      => 'published',
+                'external_id' => $externalId,
+                'payload'     => $payload,
+                'message'     => 'Publicerat till Facebook',
+            ]);
 
             $usage->increment($customerId, 'ai.publish.facebook');
             $usage->increment($customerId, 'ai.publish');
 
         } catch (Throwable $e) {
-            $pub->update(['status' => 'failed', 'message' => $e->getMessage()]);
+            Log::error('[PublishToFacebookJob] Misslyckades', [
+                'pub_id' => $this->publicationId,
+                'error' => $e->getMessage(),
+            ]);
+            $pub?->update(['status' => 'failed', 'message' => $e->getMessage()]);
             throw $e;
         }
     }
@@ -138,11 +161,11 @@ class PublishToFacebookJob implements ShouldQueue
         $voice = $inputs['brand']['voice'] ?? null;
         $aud   = $inputs['audience'] ?? null;
 
-        return trim("Create a compelling social image matching the post.
+        return trim("Create a compelling social image matching the Facebook post.
 Title: {$title}
 Keywords: {$kw}
 Audience: {$aud}
 Brand voice: {$voice}
-Style: clean, modern, high contrast, web-safe, no text overlays, photographic look");
+Style: clean, modern, high contrast, 1200x630, no text overlays, photographic look");
     }
 }
