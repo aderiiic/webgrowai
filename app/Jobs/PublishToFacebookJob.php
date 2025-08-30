@@ -355,103 +355,62 @@ class PublishToFacebookJob implements ShouldQueue
         $t = $this->stripCodeFences($t);
 
         // Ta bort rubriker, inbäddade bilder och metadata-rader
-        $t = preg_replace('/^#{1,6}\s*.+$/m', '', $t);               // Markdown H1–H6
-        $t = preg_replace('/!\[.*?\]\([^)]*\)/s', '', $t);           // MD-bilder
-        $t = preg_replace('/<img[^>]*\/?>/is', '', $t);              // HTML-bilder
+        $t = preg_replace('/^#{1,6}\s*.+$/m', '', $t);
+        $t = preg_replace('/!\[.*?\]\([^)]*\)/s', '', $t);
+        $t = preg_replace('/<img[^>]*\/?>/is', '', $t);
         $t = preg_replace('/^\s*(Nyckelord|Keywords|Stil|Style|CTA|Målgrupp|Audience|Brand voice)\s*:\s*.*$/im', '', $t);
 
         // Behåll emojis; normalisera listor och whitespace
-        $t = preg_replace('/^\s*[\*\-]\s+/m', '- ', $t);             // punktlistor → streck
+        $t = preg_replace('/^\s*[\*\-]\s+/m', '- ', $t);
         $t = preg_replace('/\n{3,}/', "\n\n", $t);
         $t = preg_replace('/^[ \t]+|[ \t]+$/m', '', $t);
 
         // Ta bort osynliga/konstiga kontrolltecken
         $t = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $t);
-        $t = preg_replace('/[\x{200B}-\x{200D}\x{FEFF}]/u', '', $t); // zero width
+        $t = preg_replace('/[\x{200B}-\x{200D}\x{FEFF}]/u', '', $t);
 
         $t = trim((string) $t);
 
         // Inställningar
-        $moveToFooter = true;
-        $maxTags      = 6;
+        $maxTags = (int) (config('social.facebook.max_hashtags', 5));
 
-        if ($moveToFooter) {
-            // 1) Plocka upp alla hashtags i texten (case-insensitivt), deduplicera och räkna frekvens
-            //    Ex: matchar "#webbsida", "#företag", etc.
-            $allTags = [];
-            if (preg_match_all('/(^|\s)(#[\p{L}\p{N}_-]+)/u', $t, $m, PREG_OFFSET_CAPTURE)) {
-                // Samla alla hittade taggar och deras index
-                foreach ($m[2] as $idx => $match) {
-                    $tag      = $match[0];        // ex: "#webbsida"
-                    $pos      = $match[1];        // position i texten
-                    $key      = mb_strtolower($tag);
-                    if (!isset($allTags[$key])) {
-                        $allTags[$key] = ['tag' => $tag, 'count' => 0, 'first' => $pos];
-                    }
-                    $allTags[$key]['count']++;
+        // Samla hashtags
+        $allTags = [];
+        if (preg_match_all('/(^|\s)(#[\p{L}\p{N}_-]+)/u', $t, $m, PREG_OFFSET_CAPTURE)) {
+            foreach ($m[2] as $idx => $match) {
+                $tag = $match[0];
+                $pos = $match[1];
+                $key = mb_strtolower($tag);
+                if (!isset($allTags[$key])) {
+                    $allTags[$key] = ['tag' => $tag, 'count' => 0, 'first' => $pos];
                 }
-            }
-
-            // 2) Ta bort existerande avslutande hashtag-rad för att undvika dubblering
-            $t = preg_replace('/(?:^|\n)\s*(?:#[\p{L}\p{N}_-]+(?:\s+#[\p{L}\p{N}_-]+)*)\s*$/u', '', $t);
-
-            // 3) Ta bort inline-hashtags från brödtexten (behåll mellanrum/rytmen)
-            $t = preg_replace('/(^|\s)#[\p{L}\p{N}_-]+/u', '$1', $t);
-            $t = trim(preg_replace('/\s{2,}/', ' ', $t)); // städa extra mellanslag
-            $t = preg_replace('/\n{3,}/', "\n\n", $t);
-
-            // 4) Om vi har taggar: välj de mest relevanta 5–6 (standard 6)
-            if (!empty($allTags)) {
-                // Sortera: flest förekomster först, därefter tidigast förekomst
-                uasort($allTags, function ($a, $b) {
-                    if ($a['count'] === $b['count']) {
-                        return $a['first'] <=> $b['first'];
-                    }
-                    return $b['count'] <=> $a['count'];
-                });
-
-                $selected = array_slice(array_column($allTags, 'tag'), 0, max(1, $maxTags ?: 6));
-
-                // 5) Lägg dem som en avslutande rad
-                if (!empty($selected)) {
-                    $t = rtrim($t);
-                    $t .= ($t === '' ? '' : "\n\n") . implode(' ', $selected);
-                }
-            }
-        } else {
-            // Flytt ej aktiverad: om maxTags>0, begränsa en eventuell avslutande hashtag-rad
-            if ($maxTags > 0) {
-                if (preg_match('/(?:^|\n)\s*((?:#[\p{L}\p{N}_-]+(?:\s+#[\p{L}\p{N}_-]+)*))\s*$/u', $t, $m, PREG_OFFSET_CAPTURE)) {
-                    $matchStart  = $m[0][1];
-                    $hashtagsStr = $m[1][0];
-                    $hashtags    = preg_split('/\s+/', trim($hashtagsStr));
-
-                    // Dedup bevarande ordning
-                    $seen = [];
-                    $unique = [];
-                    foreach ($hashtags as $tag) {
-                        $key = mb_strtolower($tag);
-                        if (!isset($seen[$key])) {
-                            $seen[$key] = true;
-                            $unique[] = $tag;
-                        }
-                    }
-                    if (count($unique) > $maxTags) {
-                        $unique = array_slice($unique, 0, $maxTags);
-                    }
-
-                    // Ersätt blocket
-                    $t = rtrim(mb_substr($t, 0, $matchStart));
-                    if (!empty($unique)) {
-                        $t = $t === '' ? '' : ($t . "\n\n");
-                        $t .= implode(' ', $unique);
-                    }
-                    $t = trim($t);
-                }
+                $allTags[$key]['count']++;
             }
         }
 
-        // Facebook: 5 000 tecken
+        // Ta bort inline hashtags från brödtext
+        $t = preg_replace('/(^|\s)#[\p{L}\p{N}_-]+/u', '$1', $t);
+        $t = trim(preg_replace('/\s{2,}/', ' ', $t));
+        $t = preg_replace('/\n{3,}/', "\n\n", $t);
+
+        // Om vi har taggar → välj de mest relevanta
+        if (!empty($allTags)) {
+            uasort($allTags, function ($a, $b) {
+                if ($a['count'] === $b['count']) {
+                    return $a['first'] <=> $b['first'];
+                }
+                return $b['count'] <=> $a['count'];
+            });
+
+            $selected = array_slice(array_column($allTags, 'tag'), 0, max(1, $maxTags ?: 5));
+
+            if (!empty($selected)) {
+                $t = rtrim($t);
+                $t .= ($t === '' ? '' : "\n\n") . implode(' ', $selected);
+            }
+        }
+
+        // Facebook: max 5 000 tecken
         if (mb_strlen($t) > 5000) {
             $t = mb_substr($t, 0, 4996) . ' ...';
         }
