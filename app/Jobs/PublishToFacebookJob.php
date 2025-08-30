@@ -381,7 +381,7 @@ class PublishToFacebookJob implements ShouldQueue
 
         $t = trim($t);
 
-        // 1) Samla alla hashtags (case-insensitivt) inklusive position för relevans
+        // 1) Samla befintliga hashtags (case-insensitivt) inklusive position för relevans
         $allTags = [];
         if (preg_match_all('/(^|\s)(#[\p{L}\p{N}_-]+)/u', $t, $m, PREG_OFFSET_CAPTURE)) {
             foreach ($m[2] as $match) {
@@ -398,18 +398,76 @@ class PublishToFacebookJob implements ShouldQueue
         // 2) Ta bort existerande avslutande hashtag-rad (utan att ta bort föregående newline)
         $t = preg_replace('/(?:^|\n)\s*(?:#[\p{L}\p{N}_-]+(?:\s+#[\p{L}\p{N}_-]+)*)\s*$/u', '', $t);
 
-        // 3) Ta bort inline-hashtags men bevara radbrytningar
-        //    Ersätt “␠#tag” med “␠” och “#tag” i början av rad med tomt, men ät inte \n.
-        $t = preg_replace('/(^|[^\S\r\n])#[\p{L}\p{N}_-]+/u', '$1', $t);
+        // 3) Plocka nakna tagg-kluster i slutet av rader (t.ex. "webbsida företag försäljning")
+        //    - Vi samlar upp till ~6 ord i slutet av raden, bara bokstäver/siffror/_/-
+        //    - Vi tar bort dem från raden men bevarar radbrytningar
+        $lines = explode("\n", $t);
+        foreach ($lines as &$line) {
+            $orig = $line;
 
-        // 4) Komprimera enbart multipla mellanslag (inte radbrytningar)
-        $t = preg_replace('/[ \t]{2,}/', ' ', $t);
-        // Städa upp flera tomrader igen
+            // Hitta kluster i slutet: ett eller flera "ord" separerade med mellanslag
+            if (preg_match('/\s((?:[\p{L}\p{N}_-]{2,})(?:\s+[\p{L}\p{N}_-]{2,}){0,7})\s*$/u', $line, $m)) {
+                $cluster = $m[1];
+
+                // Heuristik: ta bara detta som taggkluster om
+                // - föregående tecken före klustret inte är en bokstav/siffra (dvs slutet av meningen eller emoji),
+                // - och klustret inte innehåller tydlig meningsinterpunktion
+                $prefixOk = !preg_match('/[\p{L}\p{N}]$/u', mb_substr($line, 0, -mb_strlen($m[0])));
+                $hasPunct = preg_match('/[.,!?;:]/u', $cluster);
+
+                if ($prefixOk && !$hasPunct) {
+                    $tokens = preg_split('/\s+/', trim($cluster));
+                    if ($tokens && count($tokens) >= 2) {
+                        foreach ($tokens as $w) {
+                            // Skippa om ordet ser ut som en riktig mening (börjar med versal och är långt), annars ta som tagg
+                            if (preg_match('/^[\p{L}\p{N}_-]{2,}$/u', $w)) {
+                                $tag = '#' . mb_strtolower($w);
+                                $key = mb_strtolower($tag);
+                                if (!isset($allTags[$key])) {
+                                    $allTags[$key] = ['tag' => $tag, 'count' => 0, 'first' => mb_strlen(implode("\n", $lines))];
+                                }
+                                $allTags[$key]['count']++;
+                            }
+                        }
+                        // Ta bort klustret från raden (ersätt med ingenting, men bevara resten av raden)
+                        $line = rtrim(mb_substr($line, 0, -mb_strlen($m[0])));
+                    }
+                }
+            }
+
+            // Om inga ändringar, lämna raden som den är
+            if ($line === null) {
+                $line = $orig;
+            }
+        }
+        unset($line);
+
+        // 4) Ta bort inline-hashtags men bevara radbrytningar (ersätt "␠#tag" med "␠")
+        $lines = array_map(function ($line) {
+            $line = preg_replace('/(^|[^\S\r\n])#[\p{L}\p{N}_-]+/u', '$1', $line);
+            // Komprimera enbart multipla mellanslag på raden (inte radbrytningar)
+            $line = preg_replace('/[ \t]{2,}/', ' ', $line);
+            return rtrim($line);
+        }, $lines);
+
+        // 5) Se till att numrerade punkter har en tomrad före (för läsbarhet)
+        //    Om en rad börjar med "N. " och föregående rad inte är tom, sätt in tomrad
+        $normalized = [];
+        foreach ($lines as $idx => $line) {
+            $isNumbered = preg_match('/^\d+\.\s/', $line);
+            if ($isNumbered && !empty($normalized) && trim(end($normalized)) !== '') {
+                $normalized[] = ''; // tom rad
+            }
+            $normalized[] = $line;
+        }
+
+        // Ta bort överflödiga tomrader (max två i rad) och trimma
+        $t = implode("\n", $normalized);
         $t = preg_replace('/\n{3,}/', "\n\n", $t);
         $t = trim($t);
 
-        // 5) Välj 5–6 mest relevanta hashtags (config-styrt)
-        $maxTags = (int) (config('social.facebook.max_hashtags', 6));
+        // 6) Välj de mest relevanta hashtagsen
+        $maxTags = 6;
         if (!empty($allTags) && $maxTags > 0) {
             // Sortera: flest förekomster först, sedan tidigast förekomst
             uasort($allTags, function ($a, $b) {
@@ -422,12 +480,11 @@ class PublishToFacebookJob implements ShouldQueue
             $selected = array_slice(array_column($allTags, 'tag'), 0, max(1, $maxTags));
 
             if (!empty($selected)) {
-                // Lägg som avslutande rad
                 $t = rtrim($t) . "\n\n" . implode(' ', $selected);
             }
         }
 
-        // 6) Facebook maxlängd
+        // 7) Facebook maxlängd
         if (mb_strlen($t) > 5000) {
             $t = mb_substr($t, 0, 4996) . ' ...';
         }
