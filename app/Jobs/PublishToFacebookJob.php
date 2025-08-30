@@ -37,6 +37,8 @@ class PublishToFacebookJob implements ShouldQueue
             ->useWritePdo()
             ->find($this->publicationId);
 
+        Log::info('Här' . $pub);
+
         // Enkel retry om rad inte syns direkt (t.ex. pga lag)
         if (!$pub) {
             usleep(250_000); // 250 ms
@@ -73,6 +75,8 @@ class PublishToFacebookJob implements ShouldQueue
         $content    = $pub->content;
         $customerId = $content->customer_id;
         $siteId     = $content->site_id;
+
+        Log::info('Content: ' . json_encode($content->toArray()));
 
         if (!$customerId || !$siteId) {
             Log::error('[FB] Customer eller Site ID saknas', [
