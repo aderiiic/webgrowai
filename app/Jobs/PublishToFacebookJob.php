@@ -19,8 +19,6 @@ class PublishToFacebookJob implements ShouldQueue
 {
     use Queueable;
 
-    public $afterCommit = true;
-
     public function __construct(public int $publicationId)
     {
         $this->onQueue('social');

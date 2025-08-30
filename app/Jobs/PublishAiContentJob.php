@@ -15,8 +15,6 @@ class PublishAiContentJob implements ShouldQueue
 {
     use Queueable;
 
-    public $afterCommit = true;
-
     public function __construct(
         public int $aiContentId,
         public int $siteId,
@@ -26,6 +24,7 @@ class PublishAiContentJob implements ShouldQueue
         public ?string $preferredProvider = null
     ) {
         $this->onQueue('publish');
+        $this->afterCommit();
     }
 
     public function handle(IntegrationManager $integrations, Usage $usage): void
