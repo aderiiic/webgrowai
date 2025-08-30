@@ -22,6 +22,7 @@ class PublishToFacebookJob implements ShouldQueue
     public function __construct(public int $publicationId)
     {
         $this->onQueue('social');
+        $this->afterCommit();
     }
 
     public function handle(Usage $usage, ImageGenerator $images): void
