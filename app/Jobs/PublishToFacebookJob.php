@@ -372,7 +372,7 @@ class PublishToFacebookJob implements ShouldQueue
         $t = trim((string) $t);
 
         // Inställningar
-        $maxTags = (int) (config('social.facebook.max_hashtags', 5));
+        $maxTags = 5;
 
         // Samla hashtags
         $allTags = [];
