@@ -19,11 +19,11 @@ class PublishToFacebookJob implements ShouldQueue
 {
     use Queueable;
 
-    public $afterCommit = true;
-
     public function __construct(public int $publicationId)
     {
         $this->onQueue('social');
+        // Viktigt: sätt afterCommit via traitens egenskap – deklarera inte egenskapen i klassen
+        $this->afterCommit = true;
     }
 
     public function handle(Usage $usage, ImageGenerator $images): void
