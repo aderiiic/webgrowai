@@ -328,6 +328,8 @@ Route::middleware(['auth','verified','can:admin'])->prefix('admin')->name('admin
             'Content-Disposition' => 'attachment; filename="'.$doc['filename'].'"',
         ]);
     })->name('admin.invoices.download');
+
+
 });
 
 // Tracking-endpoint

@@ -195,6 +195,7 @@
         </div>
 
         <!-- WordPress/Shopify publishing -->
+        @if($currentProvider === 'wordpress')
         <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
             <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6">
                 <div class="flex items-center space-x-4 mb-6">
@@ -268,6 +269,7 @@
                     </div>
                 </div>
             </div>
+            @endif
 
             <!-- Social media publishing -->
             <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6">
