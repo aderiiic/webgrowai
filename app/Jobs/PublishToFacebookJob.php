@@ -351,33 +351,40 @@ class PublishToFacebookJob implements ShouldQueue
      */
     private function buildFacebookMessage(string $input): string
     {
+        // Skydda mot för långa texter (regex blir långsamma annars)
+        if (mb_strlen($input) > 20000) {
+            $input = mb_substr($input, 0, 20000);
+        }
+
+        // Normalisera radbrytningar
         $t = str_replace(["\r\n", "\r"], "\n", (string) $input);
         $t = $this->stripCodeFences($t);
 
-        // Ta bort rubriker, inbäddade bilder och metadata-rader
-        $t = preg_replace('/^#{1,6}\s*.+$/m', '', $t);
-        $t = preg_replace('/!\[.*?\]\([^)]*\)/s', '', $t);
-        $t = preg_replace('/<img[^>]*\/?>/is', '', $t);
-        $t = preg_replace('/^\s*(Nyckelord|Keywords|Stil|Style|CTA|Målgrupp|Audience|Brand voice)\s*:\s*.*$/im', '', $t);
+        // Ta bort rubriker, bilder och metadata-rader
+        $t = preg_replace('/^#{1,6}\s.*$/m', '', $t);               // Markdown rubriker
+        $t = preg_replace('/!\[.*?\]\([^)]*\)/s', '', $t);          // Markdown-bilder
+        $t = preg_replace('/<img[^>]*>/i', '', $t);                 // HTML-bilder
+        $t = preg_replace(
+            '/^\s*(Nyckelord|Keywords|Stil|Style|CTA|Målgrupp|Audience|Brand voice)\s*:\s*.*$/im',
+            '',
+            $t
+        );
 
-        // Behåll emojis; normalisera listor och whitespace
-        $t = preg_replace('/^\s*[\*\-]\s+/m', '- ', $t);
-        $t = preg_replace('/\n{3,}/', "\n\n", $t);
-        $t = preg_replace('/^[ \t]+|[ \t]+$/m', '', $t);
+        // Normalisera listor & whitespace
+        $t = preg_replace('/^\s*[\*\-]\s+/m', '- ', $t);            // punktlistor → streck
+        $t = preg_replace('/\n{3,}/', "\n\n", $t);                  // max 2 radbrytningar
+        $t = preg_replace('/^[ \t]+|[ \t]+$/m', '', $t);            // trim raders start/slut
 
-        // Ta bort osynliga/konstiga kontrolltecken
-        $t = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $t);
+        // Ta bort osynliga tecken
+        $t = preg_replace('/[\x00-\x1F\x7F]/u', '', $t);
         $t = preg_replace('/[\x{200B}-\x{200D}\x{FEFF}]/u', '', $t);
 
-        $t = trim((string) $t);
-
-        // Inställningar
-        $maxTags = 5;
+        $t = trim($t);
 
         // Samla hashtags
         $allTags = [];
-        if (preg_match_all('/(^|\s)(#[\p{L}\p{N}_-]+)/u', $t, $m, PREG_OFFSET_CAPTURE)) {
-            foreach ($m[2] as $idx => $match) {
+        if (preg_match_all('/#[\p{L}\p{N}_-]+/u', $t, $matches, PREG_OFFSET_CAPTURE)) {
+            foreach ($matches[0] as $match) {
                 $tag = $match[0];
                 $pos = $match[1];
                 $key = mb_strtolower($tag);
@@ -388,18 +395,20 @@ class PublishToFacebookJob implements ShouldQueue
             }
         }
 
-        // Ta bort inline hashtags från brödtext
-        $t = preg_replace('/(^|\s)#[\p{L}\p{N}_-]+/u', '$1', $t);
-        $t = trim(preg_replace('/\s{2,}/', ' ', $t));
+        // Ta bort hashtags från brödtexten
+        $t = preg_replace('/#[\p{L}\p{N}_-]+/u', '', $t);
+        $t = preg_replace('/\s{2,}/', ' ', $t);
         $t = preg_replace('/\n{3,}/', "\n\n", $t);
+        $t = trim($t);
 
-        // Om vi har taggar → välj de mest relevanta
+        // Välj de mest relevanta hashtagsen
+        $maxTags = (int) (config('social.facebook.max_hashtags', 5));
         if (!empty($allTags)) {
             uasort($allTags, function ($a, $b) {
                 if ($a['count'] === $b['count']) {
-                    return $a['first'] <=> $b['first'];
+                    return $a['first'] <=> $b['first']; // tidigast först
                 }
-                return $b['count'] <=> $a['count'];
+                return $b['count'] <=> $a['count']; // flest förekomster först
             });
 
             $selected = array_slice(array_column($allTags, 'tag'), 0, max(1, $maxTags ?: 5));
@@ -410,7 +419,7 @@ class PublishToFacebookJob implements ShouldQueue
             }
         }
 
-        // Facebook: max 5 000 tecken
+        // Facebook maxlängd: 5000 tecken
         if (mb_strlen($t) > 5000) {
             $t = mb_substr($t, 0, 4996) . ' ...';
         }
