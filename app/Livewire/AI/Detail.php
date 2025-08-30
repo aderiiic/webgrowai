@@ -180,7 +180,7 @@ class Detail extends Component
         ]);
 
         if (!$scheduledAt || $scheduledAt->lte($now)) {
-            $pub->update(['status' => 'processing']);
+            // Ta bort: $pub->update(['status' => 'processing']);
             if ($this->socialTarget === 'facebook') {
                 dispatch(new PublishToFacebookJob($pub->id))->afterCommit()->onQueue('social');
             } else {

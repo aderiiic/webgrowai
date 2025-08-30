@@ -12,8 +12,6 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
-use Carbon\Carbon;
 use Throwable;
 
 class PublishToFacebookJob implements ShouldQueue
@@ -64,6 +62,20 @@ class PublishToFacebookJob implements ShouldQueue
             return;
         }
 
+        if (!in_array($pub->status, ['queued', 'processing'], true)) {
+            Log::info('[FB] Publication har redan behandlats', [
+                'pub_id' => $this->publicationId,
+                'status' => $pub->status,
+            ]);
+            return;
+        }
+
+        // Flytta status-övergången till jobbet (minskar race)
+        if ($pub->status === 'queued') {
+            $pub->update(['status' => 'processing', 'message' => null]);
+            Log::info('[FB] Satt till processing', ['pub_id' => $this->publicationId]);
+        }
+
         if (!$pub->content) {
             Log::error('[FB] AI Content saknas för publication', [
                 'pub_id' => $this->publicationId,
@@ -72,14 +84,6 @@ class PublishToFacebookJob implements ShouldQueue
             $pub->update([
                 'status'  => 'failed',
                 'message' => 'AI Content saknas för denna publication',
-            ]);
-            return;
-        }
-
-        if (!in_array($pub->status, ['queued', 'processing'], true)) {
-            Log::info('[FB] Publication har redan behandlats', [
-                'pub_id' => $this->publicationId,
-                'status' => $pub->status,
             ]);
             return;
         }
@@ -134,10 +138,6 @@ class PublishToFacebookJob implements ShouldQueue
                 'message' => 'Facebook Page ID saknas i integrationen',
             ]);
             return;
-        }
-
-        if ($pub->status === 'queued') {
-            $pub->update(['status' => 'processing']);
         }
 
         try {
@@ -235,6 +235,7 @@ class PublishToFacebookJob implements ShouldQueue
                 'error'  => $e->getMessage(),
             ]);
 
+            // Falla tillbaka försiktigt om $pub av någon anledning saknas
             if ($pub) {
                 $pub->update([
                     'status'  => 'failed',
