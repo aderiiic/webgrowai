@@ -40,9 +40,9 @@ class PublicationsIndex extends Component
                 publicationId: $pub->id
             ))->onQueue('publish');
         } elseif ($pub->target === 'facebook') {
-            dispatch(new PublishToFacebookJob($pub->id))->onQueue('social');
+            dispatch(new PublishToFacebookJob($pub->id))->afterCommit()->onQueue('social');
         } elseif ($pub->target === 'instagram') {
-            dispatch(new PublishToInstagramJob($pub->id))->onQueue('social');
+            dispatch(new PublishToInstagramJob($pub->id))->afterCommit()->onQueue('social');
         }
 
         session()->flash('success', 'Kör om startad.');

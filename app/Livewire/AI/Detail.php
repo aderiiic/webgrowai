@@ -182,9 +182,9 @@ class Detail extends Component
         if (!$scheduledAt || $scheduledAt->lte($now)) {
             $pub->update(['status' => 'processing']);
             if ($this->socialTarget === 'facebook') {
-                dispatch(new PublishToFacebookJob($pub->id))->onQueue('social');
+                dispatch(new PublishToFacebookJob($pub->id))->afterCommit()->onQueue('social');
             } else {
-                dispatch(new PublishToInstagramJob($pub->id))->onQueue('social');
+                dispatch(new PublishToInstagramJob($pub->id))->afterCommit()->onQueue('social');
             }
             session()->flash('success', ucfirst($this->socialTarget).' publicering startad.');
         } else {

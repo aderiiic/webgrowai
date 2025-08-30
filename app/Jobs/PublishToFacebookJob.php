@@ -28,6 +28,7 @@ class PublishToFacebookJob implements ShouldQueue
     {
         $this->onQueue('social');
         $this->delay(now()->addSeconds(30));
+        $this->afterCommit();
     }
 
     public function handle(Usage $usage, ImageGenerator $images): void
