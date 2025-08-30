@@ -372,8 +372,8 @@ class PublishToFacebookJob implements ShouldQueue
         $t = trim((string) $t);
 
         // Inställningar
-        $moveToFooter = (bool) (config('social.facebook.move_hashtags_to_footer', true));
-        $maxTags      = (int) (config('social.facebook.max_hashtags', 6));
+        $moveToFooter = true;
+        $maxTags      = 6;
 
         if ($moveToFooter) {
             // 1) Plocka upp alla hashtags i texten (case-insensitivt), deduplicera och räkna frekvens
