@@ -223,7 +223,7 @@ class Detail extends Component
         $pub = ContentPublication::create([
             'ai_content_id' => $this->content->id,
             'target'        => $this->socialTarget,
-            'status'        => 'processing', // direkt igång
+            'status'        => 'queued', // ändrat från 'processing' -> låt jobbet ta processing
             'scheduled_at'  => null,
             'message'       => null,
             'payload'       => $payload,

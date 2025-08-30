@@ -112,24 +112,23 @@ class PublishToFacebookJob implements ShouldQueue
 
     private function cleanSocialText(string $input): string
     {
-        $t = str_replace(["\r\n", "\r"], "\n", (string)$input);
+        $t = str_replace(["\r\n","\r"], "\n", (string)$input);
 
-        // Ta bort ev. kodblock
-        $trim = trim($t);
-        if (str_starts_with($trim, '```') && str_ends_with($trim, '```')) {
-            $t = preg_replace('/^```[a-zA-Z0-9_-]*\n?/', '', $trim);
+        if (str_starts_with(trim($t), '```') && str_ends_with(trim($t), '```')) {
+            $t = preg_replace('/^```[a-zA-Z0-9_-]*\n?/','', trim($t));
             $t = preg_replace("/\n?```$/", '', $t);
         }
 
-        // Ta bort markdownrubriker, bilder, html-bilder, nyckelordsrader, överflödiga radbrytningar
-        $t = preg_replace('/^#{1,6}\s*.+$/m', '', $t);
-        $t = preg_replace('/!\[.*?\]\([^)]*\)/s', '', $t);
-        $t = preg_replace('/<img[^>]*\/?>/is', '', $t);
+        $t = preg_replace('/^#{1,6}\s*.+$/m', '', $t);         // rubriker
+        $t = preg_replace('/!\[.*?\]\([^)]*\)/s', '', $t);     // MD-bilder
+        $t = preg_replace('/<img[^>]*\/?>/is', '', $t);        // HTML-bilder
         $t = preg_replace('/^\s*(Nyckelord|Keywords|Stil|Style|CTA|Målgrupp|Audience|Brand voice)\s*:\s*.*$/im', '', $t);
-        $t = preg_replace('/^\s*[\*\-]\s+/m', '- ', $t);
+        $t = preg_replace('/^\s*(?:#[\p{L}\p{N}_-]+(?:\s+|$))+$/um', '', $t); // hashtag-rad
+        $t = preg_replace('/(^|\s)#[\p{L}\p{N}_-]+/u', '$1', $t);             // inline hashtags
+        $t = preg_replace('/^\s*[\*\-]\s+/m', '- ', $t);        // listpunkter → streck
         $t = preg_replace('/\n{3,}/', "\n\n", $t);
         $t = preg_replace('/^[ \t]+|[ \t]+$/m', '', $t);
 
-        return trim((string)$t);
+        return trim($t);
     }
 }
