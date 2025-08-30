@@ -98,19 +98,38 @@ class WordPressClient
 
     public function uploadMedia(string $bytes, string $filename, string $mime = 'image/png'): array
     {
-        $res = $this->client->post('/wp-json/wp/v2/media', [
-            'timeout'         => 120,
-            'connect_timeout' => 10,
-            'expect'          => false,
-            'multipart' => [
-                [
-                    'name'     => 'file',
-                    'contents' => $bytes,
-                    'filename' => $filename,
-                    'headers'  => ['Content-Type' => $mime],
+        try {
+            $res = $this->client->post('/wp-json/wp/v2/media', [
+                'timeout'         => 120,
+                'connect_timeout' => 10,
+                'expect'          => false,
+                'multipart' => [
+                    [
+                        'name'     => 'file',
+                        'contents' => $bytes,
+                        'filename' => $filename,
+                        'headers'  => ['Content-Type' => $mime],
+                    ],
                 ],
-            ],
-        ]);
-        return json_decode((string) $res->getBody(), true);
+            ]);
+
+            $response = json_decode((string) $res->getBody(), true);
+
+            if (!$response || !isset($response['id'])) {
+                throw new \RuntimeException('WordPress media upload returnerade ogiltig respons: ' . $res->getBody());
+            }
+
+            return $response;
+
+        } catch (ClientException $e) {
+            $body = (string) ($e->getResponse()?->getBody() ?? '');
+            $statusCode = $e->getCode();
+
+            // Försök att parsa WordPress fel-respons
+            $error = json_decode($body, true);
+            $errorMessage = $error['message'] ?? $body;
+
+            throw new \RuntimeException("WordPress media upload misslyckades (HTTP {$statusCode}): {$errorMessage}", $statusCode, $e);
+        }
     }
 }

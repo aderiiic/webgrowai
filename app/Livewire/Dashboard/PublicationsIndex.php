@@ -78,9 +78,16 @@ class PublicationsIndex extends Component
         $customer = $current->get();
         abort_unless($customer, 403);
 
+        $activeSiteId = (int) ($current->getSiteId() ?: 0);
+
         $q = ContentPublication::query()
-            ->whereHas('content', fn($c) => $c->where('customer_id', $customer->id))
-            ->with('content:id,title');
+            ->whereHas('content', function ($c) use ($customer, $activeSiteId) {
+                $c->where('customer_id', $customer->id);
+                if ($activeSiteId > 0) {
+                    $c->where('site_id', $activeSiteId);
+                }
+            })
+            ->with('content:id,title,site_id');
 
         if ($this->target !== '') $q->where('target', $this->target);
         if ($this->status !== '') $q->where('status', $this->status);
@@ -89,6 +96,7 @@ class PublicationsIndex extends Component
 
         return view('livewire.dashboard.publications-index', [
             'pubs' => $pubs,
+            'activeSiteId' => $activeSiteId > 0 ? $activeSiteId : null,
         ]);
     }
 }

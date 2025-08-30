@@ -2,11 +2,12 @@
 namespace App\Services\Sites\Providers;
 
 use App\Models\Integration;
+use App\Models\ImageAsset;
 use App\Services\Sites\SiteIntegrationClient;
 use App\Services\WordPressClient;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class WordPressAdapter implements SiteIntegrationClient
 {
@@ -21,7 +22,6 @@ class WordPressAdapter implements SiteIntegrationClient
 
     private function wp(): WordPressClient
     {
-        // Bygg WP-klienten från credentials i Integration
         $creds = (array)($this->integration->credentials ?? []);
 
         $baseUrl = rtrim((string)($creds['wp_url'] ?? $creds['url'] ?? ''), '/');
@@ -32,7 +32,6 @@ class WordPressAdapter implements SiteIntegrationClient
             throw new \RuntimeException('Ogiltiga WordPress-uppgifter (url/användare/lösen saknas).');
         }
 
-        // Försök dekryptera lösenordet; om det redan är plaintext, använd som det är
         try {
             $appPassword = Crypt::decryptString($rawPass);
         } catch (\Throwable) {
@@ -96,7 +95,101 @@ class WordPressAdapter implements SiteIntegrationClient
     public function publish(array $payload): array
     {
         $wp = $this->wp();
+
+        // 1) Om bild valts: ladda upp till WP Media med uploadMedia
+        $mediaId = null;
+        if (!empty($payload['image_asset_id'])) {
+            $asset = ImageAsset::find((int)$payload['image_asset_id']);
+            if ($asset) {
+                try {
+                    if (!Storage::disk($asset->disk)->exists($asset->path)) {
+                        throw new \RuntimeException("Bildfil hittades inte: {$asset->path}");
+                    }
+
+                    $bytes = Storage::disk($asset->disk)->get($asset->path);
+                    if (empty($bytes)) {
+                        throw new \RuntimeException("Bildfilen är tom eller kunde inte läsas");
+                    }
+
+                    $filename = $asset->original_name ?: basename($asset->path) ?: ('image_'.$asset->id.'.jpg');
+                    $mime = $asset->mime ?: 'image/jpeg';
+
+                    $media = $wp->uploadMedia($bytes, $filename, $mime);
+                    $mediaId = (int)($media['id'] ?? 0);
+
+                } catch (\Throwable $e) {
+                    \Log::error('Misslyckades att ladda upp bild till WordPress', [
+                        'error' => $e->getMessage(),
+                        'asset_id' => $asset->id,
+                        'filename' => $filename ?? 'okänd'
+                    ]);
+                    $mediaId = null;
+                }
+            }
+            unset($payload['image_asset_id']); // okänt fält för WP
+        }
+
+        // 2) Rensa bort eventuell titel-duplicering från innehållet
+        if (!empty($payload['content']) && !empty($payload['title'])) {
+            $content = $payload['content'];
+            $title = $payload['title'];
+
+            // Ta bort titel från början av innehållet om den finns där
+            $content = preg_replace('/^#\s*' . preg_quote($title, '/') . '\s*\n*/i', '', $content);
+            $content = preg_replace('/^' . preg_quote($title, '/') . '\s*\n*/i', '', $content);
+
+            $payload['content'] = trim($content);
+        }
+
+        // 3) Ta bort eventuella bildreferenser från innehållet (om featured image används)
+        if ($mediaId && !empty($payload['content'])) {
+            // Ta bort markdown bildreferenser
+            $payload['content'] = preg_replace('/!\[.*?\]\(.*?\)/', '', $payload['content']);
+            // Ta bort HTML img tags
+            $payload['content'] = preg_replace('/<img[^>]*>/i', '', $payload['content']);
+            $payload['content'] = trim($payload['content']);
+        }
+
+        // 4) Skapa inlägget (utan featured_media)
         $resp = $wp->createPost($payload);
-        return is_array($resp) ? $resp : ['id' => null];
+        if (!is_array($resp) || empty($resp['id'])) {
+            return ['id' => null];
+        }
+
+        // 5) Sätt featured_media i efterhand med en liten retry-loop
+        if ($mediaId) {
+            $postId = (int)$resp['id'];
+            $attempts = 0;
+            $ok = false;
+
+            while ($attempts < 3 && !$ok) {
+                try {
+                    $wp->updatePost($postId, ['featured_media' => $mediaId]);
+                    $ok = true;
+                    \Log::info('Featured media satt för WordPress post', [
+                        'post_id' => $postId,
+                        'media_id' => $mediaId
+                    ]);
+                } catch (\Throwable $e) {
+                    \Log::warning('Försök att sätta featured media misslyckades', [
+                        'attempt' => $attempts + 1,
+                        'post_id' => $postId,
+                        'media_id' => $mediaId,
+                        'error' => $e->getMessage()
+                    ]);
+
+                    usleep(500_000); // 500 ms
+                    $attempts++;
+                    if ($attempts >= 3) {
+                        \Log::error('Kunde inte sätta featured media efter 3 försök', [
+                            'post_id' => $postId,
+                            'media_id' => $mediaId
+                        ]);
+                    }
+                }
+            }
+        }
+
+        return $resp;
     }
 }

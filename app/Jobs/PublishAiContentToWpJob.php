@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\AiContent;
 use App\Models\ContentPublication;
+use App\Models\ImageAsset;
 use App\Models\WpIntegration;
 use App\Services\ImageGenerator;
 use App\Services\WordPressClient;
@@ -12,6 +13,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -41,7 +43,6 @@ class PublishAiContentToWpJob implements ShouldQueue
                 try { $scheduledAt = Carbon::parse($this->scheduleAtIso); } catch (\Throwable) {}
             }
 
-            // Spegla bildpreferenser in i payload
             $imgPrefs = $content->inputs['image'] ?? ['generate' => false, 'mode' => 'auto', 'prompt' => null];
 
             $pub = ContentPublication::create([
@@ -70,7 +71,6 @@ class PublishAiContentToWpJob implements ShouldQueue
             throw $e;
         }
 
-
         $md = $this->normalizeMd($content->body_md ?? '');
         $blocks = $this->toGutenbergBlocks($md);
         $htmlFallback = \Illuminate\Support\Str::of($md)->markdown();
@@ -87,46 +87,72 @@ class PublishAiContentToWpJob implements ShouldQueue
         $featuredMediaId = null;
         $imagesEnabled = config('features.image_generation', false);
 
-        // — Bildgenerering (respektera feature-flag) —
         try {
-            if ($imagesEnabled) {
-                $pubPayload = $pub->payload ?? [];
-                $inputs     = $content->inputs ?? [];
+            $pubPayload = $pub->payload ?? [];
+            $inputs     = $content->inputs ?? [];
 
-                $want = (bool)($pubPayload['image']['generate'] ?? $inputs['image']['generate'] ?? false);
-                $want = $imagesEnabled && $want;
+            $imageAssetId = $pubPayload['image_asset_id'] ?? null;
 
-                $prompt = $pubPayload['image_prompt']
-                    ?? $pubPayload['image']['prompt']
-                    ?? $inputs['image']['prompt']
-                    ?? null;
-
-                if ($want && !$prompt) {
-                    $prompt = $this->buildAutoPrompt($content->title, $inputs);
+            if ($imageAssetId) {
+                $asset = ImageAsset::findOrFail((int)$imageAssetId);
+                if ((int)$asset->customer_id !== (int)$content->customer_id) {
+                    throw new \RuntimeException('Otillåten bild.');
                 }
+                $bytes    = Storage::disk($asset->disk)->get($asset->path);
+                $filename = basename($asset->path);
+                $media    = $client->uploadMedia($bytes, $filename, $asset->mime ?: 'image/jpeg');
+                $featuredMediaId = $media['id'] ?? null;
+                $mediaUrl = $media['source_url'] ?? ($media['guid']['rendered'] ?? null) ?? null;
 
-                if ($want && $prompt) {
-                    // Mindre JPEG för snabbare upload till WP
-                    $bytes    = $images->generateJpeg($prompt, '1024x1024', 85);
-                    $filename = 'ai-image-' . \Illuminate\Support\Str::uuid() . '.jpg';
+                $pubPayload['image_asset_id']  = (int)$imageAssetId;
+                $pubPayload['image_bank_path'] = $asset->path;
 
-                    $media    = $client->uploadMedia($bytes, $filename, 'image/jpeg');
-                    $featuredMediaId = $media['id'] ?? null;
-                    $mediaUrl = $media['source_url'] ?? ($media['guid']['rendered'] ?? null) ?? null;
+                if ($featuredMediaId) {
+                    $payload['featured_media'] = $featuredMediaId;
 
-                    Log::debug('[WP Publish] Media upload result', [
-                        'id'  => $featuredMediaId,
-                        'url' => $mediaUrl,
-                    ]);
+                    if ($mediaUrl) {
+//                        $imgBlock = "<!-- wp:image {\"id\":{$featuredMediaId},\"sizeSlug\":\"full\",\"linkDestination\":\"none\"} -->
+//<figure class=\"wp-block-image size-full\"><img src=\"{$mediaUrl}\" alt=\"\" class=\"wp-image-{$featuredMediaId}\"/></figure>
+//<!-- /wp:image -->";
+//                        $payload['content'] = $imgBlock . "\n\n" . $payload['content'];
+                    }
+                }
+            } else {
+                if ($imagesEnabled) {
+                    $want = (bool)($pubPayload['image']['generate'] ?? $inputs['image']['generate'] ?? false);
+                    $want = $imagesEnabled && $want;
 
-                    if ($featuredMediaId) {
-                        $payload['featured_media'] = $featuredMediaId;
+                    $prompt = $pubPayload['image_prompt']
+                        ?? $pubPayload['image']['prompt']
+                        ?? $inputs['image']['prompt']
+                        ?? null;
 
-                        if ($mediaUrl) {
-                            $imgBlock = "<!-- wp:image {\"id\":{$featuredMediaId},\"sizeSlug\":\"full\",\"linkDestination\":\"none\"} -->
+                    if ($want && !$prompt) {
+                        $prompt = $this->buildAutoPrompt($content->title, $inputs);
+                    }
+
+                    if ($want && $prompt) {
+                        $bytes    = $images->generateJpeg($prompt, '1024x1024', 85);
+                        $filename = 'ai-image-' . \Illuminate\Support\Str::uuid() . '.jpg';
+
+                        $media    = $client->uploadMedia($bytes, $filename, 'image/jpeg');
+                        $featuredMediaId = $media['id'] ?? null;
+                        $mediaUrl = $media['source_url'] ?? ($media['guid']['rendered'] ?? null) ?? null;
+
+                        \Log::debug('[WP Publish] Media upload result', [
+                            'id'  => $featuredMediaId,
+                            'url' => $mediaUrl,
+                        ]);
+
+                        if ($featuredMediaId) {
+                            $payload['featured_media'] = $featuredMediaId;
+
+                            if ($mediaUrl) {
+                                $imgBlock = "<!-- wp:image {\"id\":{$featuredMediaId},\"sizeSlug\":\"full\",\"linkDestination\":\"none\"} -->
 <figure class=\"wp-block-image size-full\"><img src=\"{$mediaUrl}\" alt=\"\" class=\"wp-image-{$featuredMediaId}\"/></figure>
 <!-- /wp:image -->";
-                            $payload['content'] = $imgBlock . "\n\n" . $payload['content'];
+                                $payload['content'] = $imgBlock . "\n\n" . $payload['content'];
+                            }
                         }
                     }
                 }
@@ -135,12 +161,10 @@ class PublishAiContentToWpJob implements ShouldQueue
             Log::warning('[WP Publish] Bilddel misslyckades – fortsätter utan bild', ['err' => $e->getMessage()]);
         }
 
-        // — Skapa inlägg —
         try {
             $resp = $client->createPost($payload);
             $postId = is_array($resp) ? ($resp['id'] ?? null) : (is_object($resp) ? ($resp->id ?? null) : null);
 
-            // Säkerställ featured_media via update om create ignorerade det
             if ($postId && $featuredMediaId && (empty($resp['featured_media']) || (int)$resp['featured_media'] !== (int)$featuredMediaId)) {
                 $client->updatePost($postId, ['featured_media' => $featuredMediaId]);
             }
@@ -148,9 +172,13 @@ class PublishAiContentToWpJob implements ShouldQueue
             $pub->update([
                 'status'      => 'published',
                 'external_id' => $postId,
-                'payload'     => $payload,
+                'payload'     => $pubPayload ?: $payload, // spara ev. image_asset_id m.m.
                 'message'     => null,
             ]);
+
+            if (!empty($pubPayload['image_asset_id'])) {
+                ImageAsset::markUsed((int)$pubPayload['image_asset_id'], $pub->id);
+            }
 
             $content->update([
                 'status' => $this->status === 'draft' ? 'ready' : 'published',
@@ -237,7 +265,7 @@ Style: modern, photographic, 16:9, minimal, no text overlays.");
                 $htmlFrag = $dom->saveHTML($node);
 
                 switch ($tag) {
-                    case 'h1': $out .= "<!-- wp:heading {\"level\":1} -->{$htmlFrag}<!-- /wp:heading -->"; break;
+                    case 'h1': break;
                     case 'h2': $out .= "<!-- wp:heading {\"level\":2} -->{$htmlFrag}<!-- /wp:heading -->"; break;
                     case 'h3': $out .= "<!-- wp:heading {\"level\":3} -->{$htmlFrag}<!-- /wp:heading -->"; break;
                     case 'h4': $out .= "<!-- wp:heading {\"level\":4} -->{$htmlFrag}<!-- /wp:heading -->"; break;

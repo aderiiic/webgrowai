@@ -44,7 +44,7 @@ class GenerateContentJob implements ShouldQueue
             'facebook'  => "- 0–3 hashtags. Max 1–2 emojis. 1–2 korta stycken.\n- Nämn inte LinkedIn.",
             'instagram' => "- Hashtags i slutet: 5–10 relevanta. Radbrytningar för läsbarhet.\n- Nämn inte LinkedIn.",
             'linkedin'  => "- Professionell och saklig. 1–3 hashtags. Ingen clickbait.",
-            'blog'      => "- Använd H2/H3. Gärna punktlistor. Längre format.",
+            'blog'      => "- Börja med några inledningsstycken (vanlig text) som introducerar ämnet.\n- Använd sedan H2/H3 för underrubriker. Gärna punktlistor.\n- VIKTIGT: Inkludera INTE titeln som H1 i innehållet - titeln hanteras separat.",
             'campaign'  => "- Lista idéer kort och konkret (punktlista).",
             default     => "- Följ mallen, anpassa till målgrupp/mål.",
         };
@@ -58,6 +58,9 @@ class GenerateContentJob implements ShouldQueue
             "- Inget försnack (inga 'Självklart!' etc.).",
             "- Inga kodblock (inga ```).",
             "- Leverera exakt 1 komplett version.",
+            "- För blog/WordPress: Börja INTE med titeln som H1 - den sätts automatiskt.",
+            "- För blog/WordPress: Börja med vanlig text (inledning), sedan använd H2/H3 för rubriker.",
+            "- Inkludera INGA bildreferenser i texten - bilder hanteras separat.",
         ]);
 
         $context = [];
@@ -71,6 +74,12 @@ class GenerateContentJob implements ShouldQueue
         if ($gStyle)  $guides[] = "Stil: {$gStyle}";
         if ($gCta)    $guides[] = "CTA: {$gCta}";
         if ($gLength) $guides[] = "Längd: {$gLength}";
+
+        // Särskild instruktion för blog-format
+        $blogStructure = '';
+        if ($channel === 'blog') {
+            $blogStructure = "\n\nSTRUKTUR FÖR BLOG:\n1. Börja med några inledande stycken (vanlig text utan rubriker)\n2. Fortsätt med H2-rubriker för huvudavsnitt\n3. Använd H3 för underavsnitt\n4. Avsluta med en slutsats eller sammanfattning\n\nExempel:\n[Inledningstext som förklarar ämnet...]\n\n[Mer inledande text som sätter upp problemet...]\n\n## Första huvudrubriken\n[Innehåll...]\n\n## Andra huvudrubriken\n[Innehåll...]\n";
+        }
 
         $finalPrompt = trim("
 Du är copywriter. Skapa innehåll anpassat för kanalen: {$channel}.
@@ -89,7 +98,7 @@ TON:
 
 HÅRDA REGLER:
 {$hardRules}
-
+{$blogStructure}
 LEVERANSFORMAT:
 - Skriv ren text (Markdown endast i bloggläge för rubriker/listor).
 - Exakt 1 version (ingen variant-separator).

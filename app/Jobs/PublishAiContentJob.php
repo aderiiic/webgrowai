@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Jobs;
 
 use App\Models\AiContent;
@@ -64,7 +65,9 @@ class PublishAiContentJob implements ShouldQueue
 
         // NYTT: Delegera till WP-specifikt jobb om provider = wordpress
         if ($provider === 'wordpress') {
-            // Låt WP-jobbet hantera app-lösen, media, block, mm
+            // Kopiera image_asset_id från publication payload om det finns
+            $existingPayload = $pub->payload ?? [];
+
             dispatch(new \App\Jobs\PublishAiContentToWpJob(
                 aiContentId: $this->aiContentId,
                 siteId: $this->siteId,
@@ -73,7 +76,7 @@ class PublishAiContentJob implements ShouldQueue
                 publicationId: $pub->id
             ))->onQueue('publish');
 
-            // Markera denna rad som “överlåten” så vi inte fortsätter här
+            // Markera denna rad som "överlåten" så vi inte fortsätter här
             $pub->update(['message' => 'Delegated to WP job']);
             return;
         }
@@ -84,13 +87,22 @@ class PublishAiContentJob implements ShouldQueue
             return;
         }
 
-        $html = (string) \Illuminate\Support\Str::of($content->body_md ?? '')->markdown();
+        // Rensa innehåll från title-duplikater och bilder innan HTML-konvertering
+        $cleanMd = $this->cleanMarkdownForPublishing($content->body_md ?? '', $content->title);
+        $html = (string) \Illuminate\Support\Str::of($cleanMd)->markdown();
 
         $payload = [
             'title'   => $content->title ?: \Illuminate\Support\Str::limit(strip_tags($html), 48, '...'),
             'content' => $html,
             'status'  => $this->status,
         ];
+
+        // Lägg till image_asset_id om det finns från UI
+        $pubPayload = $pub->payload ?? [];
+        if (!empty($pubPayload['image_asset_id'])) {
+            $payload['image_asset_id'] = (int)$pubPayload['image_asset_id'];
+        }
+
         if ($this->status === 'future' && $this->scheduleAtIso) {
             $payload['date'] = $this->scheduleAtIso;
         }
@@ -102,7 +114,7 @@ class PublishAiContentJob implements ShouldQueue
             $pub->update([
                 'status'      => 'published',
                 'external_id' => $postId ? (string)$postId : null,
-                'payload'     => $payload,
+                'payload'     => array_merge($pubPayload, $payload),
                 'message'     => null,
             ]);
 
@@ -118,8 +130,39 @@ class PublishAiContentJob implements ShouldQueue
             $usage->increment($content->customer_id, 'ai.publish');
         } catch (\Throwable $e) {
             Log::error('[Publish] misslyckades', ['err' => $e->getMessage(), 'provider' => $provider]);
-            $pub->update(['status' => 'failed', 'message' => $e->getMessage(), 'payload' => $payload]);
+            $pub->update(['status' => 'failed', 'message' => $e->getMessage(), 'payload' => array_merge($pubPayload, $payload)]);
             throw $e;
         }
+    }
+
+    /**
+     * Rensa markdown från titel-dubbletter och bilder för generisk publicering
+     */
+    private function cleanMarkdownForPublishing(string $md, ?string $title = null): string
+    {
+        if (empty($md)) return $md;
+
+        // Ta bort titel från innehållet om den upprepas
+        if ($title) {
+            // Ta bort H1-rubriker som matchar titeln (case-insensitive)
+            $md = preg_replace('/^#\s+' . preg_quote($title, '/') . '\s*$/im', '', $md);
+            // Ta bort exakt matchande titel på egen rad
+            $md = preg_replace('/^' . preg_quote($title, '/') . '\s*$/im', '', $md);
+        }
+
+        // Ta bort alla H1-rubriker (plattformens titel blir H1)
+        $md = preg_replace('/^#\s+.+$/m', '', $md);
+
+        // Ta bort alla bildreferenser (markdown och HTML)
+        $md = preg_replace('/!\[.*?\]\([^)]*\)/s', '', $md);           // ![alt](url)
+        $md = preg_replace('/<img[^>]*\/?>/is', '', $md);              // <img>
+        $md = preg_replace('/\[img[^\]]*\]/is', '', $md);              // [img]
+
+        // Rensa upp extra whitespace
+        $md = preg_replace('/\n\s*\n\s*\n/', "\n\n", $md);            // Max 2 tomrader
+        $md = preg_replace('/^\s+|\s+$/m', '', $md);                   // Trim rader
+        $md = trim($md);
+
+        return $md;
     }
 }
