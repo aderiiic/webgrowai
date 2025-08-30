@@ -175,8 +175,8 @@ class PublishToFacebookJob implements ShouldQueue
         $raw = preg_replace('/!\[.*?\]\([^)]*\)/s', '', $raw);       // md-bilder
         $raw = preg_replace('/<img[^>]*\/?>/is', '', $raw);          // html-bilder
         $raw = preg_replace('/^\s*(Nyckelord|Keywords|Stil|Style|CTA|Målgrupp|Audience|Brand voice)\s*:\s*.*$/im', '', $raw);
-        $raw = preg_replace('/^\s*(?:#[\p{L}\p{N}_-]+(?:\s+|$))+$/um', '', $raw); // hashtag-rad
-        $raw = preg_replace('/(^|\s)#[\p{L}\p{N}_-]+/u', '$1', $raw);             // inline hashtags
+        //$raw = preg_replace('/^\s*(?:#[\p{L}\p{N}_-]+(?:\s+|$))+$/um', '', $raw); // hashtag-rad
+        //$raw = preg_replace('/(^|\s)#[\p{L}\p{N}_-]+/u', '$1', $raw);             // inline hashtags
         $raw = preg_replace('/^\s*[\*\-]\s+/m', '- ', $raw);          // listpunkter → streck
         $raw = preg_replace('/\n{3,}/', "\n\n", $raw);
         $raw = preg_replace('/^[ \t]+|[ \t]+$/m', '', $raw);
