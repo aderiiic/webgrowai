@@ -35,6 +35,7 @@ class PublishToFacebookJob implements ShouldQueue
         }
 
         if (!in_array($pub->status, ['queued','processing'], true)) {
+            Log::info('[FB] Hoppar över pga status', ['pub_id' => $pub->id, 'status' => $pub->status]);
             return;
         }
 
@@ -43,9 +44,10 @@ class PublishToFacebookJob implements ShouldQueue
         }
 
         try {
-            $content = $pub->content;
+            $content    = $pub->content;
             $customerId = $content?->customer_id;
             $siteId     = $content?->site_id;
+
             if (!$customerId || !$siteId) {
                 throw new \RuntimeException('Saknar customer_id eller site_id på innehållet.');
             }
@@ -59,7 +61,6 @@ class PublishToFacebookJob implements ShouldQueue
 
             $payload = $pub->payload ?? [];
 
-            // Bygg ren text (ingen MD/hashtags/metablock)
             $message = $this->buildCleanMessage(
                 title: (string)($content->title ?? ''),
                 md: (string)($content->body_md ?? ''),
@@ -69,7 +70,7 @@ class PublishToFacebookJob implements ShouldQueue
             $imagesEnabled = config('features.image_generation', false);
             $imageAssetId  = $payload['image_asset_id'] ?? null;
 
-            $client = new FacebookClient($integration->access_token);
+            $client = new \App\Services\Social\FacebookClient($integration->access_token);
 
             if ($imageAssetId) {
                 $asset = ImageAsset::findOrFail((int)$imageAssetId);
@@ -77,11 +78,10 @@ class PublishToFacebookJob implements ShouldQueue
                     throw new \RuntimeException('Otillåten bild.');
                 }
 
-                // Läs bytes och posta som foto-inlägg (caption = message)
-                $bytes = Storage::disk($asset->disk)->get($asset->path);
+                $bytes    = Storage::disk($asset->disk)->get($asset->path);
                 $filename = 'image-'.Str::random(8).'.'.pathinfo($asset->path, PATHINFO_EXTENSION);
-                Log::info('[FB] Laddar upp bild', ['pub_id' => $pub->id, 'filename' => $filename, 'size' => strlen($bytes)]);
 
+                Log::info('[FB] Laddar upp bild', ['pub_id' => $pub->id, 'filename' => $filename, 'size' => strlen($bytes)]);
                 $resp  = $client->createPagePhoto($integration->page_id, $bytes, $filename, $message);
 
                 $payload['image_asset_id']  = (int)$imageAssetId;
@@ -107,6 +107,7 @@ class PublishToFacebookJob implements ShouldQueue
                 if ($wantImage || ($imagesEnabled && $imagePrompt)) {
                     $prompt = $imagePrompt ?: $this->buildAutoPrompt($content->title, $content->body_md ?? '', $content->inputs ?? []);
                     $bytes  = $images->generate($prompt, '1536x1024');
+
                     $resp   = $client->createPagePhoto($integration->page_id, $bytes, 'image-'.Str::random(8).'.png', $message);
 
                     $pub->update([
@@ -132,7 +133,8 @@ class PublishToFacebookJob implements ShouldQueue
             $usage->increment($customerId, 'ai.publish.facebook');
             $usage->increment($customerId, 'ai.publish');
         } catch (Throwable $e) {
-            $pub->update(['status' => 'failed', 'message' => $e->getMessage()]);
+            // Säker uppdatering även om pub skulle vara null (bör inte vara det här)
+            $pub?->update(['status' => 'failed', 'message' => $e->getMessage()]);
             throw $e;
         }
     }

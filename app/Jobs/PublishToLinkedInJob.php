@@ -56,7 +56,7 @@ class PublishToLinkedInJob implements ShouldQueue
         }
 
         try {
-            $content = $pub->content;
+            $content    = $pub->content;
             $customerId = $content?->customer_id;
             $siteId     = $content?->site_id;
 
@@ -180,7 +180,7 @@ class PublishToLinkedInJob implements ShouldQueue
                 'pub_id' => $this->publicationId,
                 'error' => $e->getMessage(),
             ]);
-            $pub->update(['status' => 'failed', 'message' => $e->getMessage()]);
+            $pub?->update(['status' => 'failed', 'message' => $e->getMessage()]);
             throw $e;
         }
     }
