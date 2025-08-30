@@ -20,7 +20,7 @@ class PublishToInstagramJob implements ShouldQueue
     public function __construct(public int $publicationId)
     {
         $this->onQueue('social');
-        $this->afterCommit = true;
+        $this->afterCommit();
     }
 
     public function handle(Usage $usage, ImageGenerator $images): void
