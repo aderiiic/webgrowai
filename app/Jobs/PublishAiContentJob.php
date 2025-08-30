@@ -54,20 +54,14 @@ class PublishAiContentJob implements ShouldQueue
 
         $pub->update(['status' => 'processing', 'message' => null]);
 
-        // Hämta provider via IntegrationManager
         $client   = $integrations->forSite($this->siteId);
         $provider = $client->provider();
 
-        // Spegla target
         if ($this->publicationId) {
             ContentPublication::whereKey($this->publicationId)->update(['target' => $provider]);
         }
 
-        // NYTT: Delegera till WP-specifikt jobb om provider = wordpress
         if ($provider === 'wordpress') {
-            // Kopiera image_asset_id från publication payload om det finns
-            $existingPayload = $pub->payload ?? [];
-
             dispatch(new \App\Jobs\PublishAiContentToWpJob(
                 aiContentId: $this->aiContentId,
                 siteId: $this->siteId,
@@ -76,19 +70,19 @@ class PublishAiContentJob implements ShouldQueue
                 publicationId: $pub->id
             ))->onQueue('publish');
 
-            // Markera denna rad som "överlåten" så vi inte fortsätter här
             $pub->update(['message' => 'Delegated to WP job']);
             return;
         }
 
-        // Annars kör vi generiskt via adapter (t.ex. Shopify)
         if (!$client->supports('publish')) {
             $pub->update(['status' => 'failed', 'message' => 'Plattformen stödjer ännu inte publicering via API.']);
             return;
         }
 
-        // Rensa innehåll från title-duplikater och bilder innan HTML-konvertering
+        // 1) Normalisera/städa markdown (som i WP-flödet + extra rensning av meta/hashtags)
         $cleanMd = $this->cleanMarkdownForPublishing($content->body_md ?? '', $content->title);
+
+        // 2) Konvertera till HTML efter städning
         $html = (string) \Illuminate\Support\Str::of($cleanMd)->markdown();
 
         $payload = [
@@ -97,7 +91,6 @@ class PublishAiContentJob implements ShouldQueue
             'status'  => $this->status,
         ];
 
-        // Lägg till image_asset_id om det finns från UI
         $pubPayload = $pub->payload ?? [];
         if (!empty($pubPayload['image_asset_id'])) {
             $payload['image_asset_id'] = (int)$pubPayload['image_asset_id'];
@@ -135,34 +128,46 @@ class PublishAiContentJob implements ShouldQueue
         }
     }
 
-    /**
-     * Rensa markdown från titel-dubbletter och bilder för generisk publicering
-     */
     private function cleanMarkdownForPublishing(string $md, ?string $title = null): string
     {
-        if (empty($md)) return $md;
+        if ($md === '') return $md;
 
-        // Ta bort titel från innehållet om den upprepas
-        if ($title) {
-            // Ta bort H1-rubriker som matchar titeln (case-insensitive)
-            $md = preg_replace('/^#\s+' . preg_quote($title, '/') . '\s*$/im', '', $md);
-            // Ta bort exakt matchande titel på egen rad
-            $md = preg_replace('/^' . preg_quote($title, '/') . '\s*$/im', '', $md);
+        // Normalisera radbrytningar
+        $md = str_replace(["\r\n", "\r"], "\n", $md);
+
+        // Ta bort kodblock ```...```
+        if (str_starts_with(trim($md), '```') && str_ends_with(trim($md), '```')) {
+            $md = preg_replace('/^```[a-zA-Z0-9_-]*\n?/','', trim($md));
+            $md = preg_replace("/\n?```$/", '', $md);
         }
 
-        // Ta bort alla H1-rubriker (plattformens titel blir H1)
+        // Ta bort titel (H1 + exakt rad) om den upprepas i början
+        if ($title) {
+            $md = preg_replace('/^#\s*' . preg_quote($title, '/') . '\s*\n*/im', '', $md);
+            $md = preg_replace('/^' . preg_quote($title, '/') . '\s*\n*/im', '', $md);
+        }
+
+        // Ta bort alla H1 (plattformen sätter titel)
         $md = preg_replace('/^#\s+.+$/m', '', $md);
 
-        // Ta bort alla bildreferenser (markdown och HTML)
-        $md = preg_replace('/!\[.*?\]\([^)]*\)/s', '', $md);           // ![alt](url)
-        $md = preg_replace('/<img[^>]*\/?>/is', '', $md);              // <img>
-        $md = preg_replace('/\[img[^\]]*\]/is', '', $md);              // [img]
+        // Ta bort bildreferenser
+        $md = preg_replace('/!\[.*?\]\([^)]*\)/s', '', $md);  // MD-bilder
+        $md = preg_replace('/<img[^>]*\/?>/is', '', $md);     // HTML-bilder
 
-        // Rensa upp extra whitespace
-        $md = preg_replace('/\n\s*\n\s*\n/', "\n\n", $md);            // Max 2 tomrader
-        $md = preg_replace('/^\s+|\s+$/m', '', $md);                   // Trim rader
-        $md = trim($md);
+        // Ta bort uppenbara “meta-rader” från promptrester
+        $md = preg_replace('/^\s*(Nyckelord|Keywords|Stil|Style|CTA|Målgrupp|Audience|Brand voice)\s*:\s*.*$/im', '', $md);
 
-        return $md;
+        // Ta bort rader/kluster med hashtags (ex: “#tag #tag2 #tag3”)
+        //  - Rader som enbart består av hashtags
+        $md = preg_replace('/^\s*(?:#[\p{L}\p{N}_-]+(?:\s+|$))+$/um', '', $md);
+        //  - Hashtags inuti texten (valfritt – om du vill rensa bort alla)
+        $md = preg_replace('/(^|\s)#[\p{L}\p{N}_-]+/u', '$1', $md);
+
+        // Rensa extra tomrader
+        $md = preg_replace('/\n{3,}/', "\n\n", $md);
+        // Trimma rader
+        $md = preg_replace('/^[ \t]+|[ \t]+$/m', '', $md);
+
+        return trim($md);
     }
 }
