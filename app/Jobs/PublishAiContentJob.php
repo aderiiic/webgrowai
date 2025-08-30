@@ -23,7 +23,7 @@ class PublishAiContentJob implements ShouldQueue
         public string $status = 'draft',
         public ?string $scheduleAtIso = null,
         public ?int $publicationId = null,
-        public ?string $preferredProvider = null // 'wordpress' | 'shopify' | null
+        public ?string $preferredProvider = null
     ) {
         $this->onQueue('publish');
     }
@@ -63,7 +63,6 @@ class PublishAiContentJob implements ShouldQueue
             ContentPublication::whereKey($this->publicationId)->update(['target' => $provider]);
         }
 
-        // Delegera till WP-specifikt jobb
         if ($provider === 'wordpress') {
             dispatch(new \App\Jobs\PublishAiContentToWpJob(
                 aiContentId: $this->aiContentId,
@@ -71,19 +70,17 @@ class PublishAiContentJob implements ShouldQueue
                 status: $this->status,
                 scheduleAtIso: $this->scheduleAtIso,
                 publicationId: $pub->id
-            ))->onQueue('publish');
+            ))->afterCommit()->onQueue('publish');
 
             $pub->update(['message' => 'Delegated to WP job']);
             return;
         }
 
-        // Generiskt flöde (t.ex. Shopify)
         if (!$client->supports('publish')) {
             $pub->update(['status' => 'failed', 'message' => 'Plattformen stödjer ännu inte publicering via API.']);
             return;
         }
 
-        // Rensa markdown (rubriker/bilder/meta/hashtags) och konvertera till HTML
         $cleanMd = $this->cleanMarkdownForPublishing($content->body_md ?? '', $content->title);
         $html = (string) \Illuminate\Support\Str::of($cleanMd)->markdown();
 
@@ -136,33 +133,22 @@ class PublishAiContentJob implements ShouldQueue
 
         $md = str_replace(["\r\n", "\r"], "\n", $md);
 
-        // Ta bort kodblock
         if (str_starts_with(trim($md), '```') && str_ends_with(trim($md), '```')) {
             $md = preg_replace('/^```[a-zA-Z0-9_-]*\n?/','', trim($md));
             $md = preg_replace("/\n?```$/", '', $md);
         }
 
-        // Ta bort titelrepetitioner
         if ($title) {
             $md = preg_replace('/^#\s*' . preg_quote($title, '/') . '\s*\n*/im', '', $md);
             $md = preg_replace('/^' . preg_quote($title, '/') . '\s*\n*/im', '', $md);
         }
 
-        // Ta bort H1 (plattform sätter titel)
         $md = preg_replace('/^#\s+.+$/m', '', $md);
-
-        // Ta bort bilder
         $md = preg_replace('/!\[.*?\]\([^)]*\)/s', '', $md);
         $md = preg_replace('/<img[^>]*\/?>/is', '', $md);
-
-        // Meta-rader
         $md = preg_replace('/^\s*(Nyckelord|Keywords|Stil|Style|CTA|Målgrupp|Audience|Brand voice)\s*:\s*.*$/im', '', $md);
-
-        // Hashtags (hela rader + inline)
         $md = preg_replace('/^\s*(?:#[\p{L}\p{N}_-]+(?:\s+|$))+$/um', '', $md);
         $md = preg_replace('/(^|\s)#[\p{L}\p{N}_-]+/u', '$1', $md);
-
-        // Whitespace
         $md = preg_replace('/\n{3,}/', "\n\n", $md);
         $md = preg_replace('/^[ \t]+|[ \t]+$/m', '', $md);
 
