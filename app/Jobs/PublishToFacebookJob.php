@@ -351,19 +351,17 @@ class PublishToFacebookJob implements ShouldQueue
      */
     private function buildFacebookMessage(string $input): string
     {
-        // Skydda mot för långa texter (regex blir långsamma annars)
         if (mb_strlen($input) > 20000) {
             $input = mb_substr($input, 0, 20000);
         }
 
-        // Normalisera radbrytningar
         $t = str_replace(["\r\n", "\r"], "\n", (string) $input);
         $t = $this->stripCodeFences($t);
 
-        // Ta bort rubriker, bilder och metadata-rader
-        $t = preg_replace('/^#{1,6}\s.*$/m', '', $t);               // Markdown rubriker
-        $t = preg_replace('/!\[.*?\]\([^)]*\)/s', '', $t);          // Markdown-bilder
-        $t = preg_replace('/<img[^>]*>/i', '', $t);                 // HTML-bilder
+        // Ta bort rubriker, bilder och metadata
+        $t = preg_replace('/^#{1,6}\s.*$/m', '', $t);
+        $t = preg_replace('/!\[.*?\]\([^)]*\)/s', '', $t);
+        $t = preg_replace('/<img[^>]*>/i', '', $t);
         $t = preg_replace(
             '/^\s*(Nyckelord|Keywords|Stil|Style|CTA|Målgrupp|Audience|Brand voice)\s*:\s*.*$/im',
             '',
@@ -371,9 +369,9 @@ class PublishToFacebookJob implements ShouldQueue
         );
 
         // Normalisera listor & whitespace
-        $t = preg_replace('/^\s*[\*\-]\s+/m', '- ', $t);            // punktlistor → streck
-        $t = preg_replace('/\n{3,}/', "\n\n", $t);                  // max 2 radbrytningar
-        $t = preg_replace('/^[ \t]+|[ \t]+$/m', '', $t);            // trim raders start/slut
+        $t = preg_replace('/^\s*[\*\-]\s+/m', '- ', $t);
+        $t = preg_replace('/\n{3,}/', "\n\n", $t);
+        $t = preg_replace('/^[ \t]+|[ \t]+$/m', '', $t);
 
         // Ta bort osynliga tecken
         $t = preg_replace('/[\x00-\x1F\x7F]/u', '', $t);
@@ -395,8 +393,8 @@ class PublishToFacebookJob implements ShouldQueue
             }
         }
 
-        // Ta bort hashtags från brödtexten
-        $t = preg_replace('/#[\p{L}\p{N}_-]+/u', '', $t);
+        // Ta bort hashtags från brödtexten (inkl. hela sekvenser på raden)
+        $t = preg_replace('/\s*#[\p{L}\p{N}_-]+(?:\s*#[\p{L}\p{N}_-]+)*/u', '', $t);
         $t = preg_replace('/\s{2,}/', ' ', $t);
         $t = preg_replace('/\n{3,}/', "\n\n", $t);
         $t = trim($t);
@@ -406,20 +404,19 @@ class PublishToFacebookJob implements ShouldQueue
         if (!empty($allTags)) {
             uasort($allTags, function ($a, $b) {
                 if ($a['count'] === $b['count']) {
-                    return $a['first'] <=> $b['first']; // tidigast först
+                    return $a['first'] <=> $b['first'];
                 }
-                return $b['count'] <=> $a['count']; // flest förekomster först
+                return $b['count'] <=> $a['count'];
             });
 
             $selected = array_slice(array_column($allTags, 'tag'), 0, max(1, $maxTags ?: 5));
 
             if (!empty($selected)) {
                 $t = rtrim($t);
-                $t .= ($t === '' ? '' : "\n\n") . implode(' ', $selected);
+                $t .= "\n\n" . implode(' ', $selected);
             }
         }
 
-        // Facebook maxlängd: 5000 tecken
         if (mb_strlen($t) > 5000) {
             $t = mb_substr($t, 0, 4996) . ' ...';
         }
