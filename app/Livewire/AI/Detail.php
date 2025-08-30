@@ -144,23 +144,18 @@ class Detail extends Component
         $this->publish();
     }
 
-    public function queueSocial(): void
+    public function publishSocialNow(): void
     {
         Gate::authorize('update', $this->content);
 
         $this->validate([
             'socialTarget' => 'required|in:facebook,instagram',
-            'socialScheduleAt' => 'nullable|date',
         ]);
 
-        // Om Instagram: kräver bild
         if ($this->socialTarget === 'instagram' && $this->selectedImageAssetId <= 0) {
             session()->flash('success', 'Instagram kräver en vald bild från bildbanken.');
             return;
         }
-
-        $now = Carbon::now();
-        $scheduledAt = $this->socialScheduleAt ? Carbon::parse($this->socialScheduleAt) : null;
 
         $payload = [
             'text' => $this->extractPlainText((string) ($this->content->body_md ?? '')),
@@ -173,23 +168,55 @@ class Detail extends Component
         $pub = ContentPublication::create([
             'ai_content_id' => $this->content->id,
             'target'        => $this->socialTarget,
-            'status'        => 'queued',
+            'status'        => 'processing', // direkt igång
+            'scheduled_at'  => null,
+            'message'       => null,
+            'payload'       => $payload,
+        ]);
+
+        if ($this->socialTarget === 'facebook') {
+            dispatch(new PublishToFacebookJob($pub->id))->afterCommit()->onQueue('social');
+        } else {
+            dispatch(new PublishToInstagramJob($pub->id))->afterCommit()->onQueue('social');
+        }
+
+        session()->flash('success', ucfirst($this->socialTarget) . ' publicering startad.');
+    }
+
+    public function scheduleSocial(): void
+    {
+        Gate::authorize('update', $this->content);
+
+        $this->validate([
+            'socialTarget'     => 'required|in:facebook,instagram',
+            'socialScheduleAt' => 'required|date|after:now',
+        ]);
+
+        if ($this->socialTarget === 'instagram' && $this->selectedImageAssetId <= 0) {
+            session()->flash('success', 'Instagram kräver en vald bild från bildbanken.');
+            return;
+        }
+
+        $payload = [
+            'text' => $this->extractPlainText((string) ($this->content->body_md ?? '')),
+        ];
+
+        if ($this->selectedImageAssetId > 0) {
+            $payload['image_asset_id'] = (int)$this->selectedImageAssetId;
+        }
+
+        $scheduledAt = Carbon::parse($this->socialScheduleAt);
+
+        ContentPublication::create([
+            'ai_content_id' => $this->content->id,
+            'target'        => $this->socialTarget,
+            'status'        => 'queued', // väntar
             'scheduled_at'  => $scheduledAt,
             'message'       => null,
             'payload'       => $payload,
         ]);
 
-        if (!$scheduledAt || $scheduledAt->lte($now)) {
-            // Ta bort: $pub->update(['status' => 'processing']);
-            if ($this->socialTarget === 'facebook') {
-                dispatch(new PublishToFacebookJob($pub->id))->afterCommit()->onQueue('social');
-            } else {
-                dispatch(new PublishToInstagramJob($pub->id))->afterCommit()->onQueue('social');
-            }
-            session()->flash('success', ucfirst($this->socialTarget).' publicering startad.');
-        } else {
-            session()->flash('success', ucfirst($this->socialTarget)." schemalagd till {$scheduledAt->format('Y-m-d H:i')}.");
-        }
+        session()->flash('success', ucfirst($this->socialTarget) . " schemalagd till {$scheduledAt->format('Y-m-d H:i')}.");
     }
 
     public function queueLinkedInQuick(): void

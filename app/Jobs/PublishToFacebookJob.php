@@ -18,28 +18,20 @@ class PublishToFacebookJob implements ShouldQueue
 {
     use Queueable;
 
-    public int $timeout = 300;
-    public int $tries = 3;
-    public int $maxExceptions = 1;
-
     public function __construct(public int $publicationId)
     {
         $this->onQueue('social');
         $this->delay(now()->addSeconds(30));
-        $this->afterCommit();
     }
 
     public function handle(Usage $usage, ImageGenerator $images): void
     {
         // Läs från write-PDO för att undvika replikations-lag
-        $pub = ContentPublication::with('content')
-            ->useWritePdo()
-            ->find($this->publicationId);
-
-        Log::info('[FB] Hämtad publication (försök 1)', [
-            'pub_id' => $this->publicationId,
-            'found'  => (bool) $pub,
-        ]);
+        $pub = ContentPublication::with('content')->find($this->publicationId);
+        if (!$pub) {
+            Log::warning('[PublishToLinkedInJob] Publication saknas – avbryter', ['pub_id' => $this->publicationId]);
+            return;
+        }
 
         // Enkel retry om rad inte syns direkt (t.ex. pga lag)
         if (!$pub) {
@@ -72,23 +64,17 @@ class PublishToFacebookJob implements ShouldQueue
 
         // Flytta status-övergången till jobbet (minskar race)
         if ($pub->status === 'queued') {
-            $pub->update(['status' => 'processing', 'message' => null]);
+            $pub->update(['status' => 'processing']);
             Log::info('[FB] Satt till processing', ['pub_id' => $this->publicationId]);
         }
 
-        if (!$pub->content) {
-            Log::error('[FB] AI Content saknas för publication', [
-                'pub_id' => $this->publicationId,
-                'pub'    => $pub->only(['id','ai_content_id','target','status']),
-            ]);
-            $pub->update([
-                'status'  => 'failed',
-                'message' => 'AI Content saknas för denna publication',
-            ]);
+        $content = $pub->content;
+        if (!$content) {
+            Log::warning('[PublishToLinkedInJob] Content saknas', ['pub_id' => $this->publicationId]);
+            $pub->update(['status' => 'failed', 'message' => 'Content saknas']);
             return;
         }
 
-        $content    = $pub->content;
         $customerId = $content->customer_id;
         $siteId     = $content->site_id;
 
@@ -112,137 +98,104 @@ class PublishToFacebookJob implements ShouldQueue
             return;
         }
 
-        $integration = SocialIntegration::where('site_id', $siteId)
-            ->where('provider', 'facebook')
-            ->first();
-
-        if (!$integration) {
-            Log::error('[FB] Facebook integration saknas', [
-                'pub_id' => $this->publicationId,
-                'site_id'=> $siteId,
-            ]);
-            $pub->update([
-                'status'  => 'failed',
-                'message' => 'Facebook integration saknas för denna sajt',
-            ]);
-            return;
-        }
-
-        if (empty($integration->page_id)) {
-            Log::error('[FB] Facebook Page ID saknas', [
-                'pub_id'          => $this->publicationId,
-                'integration_id'  => $integration->id,
-            ]);
-            $pub->update([
-                'status'  => 'failed',
-                'message' => 'Facebook Page ID saknas i integrationen',
-            ]);
-            return;
-        }
-
         try {
-            Log::info('[FB] Startar Facebook publicering', [
-                'pub_id'     => $this->publicationId,
-                'content_id' => $content->id,
-                'site_id'    => $siteId,
-            ]);
+            $si = SocialIntegration::where('site_id', $siteId)->where('provider', 'facebook')->first();
+            if (!$si) {
+                throw new \RuntimeException('Ingen Facebook-integration hittad för denna sajt.');
+            }
 
-            $message       = $this->formatMessage($content);
-            $payload       = $pub->payload ?? [];
-            $imageAssetId  = $payload['image_asset_id'] ?? null;
-            $scheduledAt   = $pub->scheduled_at;
-            $client        = new FacebookClient($integration->access_token);
-            $pageId        = $integration->page_id;
+            $accessToken = $si->access_token;
+            $pageId      = $si->page_id ?: '';
+            if (empty($accessToken) || empty($pageId)) {
+                throw new \RuntimeException('Access token eller Page ID saknas för Facebook.');
+            }
 
-            $response      = null;
-            $updatePayload = $payload;
-
+            $payload     = $pub->payload ?? [];
+            $message     = $this->formatMessage($content);
+            $imageAssetId = $payload['image_asset_id'] ?? null;
+            $scheduledAt  = $pub->scheduled_at;
             $shouldSchedule = $scheduledAt && $scheduledAt->gt(now());
 
+            $fb     = new FacebookClient($accessToken);
+            $resp   = null;
+
+            // 1) Bild från bildbank
             if ($imageAssetId) {
                 $asset = ImageAsset::find((int)$imageAssetId);
-                if (!$asset) {
-                    throw new \RuntimeException('Vald bild hittades inte i bildbanken');
-                }
-                if ((int)$asset->customer_id !== (int)$customerId) {
-                    throw new \RuntimeException('Otillåten åtkomst till bild');
-                }
+                if ($asset && (int)$asset->customer_id === (int)$customerId) {
+                    $disk = Storage::disk($asset->disk);
+                    if (!$disk->exists($asset->path)) {
+                        throw new \RuntimeException('Bildfil saknas: ' . $asset->path);
+                    }
 
-                $disk = Storage::disk($asset->disk);
-                if (!$disk->exists($asset->path)) {
-                    throw new \RuntimeException('Bildfil saknas: ' . $asset->path);
+                    $bytes    = $disk->get($asset->path);
+                    $filename = basename($asset->path);
+
+                    if ($shouldSchedule) {
+                        Log::info('[PublishToFacebookJob] Schemaläggning med bild stöds ej, publicerar text istället', [
+                            'pub_id'       => $pub->id,
+                            'scheduled_at' => $scheduledAt->toISOString(),
+                        ]);
+                        $resp = $fb->schedulePagePost($pageId, $message, $scheduledAt->timestamp);
+                    } else {
+                        $resp = $fb->createPagePhoto($pageId, $bytes, $filename, $message);
+                    }
+
+                    $payload['image_asset_id']  = (int)$imageAssetId;
+                    $payload['image_bank_path'] = $asset->path;
+
+                    if (!$shouldSchedule) {
+                        ImageAsset::markUsed((int)$imageAssetId, $pub->id);
+                    }
+                } else {
+                    Log::warning('[PublishToFacebookJob] Bild saknas eller otillåten', [
+                        'pub_id'        => $this->publicationId,
+                        'image_asset_id'=> $imageAssetId
+                    ]);
                 }
-
-                $imageBytes = $disk->get($asset->path);
-                $filename   = basename($asset->path);
-
+            }
+            // 2) Publicera text
+            else {
                 if ($shouldSchedule) {
-                    Log::info('[FB] Schemaläggning med bild ej stödd, publicerar text istället', [
+                    $resp = $fb->schedulePagePost($pageId, $message, $scheduledAt->timestamp);
+                    Log::info('[PublishToFacebookJob] Inlägg schemalagt', [
                         'pub_id'       => $pub->id,
                         'scheduled_at' => $scheduledAt->toISOString(),
                     ]);
-                    $response = $client->schedulePagePost($pageId, $message, $scheduledAt->timestamp);
                 } else {
-                    $response = $client->createPagePhoto($pageId, $imageBytes, $filename, $message);
-                }
-
-                $updatePayload['image_asset_id']   = (int)$imageAssetId;
-                $updatePayload['image_bank_path']  = $asset->path;
-
-                if (!$shouldSchedule) {
-                    ImageAsset::markUsed((int)$imageAssetId, $pub->id);
-                }
-            } else {
-                if ($shouldSchedule) {
-                    $response = $client->schedulePagePost($pageId, $message, $scheduledAt->timestamp);
-                    Log::info('[FB] Inlägg schemalagt', [
-                        'pub_id'       => $pub->id,
-                        'scheduled_at' => $scheduledAt->toISOString(),
-                    ]);
-                } else {
-                    $response = $client->createPagePost($pageId, $message);
+                    $resp = $fb->createPagePost($pageId, $message);
                 }
             }
 
-            if (!isset($response['id'])) {
-                throw new \RuntimeException('Facebook returnerade inget ID: ' . json_encode($response));
+            if (empty($resp) || !isset($resp['id'])) {
+                throw new \RuntimeException('Facebook API returnerade tomt svar eller saknar ID. Svar: ' . json_encode($resp));
             }
 
-            $status       = $shouldSchedule ? 'scheduled' : 'published';
-            $message_text = $shouldSchedule
-                ? 'Schemalagt på Facebook'
-                : ($imageAssetId ? 'Publicerat med bild' : 'Publicerat som text');
-
+            $status = $shouldSchedule ? 'scheduled' : 'published';
             $pub->update([
                 'status'      => $status,
-                'external_id' => $response['id'],
-                'payload'     => $updatePayload,
-                'message'     => $message_text,
+                'external_id' => $resp['id'],
+                'message'     => $shouldSchedule ? 'Schemalagt på Facebook' : 'Publicerat till Facebook',
+                'payload'     => $payload,
             ]);
 
             $usage->increment($customerId, 'ai.publish.facebook');
             $usage->increment($customerId, 'ai.publish');
 
-            Log::info('[FB] Publicering slutförd', [
+            Log::info('[PublishToFacebookJob] Publicering slutförd', [
                 'pub_id'      => $pub->id,
-                'external_id' => $response['id'],
+                'external_id' => $resp['id'],
                 'status'      => $status,
             ]);
 
         } catch (Throwable $e) {
-            Log::error('[FB] Publicering misslyckades', [
+            Log::error('[PublishToFacebookJob] Jobbet misslyckades', [
                 'pub_id' => $pub?->id ?? $this->publicationId,
                 'error'  => $e->getMessage(),
             ]);
-
-            // Falla tillbaka försiktigt om $pub av någon anledning saknas
             if ($pub) {
-                $pub->update([
-                    'status'  => 'failed',
-                    'message' => $e->getMessage(),
-                ]);
+                $pub->update(['status' => 'failed', 'message' => $e->getMessage()]);
             }
-
             throw $e;
         }
     }
