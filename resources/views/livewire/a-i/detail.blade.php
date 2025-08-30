@@ -322,7 +322,7 @@
                         Publicera nu
                     </button>
 
-                    <button wire:click="scheduleSocial"
+                    <button wire:click="queueSocial"
                             class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-600 text-white font-semibold rounded-xl hover:from-yellow-600 hover:to-orange-700 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl {{ (!$mdReady || $publishQuotaReached) ? 'opacity-50 cursor-not-allowed' : '' }}"
                             @if(!$mdReady || $publishQuotaReached) disabled @endif>
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
