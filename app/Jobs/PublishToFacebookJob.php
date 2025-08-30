@@ -7,152 +7,396 @@ use App\Models\ImageAsset;
 use App\Models\SocialIntegration;
 use App\Services\Social\FacebookClient;
 use App\Support\Usage;
+use Carbon\CarbonImmutable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\RateLimited;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Throwable;
 
 class PublishToFacebookJob implements ShouldQueue
 {
     use Queueable, InteractsWithQueue;
 
+    /**
+     * Totalt antal försök innan jobb klassas som misslyckat.
+     */
+    public int $tries = 5;
+
+    /**
+     * Exponentiell backoff för retries (sekunder).
+     */
+    public function backoff(): array
+    {
+        return [60, 120, 300, 600, 900];
+    }
+
+    /**
+     * Absolut tidsgräns för retries.
+     */
+    public function retryUntil(): \DateTimeInterface
+    {
+        return now()->addHours(6);
+    }
+
     public function __construct(public int $publicationId)
     {
         $this->onQueue('social');
-        $this->delay(now()->addSeconds(30));
+        // Initial liten delay för att undvika race med skapande/commit
+        $this->delay(now()->addSeconds(10));
+    }
+
+    /**
+     * Skydda mot parallell körning för samma publicationId + enkel rate limiting.
+     */
+    public function middleware(): array
+    {
+        return [
+            // Låser per publikation så att inte två workers kör samma jobb samtidigt
+            new WithoutOverlapping("fb-pub-{$this->publicationId}"),
+            // Namngiven rate limiter (konfigureras i app/Providers/RouteServiceProvider eller RateLimiter)
+            // Skapar mjuk throttle mot Facebook Graph API.
+            (new RateLimited('facebook-api'))->dontRelease(),
+        ];
     }
 
     public function handle(Usage $usage): void
     {
-        Log::info('[PublishToFacebookJob] Start', ['pub_id' => $this->publicationId]);
+        Log::info('[Facebook] Start', ['pub_id' => $this->publicationId]);
 
+        // Läs med lås för att undvika race mellan flera instanser
         $pub = ContentPublication::with('content')->find($this->publicationId);
         if (!$pub) {
-            Log::warning('[PublishToFacebookJob] Publication saknas', ['pub_id' => $this->publicationId]);
+            Log::warning('[Facebook] Publication saknas', ['pub_id' => $this->publicationId]);
             return;
         }
 
-        if ($pub->scheduled_at) {
-            $seconds = now()->diffInSeconds($pub->scheduled_at, false);
-            if ($seconds > 5) {
-                Log::info('[PublishToFacebookJob] För tidigt - releasar', ['pub_id' => $pub->id, 'delay' => $seconds]);
-                $this->release($seconds);
+        // Endast bearbeta inlägg för Facebook
+        if (!in_array($pub->target, ['facebook', 'fb'], true)) {
+            Log::info('[Facebook] Hoppar över – fel target', ['pub_id' => $pub->id, 'target' => $pub->target]);
+            return;
+        }
+
+        // Skydda mot omkörning om redan publicerad
+        if ($pub->status === 'published' && !empty($pub->external_id)) {
+            Log::info('[Facebook] Redan publicerad – ingen åtgärd', ['pub_id' => $pub->id]);
+            return;
+        }
+
+        // Statusgate
+        if (!in_array($pub->status, ['queued', 'processing'], true)) {
+            Log::info('[Facebook] Hoppar över pga status', ['pub_id' => $pub->id, 'status' => $pub->status]);
+            return;
+        }
+
+        // Försök att ta "processing" atomiskt
+        if ($pub->status === 'queued') {
+            $updated = DB::transaction(function () use ($pub) {
+                $fresh = ContentPublication::lockForUpdate()->find($pub->id);
+                if (!$fresh) {
+                    return false;
+                }
+                if ($fresh->status !== 'queued') {
+                    return false;
+                }
+                $fresh->update(['status' => 'processing']);
+                return true;
+            });
+            if (!$updated) {
+                // Någon annan jobbnod tog den – sluta
+                Log::info('[Facebook] Kunde ej ta processing-lås', ['pub_id' => $pub->id]);
                 return;
             }
-        }
-
-        if (!in_array($pub->status, ['queued', 'processing'], true)) {
-            Log::info('[PublishToFacebookJob] Hoppar över pga status', ['pub_id' => $pub->id, 'status' => $pub->status]);
-            return;
-        }
-
-        if ($pub->status === 'queued') {
-            $pub->update(['status' => 'processing']);
+            // Refresh lokalt objekt
+            $pub->refresh();
         }
 
         $content = $pub->content;
         if (!$content) {
-            $pub->update(['status' => 'failed', 'message' => 'Content saknas']);
-            Log::error('[PublishToFacebookJob] Content saknas', ['pub_id' => $pub->id]);
+            $this->markFailed($pub, 'Inget innehåll kopplat till publiceringen.');
             return;
         }
 
-        try {
-            $siteId = $content->site_id;
-            $si = SocialIntegration::where('site_id', $siteId)
-                ->where('provider', 'facebook')
-                ->first();
+        // Hämta och validera integration
+        $integration = SocialIntegration::where('site_id', $content->site_id)
+            ->where('provider', 'facebook')
+            ->first();
 
-            if (!$si || empty($si->access_token) || empty($si->page_id)) {
-                throw new \RuntimeException('Facebook-integration saknar access token eller page_id');
+        if (!$integration || empty($integration->access_token) || empty($integration->page_id)) {
+            $this->markFailed($pub, 'Facebook-integration saknas eller är ofullständig (access_token/page_id).');
+            return;
+        }
+
+        // Bygg och sanera meddelandet
+        $payload = (array) ($pub->payload ?? []);
+        $raw = $payload['text']
+            ?? trim(($content->title ? $content->title . "\n\n" : '') . (string) ($content->body_md ?? ''));
+
+        $message = $this->buildFacebookMessage($raw);
+
+        // Validera att vi faktiskt har något att posta
+        if ($message === '' && empty($payload['image_asset_id'])) {
+            $this->markFailed($pub, 'Varken text eller bild angiven för Facebook-inlägget.');
+            return;
+        }
+
+        // Hantera schemaläggning:
+        // - Om > 15 minuter i framtiden: använd Facebooks scheduled_publish_time
+        // - Om i framtiden men nära: försök att vänta tills tidpunkten
+        $scheduledAt = $pub->scheduled_at ? CarbonImmutable::parse($pub->scheduled_at) : null;
+        $now = CarbonImmutable::now();
+
+        try {
+            $client = new FacebookClient($integration->access_token);
+
+            // Om vi redan har external_id (t.ex. schemalagt i tidigare försök), avbryt säkert
+            if (!empty($pub->external_id)) {
+                Log::info('[Facebook] external_id finns redan – ingen ny publicering', [
+                    'pub_id' => $pub->id,
+                    'external_id' => $pub->external_id,
+                ]);
+                return;
             }
 
-            $payload = $pub->payload ?? [];
-            $raw = $payload['text']
-                ?? trim(($content->title ? $content->title . "\n\n" : '') . ($content->body_md ?? ''));
-            // Behåll hashtags och emojis, rensa bara brus
-            $message = mb_substr($this->cleanSocialText($raw), 0, 5000);
-
-            $client = new FacebookClient($si->access_token);
-
-            $imageAssetId = $payload['image_asset_id'] ?? null;
             $resp = null;
+            $usedImageAssetId = null;
 
-            if ($imageAssetId) {
-                // Posta som bildinlägg med bildbankens fil + caption
-                $asset = ImageAsset::findOrFail((int)$imageAssetId);
-                if ((int)$asset->customer_id !== (int)$content->customer_id) {
-                    throw new \RuntimeException('Otillåten bild.');
+            // Om bilden finns i payload -> skicka som bildinlägg
+            if (!empty($payload['image_asset_id'])) {
+                $asset = ImageAsset::find((int) $payload['image_asset_id']);
+                if (!$asset) {
+                    $this->markFailed($pub, 'Angiven bild finns inte.');
+                    return;
                 }
-                $bytes = Storage::disk($asset->disk)->get($asset->path);
-                $filename = basename($asset->path) ?: (Str::uuid()->toString().'.jpg');
+                // Säkerställ ägarskap
+                if ((int) $asset->customer_id !== (int) $content->customer_id) {
+                    $this->markFailed($pub, 'Otillåten bild för denna kund.');
+                    return;
+                }
 
-                $resp = $client->createPagePhoto($si->page_id, $bytes, $filename, $message);
+                // Läs bytes
+                try {
+                    $bytes = Storage::disk($asset->disk)->get($asset->path);
+                } catch (Throwable $e) {
+                    $this->markFailed($pub, 'Kunde inte läsa bild från lagring.');
+                    return;
+                }
 
-                // Uppdatera payload med referens
-                $payload['image_asset_id'] = (int)$imageAssetId;
+                $filename = basename($asset->path) ?: (Str::uuid()->toString() . '.jpg');
+
+                // Facebooks photos endpoint saknar stöd för scheduled_publish_time i samma grad som feed-text,
+                // så om det är långt fram – posta text schemalagt istället. Annars: posta direkt som foto.
+                if ($scheduledAt && $scheduledAt->isFuture()) {
+                    $seconds = $now->diffInSeconds($scheduledAt, false);
+
+                    if ($seconds > 900) {
+                        // Schemalägg som textinlägg istället (alternativ: ladda upp unpublished photo + dela via post)
+                        $resp = $client->schedulePagePost(
+                            $integration->page_id,
+                            $message !== '' ? $message : '(Bild)', // fallback caption
+                            $scheduledAt->getTimestamp()
+                        );
+                        $this->finalizeScheduled($pub, $payload, $resp, note: 'Schemalagd på Facebook (text, vald bild kunde ej schemaläggas som foto).');
+                        return;
+                    }
+
+                    if ($seconds > 5) {
+                        // Vänta tills nära tidpunkt
+                        $this->release($seconds);
+                        Log::info('[Facebook] För tidigt – release till schematid', [
+                            'pub_id' => $pub->id,
+                            'delay_s' => $seconds,
+                        ]);
+                        return;
+                    }
+                }
+
+                // Publicera som foto nu
+                $resp = $client->createPagePhoto($integration->page_id, $bytes, $filename, $message);
+                $usedImageAssetId = (int) $payload['image_asset_id'];
+                // Berika payload
+                $payload['image_asset_id'] = $usedImageAssetId;
                 $payload['image_bank_path'] = $asset->path;
             } else {
-                // Textinlägg
-                $resp = $client->createPagePost($si->page_id, $message);
+                // Inget foto: textinlägg
+                if ($scheduledAt && $scheduledAt->isFuture()) {
+                    $seconds = $now->diffInSeconds($scheduledAt, false);
+
+                    if ($seconds > 900) {
+                        // Schemalägg via Facebook
+                        $resp = $client->schedulePagePost($integration->page_id, $message, $scheduledAt->getTimestamp());
+                        $this->finalizeScheduled($pub, $payload, $resp, note: 'Schemalagd på Facebook.');
+                        return;
+                    }
+
+                    if ($seconds > 5) {
+                        // Vänta tills nära tidpunkt
+                        $this->release($seconds);
+                        Log::info('[Facebook] För tidigt – release till schematid', [
+                            'pub_id' => $pub->id,
+                            'delay_s' => $seconds,
+                        ]);
+                        return;
+                    }
+                }
+
+                // Publicera direkt
+                $resp = $client->createPagePost($integration->page_id, $message);
             }
 
             if (empty($resp) || empty($resp['id'])) {
-                throw new \RuntimeException('Facebook API returnerade tomt svar eller saknar id.');
+                $this->markFailed($pub, 'Tomt eller ogiltigt svar från Facebook API (saknar id).');
+                return;
             }
 
+            // Uppdatera publicering som klar (publicerad)
             $pub->update([
                 'status'      => 'published',
                 'external_id' => $resp['id'],
-                'message'     => $imageAssetId ? 'Publicerat (photo)' : 'Publicerat (text)',
+                'message'     => !empty($usedImageAssetId) ? 'Publicerat (photo)' : 'Publicerat (text)',
                 'payload'     => $payload,
             ]);
 
-            if ($imageAssetId) {
-                // Markera bild använd
-                if (method_exists(ImageAsset::class, 'markUsed')) {
-                    ImageAsset::markUsed((int)$imageAssetId, $pub->id);
-                }
+            // Markera bild använd om tillgänglig
+            if (!empty($usedImageAssetId) && method_exists(ImageAsset::class, 'markUsed')) {
+                ImageAsset::markUsed($usedImageAssetId, $pub->id);
             }
 
+            // Usage counters
             $usage->increment($content->customer_id, 'ai.publish.facebook');
             $usage->increment($content->customer_id, 'ai.publish');
 
-            Log::info('[PublishToFacebookJob] Klart', ['pub_id' => $pub->id, 'fb_id' => $resp['id']]);
-        } catch (\Throwable $e) {
-            $pub->update(['status' => 'failed', 'message' => $e->getMessage()]);
-            Log::error('[PublishToFacebookJob] Misslyckades', [
+            Log::info('[Facebook] Klart', [
                 'pub_id' => $pub->id,
-                'error'  => $e->getMessage(),
+                'fb_id'  => $resp['id'],
             ]);
-            throw $e;
+        } catch (Throwable $e) {
+            // Sätt endast diagnostiskt meddelande; låt retries hantera tillfälliga fel
+            $pub->update(['message' => $this->safeError($e)]);
+            Log::error('[Facebook] Misslyckades (transient)', [
+                'pub_id' => $pub->id,
+                'error'  => $this->safeError($e),
+            ]);
+            throw $e; // behåll retry-beteende
         }
     }
 
-    private function cleanSocialText(string $input): string
+    /**
+     * Körs av Laravel när jobbet slutligen anses misslyckat efter alla försök.
+     */
+    public function failed(Throwable $e): void
     {
-        $t = str_replace(["\r\n","\r"], "\n", (string)$input);
+        try {
+            $pub = ContentPublication::find($this->publicationId);
+            if ($pub && $pub->status !== 'published') {
+                $pub->update([
+                    'status'  => 'failed',
+                    'message' => $this->safeError($e),
+                ]);
+            }
+        } catch (Throwable $inner) {
+            Log::error('[Facebook] Kunde inte markera failed', [
+                'pub_id' => $this->publicationId,
+                'error'  => $inner->getMessage(),
+            ]);
+        }
+    }
 
-        // Ta bort kodblock
-        $trim = trim($t);
-        if (str_starts_with($trim, '```') && str_ends_with($trim, '```')) {
-            $t = preg_replace('/^```[a-zA-Z0-9_-]*\n?/', '', $trim);
-            $t = preg_replace("/\n?```$/", '', $t);
+    /**
+     * Slutbehandlar schemalagda inlägg via Facebook (betraktas som "klar" i vår pipeline).
+     */
+    private function finalizeScheduled(ContentPublication $pub, array $payload, array $resp, string $note): void
+    {
+        if (empty($resp) || empty($resp['id'])) {
+            $this->markFailed($pub, 'Schemaläggning misslyckades – saknar id i svar.');
+            return;
         }
 
-        // Rensa rubriker, inbäddade bilder och html-img, metadata-rader
-        $t = preg_replace('/^#{1,6}\s*.+$/m', '', $t);
-        $t = preg_replace('/!\[.*?\]\([^)]*\)/s', '', $t);
-        $t = preg_replace('/<img[^>]*\/?>/is', '', $t);
+        $pub->update([
+            'status'      => 'published', // I vår domän betyder "klart/hanterat"; själva FB-publiceringen sker senare
+            'external_id' => $resp['id'],
+            'message'     => $note,
+            'payload'     => $payload,
+        ]);
+
+        Log::info('[Facebook] Schemalagd på Facebook', [
+            'pub_id' => $pub->id,
+            'fb_id'  => $resp['id'],
+            'note'   => $note,
+        ]);
+    }
+
+    /**
+     * Markerar publikation som permanent misslyckad (utan retries).
+     */
+    private function markFailed(ContentPublication $pub, string $reason): void
+    {
+        $pub->update([
+            'status'  => 'failed',
+            'message' => $reason,
+        ]);
+        Log::warning('[Facebook] Permanent fel', [
+            'pub_id' => $pub->id,
+            'reason' => $reason,
+        ]);
+    }
+
+    /**
+     * Bygger och sanerar text för Facebook och klipper till 5 000 tecken.
+     */
+    private function buildFacebookMessage(string $input): string
+    {
+        $t = str_replace(["\r\n", "\r"], "\n", (string) $input);
+        $t = $this->stripCodeFences($t);
+
+        // Ta bort rubriker, inbäddade bilder och metadata-rader
+        $t = preg_replace('/^#{1,6}\s*.+$/m', '', $t);               // Markdown H1–H6
+        $t = preg_replace('/!\[.*?\]\([^)]*\)/s', '', $t);           // MD-bilder
+        $t = preg_replace('/<img[^>]*\/?>/is', '', $t);              // HTML-bilder
         $t = preg_replace('/^\s*(Nyckelord|Keywords|Stil|Style|CTA|Målgrupp|Audience|Brand voice)\s*:\s*.*$/im', '', $t);
 
-        // Viktigt: behåll hashtags och emojis – ta inte bort dem
-        $t = preg_replace('/^\s*[\*\-]\s+/m', '- ', $t);
+        // Behåll hashtags/emojis; normalisera listor och whitespace
+        $t = preg_replace('/^\s*[\*\-]\s+/m', '- ', $t);             // punktlistor → streck
         $t = preg_replace('/\n{3,}/', "\n\n", $t);
         $t = preg_replace('/^[ \t]+|[ \t]+$/m', '', $t);
 
-        return trim((string)$t);
+        // Ta bort osynliga/konstiga kontrolltecken
+        $t = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $t);
+        $t = preg_replace('/[\x{200B}-\x{200D}\x{FEFF}]/u', '', $t); // zero width
+
+        $t = trim((string) $t);
+
+        // Facebook: 5 000 tecken
+        if (mb_strlen($t) > 5000) {
+            $t = mb_substr($t, 0, 4996) . ' ...';
+        }
+
+        return $t;
+    }
+
+    private function stripCodeFences(string $t): string
+    {
+        $trim = trim($t);
+        if (str_starts_with($trim, '```') && str_ends_with($trim, '```')) {
+            $t = preg_replace('/^```[a-zA-Z0-9_-]*\n?/', '', $trim);
+            $t = preg_replace("/\n?```$/", '', (string) $t);
+        }
+        return (string) $t;
+    }
+
+    /**
+     * Returnerar ett säkert felmeddelande för logg/UI (inga känsliga data).
+     */
+    private function safeError(Throwable $e): string
+    {
+        $msg = $e->getMessage() ?: 'Okänt fel';
+        // Rensa eventuella access tokens eller query-strängar
+        $msg = preg_replace('/access_token=[^&\s]+/i', 'access_token=[REDACTED]', $msg);
+        return $msg;
     }
 }
