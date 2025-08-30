@@ -19,6 +19,8 @@ class PublishToFacebookJob implements ShouldQueue
 {
     use Queueable;
 
+    public $afterCommit = true;
+
     public function __construct(public int $publicationId)
     {
         $this->onQueue('social');
@@ -26,7 +28,11 @@ class PublishToFacebookJob implements ShouldQueue
 
     public function handle(Usage $usage, ImageGenerator $images): void
     {
-        $pub = ContentPublication::with('content')->findOrFail($this->publicationId);
+        $pub = ContentPublication::with('content')->find($this->publicationId);
+        if (!$pub) {
+            Log::warning('[FB] Publication saknas – avbryter', ['pub_id' => $this->publicationId]);
+            return;
+        }
 
         if (!in_array($pub->status, ['queued','processing'], true)) {
             return;
@@ -52,6 +58,7 @@ class PublishToFacebookJob implements ShouldQueue
             }
 
             $payload = $pub->payload ?? [];
+
             // Bygg ren text (ingen MD/hashtags/metablock)
             $message = $this->buildCleanMessage(
                 title: (string)($content->title ?? ''),
@@ -73,7 +80,6 @@ class PublishToFacebookJob implements ShouldQueue
                 // Läs bytes och posta som foto-inlägg (caption = message)
                 $bytes = Storage::disk($asset->disk)->get($asset->path);
                 $filename = 'image-'.Str::random(8).'.'.pathinfo($asset->path, PATHINFO_EXTENSION);
-
                 Log::info('[FB] Laddar upp bild', ['pub_id' => $pub->id, 'filename' => $filename, 'size' => strlen($bytes)]);
 
                 $resp  = $client->createPagePhoto($integration->page_id, $bytes, $filename, $message);
@@ -133,43 +139,22 @@ class PublishToFacebookJob implements ShouldQueue
 
     private function buildCleanMessage(string $title, string $md, string $extra = ''): string
     {
-        // Sätt ihop titel + md + ev. extra
         $raw = trim(($title ? ($title."\n\n") : '').($md ?: '').($extra ? ("\n\n".$extra) : ''));
-
-        // Normalisera radbrytningar
         $raw = str_replace(["\r\n","\r"], "\n", $raw);
-
-        // Rensa kodblock ```...```
         if (str_starts_with(trim($raw), '```') && str_ends_with(trim($raw), '```')) {
             $raw = preg_replace('/^```[a-zA-Z0-9_-]*\n?/','', trim($raw));
             $raw = preg_replace("/\n?```$/", '', $raw);
         }
-
-        // Ta bort rubriker (#, ## ...)
-        $raw = preg_replace('/^#{1,6}\s*.+$/m', '', $raw);
-
-        // Ta bort bildreferenser och html-tags
-        $raw = preg_replace('/!\[.*?\]\([^)]*\)/s', '', $raw);
-        $raw = preg_replace('/<img[^>]*\/?>/is', '', $raw);
-
-        // Ta bort meta-rader (Nyckelord: Stil: CTA: ...)
+        $raw = preg_replace('/^#{1,6}\s*.+$/m', '', $raw);          // rubriker
+        $raw = preg_replace('/!\[.*?\]\([^)]*\)/s', '', $raw);       // md-bilder
+        $raw = preg_replace('/<img[^>]*\/?>/is', '', $raw);          // html-bilder
         $raw = preg_replace('/^\s*(Nyckelord|Keywords|Stil|Style|CTA|Målgrupp|Audience|Brand voice)\s*:\s*.*$/im', '', $raw);
-
-        // Rensa Hashtags (rader med bara hashtags + inline)
-        $raw = preg_replace('/^\s*(?:#[\p{L}\p{N}_-]+(?:\s+|$))+$/um', '', $raw);
-        $raw = preg_replace('/(^|\s)#[\p{L}\p{N}_-]+/u', '$1', $raw);
-
-        // Byt listsymboler till streck
-        $raw = preg_replace('/^\s*[\*\-]\s+/m', '- ', $raw);
-
-        // Komprimera tomrader
+        $raw = preg_replace('/^\s*(?:#[\p{L}\p{N}_-]+(?:\s+|$))+$/um', '', $raw); // hashtag-rad
+        $raw = preg_replace('/(^|\s)#[\p{L}\p{N}_-]+/u', '$1', $raw);             // inline hashtags
+        $raw = preg_replace('/^\s*[\*\-]\s+/m', '- ', $raw);          // listpunkter → streck
         $raw = preg_replace('/\n{3,}/', "\n\n", $raw);
         $raw = preg_replace('/^[ \t]+|[ \t]+$/m', '', $raw);
-
-        // Begränsa rimligt
-        $raw = mb_substr(trim($raw), 0, 5000);
-
-        return $raw;
+        return mb_substr(trim($raw), 0, 5000);
     }
 
     private function buildAutoPrompt(?string $title, string $body, array $inputs): string
