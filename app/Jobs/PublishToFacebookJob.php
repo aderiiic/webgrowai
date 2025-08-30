@@ -20,7 +20,7 @@ class PublishToFacebookJob implements ShouldQueue
 {
     use Queueable;
 
-    public int $timeout = 300; // 5 minuter
+    public int $timeout = 300;
     public int $tries = 3;
     public int $maxExceptions = 1;
 
@@ -32,30 +32,92 @@ class PublishToFacebookJob implements ShouldQueue
 
     public function handle(Usage $usage, ImageGenerator $images): void
     {
+        // Ändra från findOrFail() till find() för att undvika exception
         $pub = ContentPublication::with('content')->find($this->publicationId);
+
         if (!$pub) {
-            Log::warning('[FB] Publication saknas – avbryter', ['pub_id' => $this->publicationId]);
+            Log::warning('[FB] Publication saknas – avbryter gracefully', [
+                'pub_id' => $this->publicationId,
+                'message' => 'ContentPublication hittades inte i databasen'
+            ]);
+            return; // Avsluta jobbet utan att kasta exception
+        }
+
+        // Kontrollera att content finns
+        if (!$pub->content) {
+            Log::error('[FB] AI Content saknas för publication', ['pub_id' => $this->publicationId]);
+            $pub->update([
+                'status' => 'failed',
+                'message' => 'AI Content saknas för denna publication'
+            ]);
             return;
         }
 
         if (!in_array($pub->status, ['queued', 'processing'], true)) {
+            Log::info('[FB] Publication har redan behandlats', [
+                'pub_id' => $this->publicationId,
+                'status' => $pub->status
+            ]);
             return;
         }
 
         $content = $pub->content;
-        $customerId = $content?->customer_id;
-        $siteId = $content?->site_id;
-        abort_unless($customerId && $siteId, 422);
+        $customerId = $content->customer_id;
+        $siteId = $content->site_id;
+
+        if (!$customerId || !$siteId) {
+            Log::error('[FB] Customer eller Site ID saknas', [
+                'pub_id' => $this->publicationId,
+                'customer_id' => $customerId,
+                'site_id' => $siteId
+            ]);
+            $pub->update([
+                'status' => 'failed',
+                'message' => 'Customer eller Site ID saknas'
+            ]);
+            return;
+        }
 
         $integration = SocialIntegration::where('site_id', $siteId)
             ->where('provider', 'facebook')
-            ->firstOrFail();
+            ->first();
+
+        if (!$integration) {
+            Log::error('[FB] Facebook integration saknas', [
+                'pub_id' => $this->publicationId,
+                'site_id' => $siteId
+            ]);
+            $pub->update([
+                'status' => 'failed',
+                'message' => 'Facebook integration saknas för denna sajt'
+            ]);
+            return;
+        }
+
+        // Kontrollera att page_id finns
+        if (empty($integration->page_id)) {
+            Log::error('[FB] Facebook Page ID saknas', [
+                'pub_id' => $this->publicationId,
+                'integration_id' => $integration->id
+            ]);
+            $pub->update([
+                'status' => 'failed',
+                'message' => 'Facebook Page ID saknas i integrationen'
+            ]);
+            return;
+        }
 
         if ($pub->status === 'queued') {
             $pub->update(['status' => 'processing']);
         }
 
         try {
+            Log::info('[FB] Startar Facebook publicering', [
+                'pub_id' => $this->publicationId,
+                'content_id' => $content->id,
+                'site_id' => $siteId
+            ]);
+
             // Formatera meddelandet från AI-innehåll (markdown)
             $message = $this->formatMessage($content);
 
@@ -64,7 +126,7 @@ class PublishToFacebookJob implements ShouldQueue
             $scheduledAt = $pub->scheduled_at;
 
             $client = new FacebookClient($integration->access_token);
-            $pageId = $integration->page_id; // Antar att detta finns i integrations-tabellen
+            $pageId = $integration->page_id;
 
             $response = null;
             $updatePayload = $payload;
@@ -74,12 +136,20 @@ class PublishToFacebookJob implements ShouldQueue
 
             if ($imageAssetId) {
                 // Publicera med bild från bildbank
-                $asset = ImageAsset::findOrFail((int)$imageAssetId);
+                $asset = ImageAsset::find((int)$imageAssetId);
+                if (!$asset) {
+                    throw new \RuntimeException('Vald bild hittades inte i bildbanken');
+                }
+
                 if ((int)$asset->customer_id !== (int)$customerId) {
-                    throw new \RuntimeException('Otillåten bild.');
+                    throw new \RuntimeException('Otillåten åtkomst till bild');
                 }
 
                 $disk = Storage::disk($asset->disk);
+                if (!$disk->exists($asset->path)) {
+                    throw new \RuntimeException('Bildfil saknas: ' . $asset->path);
+                }
+
                 $imageBytes = $disk->get($asset->path);
                 $filename = basename($asset->path);
 
@@ -147,6 +217,12 @@ class PublishToFacebookJob implements ShouldQueue
             $usage->increment($customerId, 'ai.publish.facebook');
             $usage->increment($customerId, 'ai.publish');
 
+            Log::info('[FB] Publicering slutförd framgångsrikt', [
+                'pub_id' => $pub->id,
+                'external_id' => $response['id'],
+                'status' => $status
+            ]);
+
         } catch (Throwable $e) {
             Log::error('[FB] Publicering misslyckades', [
                 'pub_id' => $pub->id,
@@ -163,9 +239,6 @@ class PublishToFacebookJob implements ShouldQueue
         }
     }
 
-    /**
-     * Formatera markdown-innehåll från AI till ren text lämplig för Facebook
-     */
     private function formatMessage($content): string
     {
         $title = $content->title ?? '';
@@ -187,9 +260,6 @@ class PublishToFacebookJob implements ShouldQueue
         return trim($message);
     }
 
-    /**
-     * Rensa markdown och formatera för Facebook
-     */
     private function cleanMarkdown(string $input): string
     {
         $text = str_replace(["\r\n", "\r"], "\n", $input);
@@ -234,9 +304,6 @@ class PublishToFacebookJob implements ShouldQueue
         return trim($text);
     }
 
-    /**
-     * Hantera job-fel
-     */
     public function failed(Throwable $exception): void
     {
         Log::error('[FB] Job misslyckades permanent', [
@@ -244,6 +311,7 @@ class PublishToFacebookJob implements ShouldQueue
             'error' => $exception->getMessage(),
         ]);
 
+        // Använd find istället för findOrFail här också
         $pub = ContentPublication::find($this->publicationId);
         if ($pub) {
             $pub->update([
