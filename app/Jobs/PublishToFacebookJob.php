@@ -37,7 +37,10 @@ class PublishToFacebookJob implements ShouldQueue
             ->useWritePdo()
             ->find($this->publicationId);
 
-        Log::info('Här' . $pub);
+        Log::info('[FB] Hämtad publication (försök 1)', [
+            'pub_id' => $this->publicationId,
+            'found'  => (bool) $pub,
+        ]);
 
         // Enkel retry om rad inte syns direkt (t.ex. pga lag)
         if (!$pub) {
@@ -45,18 +48,26 @@ class PublishToFacebookJob implements ShouldQueue
             $pub = ContentPublication::with('content')
                 ->useWritePdo()
                 ->find($this->publicationId);
+
+            Log::info('[FB] Hämtad publication (försök 2)', [
+                'pub_id' => $this->publicationId,
+                'found'  => (bool) $pub,
+            ]);
         }
 
         if (!$pub) {
             Log::warning('[FB] Publication saknas – avbryter gracefully', [
                 'pub_id'  => $this->publicationId,
-                'message' => 'ContentPublication hittades inte i databasen (kan vara replikations-lag eller borttagen).',
+                'message' => 'ContentPublication hittades inte i databasen (kan vara replikerings-lag, fel DB eller borttagen).',
             ]);
             return;
         }
 
         if (!$pub->content) {
-            Log::error('[FB] AI Content saknas för publication', ['pub_id' => $this->publicationId]);
+            Log::error('[FB] AI Content saknas för publication', [
+                'pub_id' => $this->publicationId,
+                'pub'    => $pub->only(['id','ai_content_id','target','status']),
+            ]);
             $pub->update([
                 'status'  => 'failed',
                 'message' => 'AI Content saknas för denna publication',
@@ -76,7 +87,12 @@ class PublishToFacebookJob implements ShouldQueue
         $customerId = $content->customer_id;
         $siteId     = $content->site_id;
 
-        Log::info('Content: ' . json_encode($content->toArray()));
+        Log::info('[FB] Content laddat', [
+            'pub_id'      => $this->publicationId,
+            'content_id'  => $content->id,
+            'customer_id' => $customerId,
+            'site_id'     => $siteId,
+        ]);
 
         if (!$customerId || !$siteId) {
             Log::error('[FB] Customer eller Site ID saknas', [
@@ -206,7 +222,7 @@ class PublishToFacebookJob implements ShouldQueue
             $usage->increment($customerId, 'ai.publish.facebook');
             $usage->increment($customerId, 'ai.publish');
 
-            Log::info('[FB] Publicering slutförd framgångsrikt', [
+            Log::info('[FB] Publicering slutförd', [
                 'pub_id'      => $pub->id,
                 'external_id' => $response['id'],
                 'status'      => $status,
@@ -218,7 +234,6 @@ class PublishToFacebookJob implements ShouldQueue
                 'error'  => $e->getMessage(),
             ]);
 
-            // Falla tillbaka försiktigt om $pub av någon anledning saknas
             if ($pub) {
                 $pub->update([
                     'status'  => 'failed',
