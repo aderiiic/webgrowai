@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\ContentPublication;
+use App\Models\ImageAsset;
 use App\Models\SocialIntegration;
 use App\Services\Social\FacebookClient;
 use App\Support\Usage;
@@ -10,6 +11,8 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class PublishToFacebookJob implements ShouldQueue
 {
@@ -18,7 +21,6 @@ class PublishToFacebookJob implements ShouldQueue
     public function __construct(public int $publicationId)
     {
         $this->onQueue('social');
-        // Liten fördröjning för att undvika race med transaktioner
         $this->delay(now()->addSeconds(30));
     }
 
@@ -32,14 +34,10 @@ class PublishToFacebookJob implements ShouldQueue
             return;
         }
 
-        // Respektera ev. schemaläggning om jobbet skulle vakna för tidigt
         if ($pub->scheduled_at) {
             $seconds = now()->diffInSeconds($pub->scheduled_at, false);
             if ($seconds > 5) {
-                Log::info('[PublishToFacebookJob] För tidigt - releasar tills schematid', [
-                    'pub_id' => $pub->id,
-                    'delay'  => $seconds,
-                ]);
+                Log::info('[PublishToFacebookJob] För tidigt - releasar', ['pub_id' => $pub->id, 'delay' => $seconds]);
                 $this->release($seconds);
                 return;
             }
@@ -62,7 +60,6 @@ class PublishToFacebookJob implements ShouldQueue
         }
 
         try {
-            // Hämta Facebook-integration för sajt
             $siteId = $content->site_id;
             $si = SocialIntegration::where('site_id', $siteId)
                 ->where('provider', 'facebook')
@@ -73,16 +70,34 @@ class PublishToFacebookJob implements ShouldQueue
             }
 
             $payload = $pub->payload ?? [];
-            // Bygg text: använd ev. explicit payload-text, annars AI-innehåll (title + body)
             $raw = $payload['text']
                 ?? trim(($content->title ? $content->title . "\n\n" : '') . ($content->body_md ?? ''));
+            // Behåll hashtags och emojis, rensa bara brus
             $message = mb_substr($this->cleanSocialText($raw), 0, 5000);
 
             $client = new FacebookClient($si->access_token);
 
-            // Vi förlitar oss på Horizon-delay för schemaläggning.
-            // När jobbet väl körs, postar vi direkt.
-            $resp = $client->createPagePost($si->page_id, $message);
+            $imageAssetId = $payload['image_asset_id'] ?? null;
+            $resp = null;
+
+            if ($imageAssetId) {
+                // Posta som bildinlägg med bildbankens fil + caption
+                $asset = ImageAsset::findOrFail((int)$imageAssetId);
+                if ((int)$asset->customer_id !== (int)$content->customer_id) {
+                    throw new \RuntimeException('Otillåten bild.');
+                }
+                $bytes = Storage::disk($asset->disk)->get($asset->path);
+                $filename = basename($asset->path) ?: (Str::uuid()->toString().'.jpg');
+
+                $resp = $client->createPagePhoto($si->page_id, $bytes, $filename, $message);
+
+                // Uppdatera payload med referens
+                $payload['image_asset_id'] = (int)$imageAssetId;
+                $payload['image_bank_path'] = $asset->path;
+            } else {
+                // Textinlägg
+                $resp = $client->createPagePost($si->page_id, $message);
+            }
 
             if (empty($resp) || empty($resp['id'])) {
                 throw new \RuntimeException('Facebook API returnerade tomt svar eller saknar id.');
@@ -91,11 +106,17 @@ class PublishToFacebookJob implements ShouldQueue
             $pub->update([
                 'status'      => 'published',
                 'external_id' => $resp['id'],
-                'message'     => 'Publicerat till Facebook',
+                'message'     => $imageAssetId ? 'Publicerat (photo)' : 'Publicerat (text)',
                 'payload'     => $payload,
             ]);
 
-            // Mät användning
+            if ($imageAssetId) {
+                // Markera bild använd
+                if (method_exists(ImageAsset::class, 'markUsed')) {
+                    ImageAsset::markUsed((int)$imageAssetId, $pub->id);
+                }
+            }
+
             $usage->increment($content->customer_id, 'ai.publish.facebook');
             $usage->increment($content->customer_id, 'ai.publish');
 
@@ -114,21 +135,24 @@ class PublishToFacebookJob implements ShouldQueue
     {
         $t = str_replace(["\r\n","\r"], "\n", (string)$input);
 
-        if (str_starts_with(trim($t), '```') && str_ends_with(trim($t), '```')) {
-            $t = preg_replace('/^```[a-zA-Z0-9_-]*\n?/','', trim($t));
+        // Ta bort kodblock
+        $trim = trim($t);
+        if (str_starts_with($trim, '```') && str_ends_with($trim, '```')) {
+            $t = preg_replace('/^```[a-zA-Z0-9_-]*\n?/', '', $trim);
             $t = preg_replace("/\n?```$/", '', $t);
         }
 
-        $t = preg_replace('/^#{1,6}\s*.+$/m', '', $t);         // rubriker
-        $t = preg_replace('/!\[.*?\]\([^)]*\)/s', '', $t);     // MD-bilder
-        $t = preg_replace('/<img[^>]*\/?>/is', '', $t);        // HTML-bilder
+        // Rensa rubriker, inbäddade bilder och html-img, metadata-rader
+        $t = preg_replace('/^#{1,6}\s*.+$/m', '', $t);
+        $t = preg_replace('/!\[.*?\]\([^)]*\)/s', '', $t);
+        $t = preg_replace('/<img[^>]*\/?>/is', '', $t);
         $t = preg_replace('/^\s*(Nyckelord|Keywords|Stil|Style|CTA|Målgrupp|Audience|Brand voice)\s*:\s*.*$/im', '', $t);
-        $t = preg_replace('/^\s*(?:#[\p{L}\p{N}_-]+(?:\s+|$))+$/um', '', $t); // hashtag-rad
-        $t = preg_replace('/(^|\s)#[\p{L}\p{N}_-]+/u', '$1', $t);             // inline hashtags
-        $t = preg_replace('/^\s*[\*\-]\s+/m', '- ', $t);        // listpunkter → streck
+
+        // Viktigt: behåll hashtags och emojis – ta inte bort dem
+        $t = preg_replace('/^\s*[\*\-]\s+/m', '- ', $t);
         $t = preg_replace('/\n{3,}/', "\n\n", $t);
         $t = preg_replace('/^[ \t]+|[ \t]+$/m', '', $t);
 
-        return trim($t);
+        return trim((string)$t);
     }
 }
