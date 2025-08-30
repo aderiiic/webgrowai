@@ -351,10 +351,12 @@ class PublishToFacebookJob implements ShouldQueue
      */
     private function buildFacebookMessage(string $input): string
     {
+        // Skydda mot orimligt stora strängar
         if (mb_strlen($input) > 20000) {
             $input = mb_substr($input, 0, 20000);
         }
 
+        // Normalisera radbrytningar och ta bort ev. kodstaket
         $t = str_replace(["\r\n", "\r"], "\n", (string) $input);
         $t = $this->stripCodeFences($t);
 
@@ -368,23 +370,23 @@ class PublishToFacebookJob implements ShouldQueue
             $t
         );
 
-        // Normalisera listor & whitespace
+        // Normalisera listor, trimma radslut; bevara radbrytningar
         $t = preg_replace('/^\s*[\*\-]\s+/m', '- ', $t);
-        $t = preg_replace('/\n{3,}/', "\n\n", $t);
-        $t = preg_replace('/^[ \t]+|[ \t]+$/m', '', $t);
+        $t = preg_replace('/[ \t]+$/m', '', $t);     // trimma spaces i slutet av rader
+        $t = preg_replace('/\n{3,}/', "\n\n", $t);   // max två radbrytningar i rad
 
-        // Ta bort osynliga tecken
-        $t = preg_replace('/[\x00-\x1F\x7F]/u', '', $t);
+        // Ta bort osynliga tecken (ej radbrytningar)
+        $t = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $t);
         $t = preg_replace('/[\x{200B}-\x{200D}\x{FEFF}]/u', '', $t);
 
         $t = trim($t);
 
-        // Samla hashtags
+        // 1) Samla alla hashtags (case-insensitivt) inklusive position för relevans
         $allTags = [];
-        if (preg_match_all('/#[\p{L}\p{N}_-]+/u', $t, $matches, PREG_OFFSET_CAPTURE)) {
-            foreach ($matches[0] as $match) {
-                $tag = $match[0];
-                $pos = $match[1];
+        if (preg_match_all('/(^|\s)(#[\p{L}\p{N}_-]+)/u', $t, $m, PREG_OFFSET_CAPTURE)) {
+            foreach ($m[2] as $match) {
+                $tag = $match[0];         // ex: "#webbsida"
+                $pos = $match[1];         // index i texten
                 $key = mb_strtolower($tag);
                 if (!isset($allTags[$key])) {
                     $allTags[$key] = ['tag' => $tag, 'count' => 0, 'first' => $pos];
@@ -393,15 +395,23 @@ class PublishToFacebookJob implements ShouldQueue
             }
         }
 
-        // Ta bort hashtags från brödtexten (inkl. hela sekvenser på raden)
-        $t = preg_replace('/\s*#[\p{L}\p{N}_-]+(?:\s*#[\p{L}\p{N}_-]+)*/u', '', $t);
-        $t = preg_replace('/\s{2,}/', ' ', $t);
+        // 2) Ta bort existerande avslutande hashtag-rad (utan att ta bort föregående newline)
+        $t = preg_replace('/(?:^|\n)\s*(?:#[\p{L}\p{N}_-]+(?:\s+#[\p{L}\p{N}_-]+)*)\s*$/u', '', $t);
+
+        // 3) Ta bort inline-hashtags men bevara radbrytningar
+        //    Ersätt “␠#tag” med “␠” och “#tag” i början av rad med tomt, men ät inte \n.
+        $t = preg_replace('/(^|[^\S\r\n])#[\p{L}\p{N}_-]+/u', '$1', $t);
+
+        // 4) Komprimera enbart multipla mellanslag (inte radbrytningar)
+        $t = preg_replace('/[ \t]{2,}/', ' ', $t);
+        // Städa upp flera tomrader igen
         $t = preg_replace('/\n{3,}/', "\n\n", $t);
         $t = trim($t);
 
-        // Välj de mest relevanta hashtagsen
-        $maxTags = (int) (config('social.facebook.max_hashtags', 5));
-        if (!empty($allTags)) {
+        // 5) Välj 5–6 mest relevanta hashtags (config-styrt)
+        $maxTags = (int) (config('social.facebook.max_hashtags', 6));
+        if (!empty($allTags) && $maxTags > 0) {
+            // Sortera: flest förekomster först, sedan tidigast förekomst
             uasort($allTags, function ($a, $b) {
                 if ($a['count'] === $b['count']) {
                     return $a['first'] <=> $b['first'];
@@ -409,14 +419,15 @@ class PublishToFacebookJob implements ShouldQueue
                 return $b['count'] <=> $a['count'];
             });
 
-            $selected = array_slice(array_column($allTags, 'tag'), 0, max(1, $maxTags ?: 5));
+            $selected = array_slice(array_column($allTags, 'tag'), 0, max(1, $maxTags));
 
             if (!empty($selected)) {
-                $t = rtrim($t);
-                $t .= "\n\n" . implode(' ', $selected);
+                // Lägg som avslutande rad
+                $t = rtrim($t) . "\n\n" . implode(' ', $selected);
             }
         }
 
+        // 6) Facebook maxlängd
         if (mb_strlen($t) > 5000) {
             $t = mb_substr($t, 0, 4996) . ' ...';
         }
