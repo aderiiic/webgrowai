@@ -213,7 +213,7 @@ class Detail extends Component
         }
 
         $payload = [
-            'text' => $this->extractPlainText((string)($this->content->body_md ?? '')),
+            'text' => $this->extractPlainText((string) ($this->content->body_md ?? '')),
         ];
 
         if ($this->selectedImageAssetId > 0) {
@@ -222,11 +222,11 @@ class Detail extends Component
 
         $pub = ContentPublication::create([
             'ai_content_id' => $this->content->id,
-            'target' => $this->socialTarget,
-            'status' => 'processing', // direkt igång
-            'scheduled_at' => null,
-            'message' => null,
-            'payload' => $payload,
+            'target'        => $this->socialTarget,
+            'status'        => 'processing', // direkt igång
+            'scheduled_at'  => null,
+            'message'       => null,
+            'payload'       => $payload,
         ]);
 
         if ($this->socialTarget === 'facebook') {

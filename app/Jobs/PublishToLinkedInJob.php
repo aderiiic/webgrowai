@@ -12,7 +12,6 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Throwable;
 
 class PublishToLinkedInJob implements ShouldQueue
 {
@@ -112,7 +111,7 @@ class PublishToLinkedInJob implements ShouldQueue
                             $assetUrn = $reg['asset'];
                             $payload['prompt'] = $prompt;
                         }
-                    } catch (Throwable $imgErr) {
+                    } catch (\Throwable $imgErr) {
                         Log::error('[PublishToLinkedInJob] Bildgenerering misslyckades', ['pub_id' => $this->publicationId, 'error' => $imgErr->getMessage()]);
                     }
                 }
@@ -139,7 +138,7 @@ class PublishToLinkedInJob implements ShouldQueue
             $usage->increment($customerId, 'ai.publish.linkedin');
             $usage->increment($customerId, 'ai.publish');
 
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             Log::error('[PublishToLinkedInJob] Jobbet misslyckades', [
                 'pub_id' => $this->publicationId,
                 'error' => $e->getMessage(),
