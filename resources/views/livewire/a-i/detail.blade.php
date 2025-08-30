@@ -338,9 +338,21 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <input type="text" wire:model.defer="liQuickText" class="md:col-span-3 w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm" placeholder="Inläggstext" @if($publishQuotaReached) disabled @endif>
-                <input type="datetime-local" wire:model.defer="liQuickScheduleAt" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm" placeholder="Schemalägg (valfritt)" @if($publishQuotaReached) disabled @endif>
+            <div class="space-y-3">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <input type="text" wire:model.defer="liQuickText" class="md:col-span-2 w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm" placeholder="Inläggstext (lämna tom för att använda AI-innehåll)" @if($publishQuotaReached) disabled @endif>
+                    <input type="datetime-local" wire:model.defer="liQuickScheduleAt" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm" placeholder="Schemalägg (valfritt)" @if($publishQuotaReached) disabled @endif>
+                </div>
+
+                <div class="flex justify-end">
+                    <button wire:click="queueLinkedInQuick" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-sky-600 to-blue-700 text-white font-semibold rounded-xl hover:from-sky-700 hover:to-blue-800 focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl {{ (!$mdReady || $publishQuotaReached) ? 'opacity-50 cursor-not-allowed' : '' }}"
+                            @if(!$mdReady || $publishQuotaReached) disabled @endif>
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                        </svg>
+                        Köa till LinkedIn
+                    </button>
+                </div>
             </div>
         </div>
 

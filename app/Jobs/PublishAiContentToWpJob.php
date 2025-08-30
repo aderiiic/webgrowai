@@ -111,10 +111,10 @@ class PublishAiContentToWpJob implements ShouldQueue
                     $payload['featured_media'] = $featuredMediaId;
 
                     if ($mediaUrl) {
-                        $imgBlock = "<!-- wp:image {\"id\":{$featuredMediaId},\"sizeSlug\":\"full\",\"linkDestination\":\"none\"} -->
-<figure class=\"wp-block-image size-full\"><img src=\"{$mediaUrl}\" alt=\"\" class=\"wp-image-{$featuredMediaId}\"/></figure>
-<!-- /wp:image -->";
-                        $payload['content'] = $imgBlock . "\n\n" . $payload['content'];
+//                        $imgBlock = "<!-- wp:image {\"id\":{$featuredMediaId},\"sizeSlug\":\"full\",\"linkDestination\":\"none\"} -->
+//<figure class=\"wp-block-image size-full\"><img src=\"{$mediaUrl}\" alt=\"\" class=\"wp-image-{$featuredMediaId}\"/></figure>
+//<!-- /wp:image -->";
+//                        $payload['content'] = $imgBlock . "\n\n" . $payload['content'];
                     }
                 }
             } else {
@@ -265,7 +265,7 @@ Style: modern, photographic, 16:9, minimal, no text overlays.");
                 $htmlFrag = $dom->saveHTML($node);
 
                 switch ($tag) {
-                    case 'h1': $out .= "<!-- wp:heading {\"level\":1} -->{$htmlFrag}<!-- /wp:heading -->"; break;
+                    case 'h1': break;
                     case 'h2': $out .= "<!-- wp:heading {\"level\":2} -->{$htmlFrag}<!-- /wp:heading -->"; break;
                     case 'h3': $out .= "<!-- wp:heading {\"level\":3} -->{$htmlFrag}<!-- /wp:heading -->"; break;
                     case 'h4': $out .= "<!-- wp:heading {\"level\":4} -->{$htmlFrag}<!-- /wp:heading -->"; break;

@@ -1,3 +1,4 @@
+
 <div>
     <div class="max-w-7xl mx-auto space-y-8">
         <!-- Header -->
@@ -7,9 +8,38 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                 </svg>
                 Publiceringar
+                @if($activeSiteId)
+                    <span class="ml-2 text-lg text-gray-600">(Sajt #{{ $activeSiteId }})</span>
+                @endif
             </h1>
         </div>
 
+        <!-- Site filter info -->
+        @if($activeSiteId)
+            <div class="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl">
+                <div class="flex items-center space-x-3">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <p class="text-sm font-medium text-blue-800">
+                        Visar endast publiceringar för vald sajt. Byt sajt i topbar för att se andra publiceringar.
+                    </p>
+                </div>
+            </div>
+        @else
+            <div class="p-4 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-xl">
+                <div class="flex items-center space-x-3">
+                    <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.314 15.5c-.77.833.192 2.5 1.732 2.5z"/>
+                    </svg>
+                    <p class="text-sm font-medium text-amber-800">
+                        Ingen specifik sajt vald. Visar publiceringar för alla sajter. Välj en sajt i topbar för att filtrera.
+                    </p>
+                </div>
+            </div>
+        @endif
+
+        <!-- Resten av innehållet förblir oförändrat -->
         <!-- Filters -->
         <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6">
             <div class="flex flex-wrap items-center gap-4">
@@ -78,7 +108,6 @@
                                         @elseif($p->target === 'instagram') bg-pink-100 text-pink-800 border border-pink-200
                                         @elseif($p->target === 'linkedin') bg-sky-100 text-sky-800 border border-sky-200
                                         @else bg-gray-100 text-gray-800 border border-gray-200 @endif">
-                                        {{-- befintlig ikon + label --}}
                                         {{ strtoupper($p->target) }}
                                     </div>
 
@@ -144,7 +173,6 @@
 
                         <!-- Actions -->
                         <div class="flex items-center space-x-3 ml-6">
-                            {{-- befintliga actions oförändrade --}}
                             @if($p->status === 'failed')
                                 <button wire:click="retry({{ $p->id }})" class="inline-flex items-center px-3 py-2 bg-gradient-to-r from-orange-600 to-red-600 text-white font-semibold rounded-xl hover:from-orange-700 hover:to-red-700 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl text-sm">
                                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -189,8 +217,20 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                         </svg>
                     </div>
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Inga publiceringar ännu</h3>
-                    <p class="text-gray-600">Skapa och publicera innehåll för att se det här.</p>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">
+                        @if($activeSiteId)
+                            Inga publiceringar för vald sajt
+                        @else
+                            Inga publiceringar ännu
+                        @endif
+                    </h3>
+                    <p class="text-gray-600">
+                        @if($activeSiteId)
+                            Skapa och publicera innehåll för denna sajt för att se det här.
+                        @else
+                            Skapa och publicera innehåll för att se det här.
+                        @endif
+                    </p>
                 </div>
             @endforelse
         </div>
