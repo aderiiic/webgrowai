@@ -27,6 +27,8 @@ class PublishToFacebookJob implements ShouldQueue
 
     public function handle(Usage $usage, ImageGenerator $images): void
     {
+        Log::info('[PublishToFacebookJob] Start', ['publication_id' => $this->publicationId]);
+
         $pub = ContentPublication::with('content')->find($this->publicationId);
 
         if (!$pub) {
@@ -37,6 +39,10 @@ class PublishToFacebookJob implements ShouldQueue
         }
 
         if (!in_array($pub->status, ['queued','processing'], true)) {
+            Log::info('[PublishToFacebookJob] Avbryter, status tillåts ej', [
+                'publication_id' => $pub->id,
+                'status' => $pub->status,
+            ]);
             return;
         }
 
@@ -63,7 +69,7 @@ class PublishToFacebookJob implements ShouldQueue
 
             $payload = $pub->payload ?? [];
 
-            // Bygg rensat meddelande via buildCleanMessage
+            // Rensa meddelandet med @symbol:buildCleanMessage
             $message = $this->buildCleanMessage(
                 (string)($content->title ?? ''),
                 (string)($payload['text'] ?? $content->body_md ?? ''),
@@ -85,8 +91,8 @@ class PublishToFacebookJob implements ShouldQueue
 
             // 1) Om användaren valt en bild från bildbanken: använd den
             if ($imageAssetId > 0) {
-                Log::info('[PublishToFacebookJob] Skapar inlägg med vald bild från bildbanken', [
-                    'pub_id' => $this->publicationId,
+                Log::info('[PublishToFacebookJob] Inlägg med vald bild', [
+                    'pub_id' => $pub->id,
                     'image_asset_id' => $imageAssetId,
                 ]);
 
@@ -125,7 +131,7 @@ class PublishToFacebookJob implements ShouldQueue
 
                 // 2) Annars: generera bild om aktiverat/önskat eller prompt finns
             } elseif ($wantImage || ($imagesEnabled && $imagePrompt)) {
-                Log::info('[PublishToFacebookJob] Skapar inlägg med genererad bild', ['pub_id' => $this->publicationId]);
+                Log::info('[PublishToFacebookJob] Inlägg med genererad bild', ['pub_id' => $pub->id]);
 
                 $prompt = $imagePrompt ?: $this->buildAutoPrompt($content->title, $content->body_md ?? '', $content->inputs ?? []);
                 $bytes  = $images->generate($prompt, '1536x1024');
@@ -158,7 +164,13 @@ class PublishToFacebookJob implements ShouldQueue
             $usage->increment($customerId, 'ai.publish');
 
         } catch (Throwable $e) {
-            $pub->update(['status' => 'failed', 'message' => $e->getMessage()]);
+            Log::error('[PublishToFacebookJob] Fel', [
+                'publication_id' => $this->publicationId,
+                'error' => $e->getMessage(),
+            ]);
+            if (isset($pub) && $pub) {
+                $pub->update(['status' => 'failed', 'message' => $e->getMessage()]);
+            }
             throw $e;
         }
     }
