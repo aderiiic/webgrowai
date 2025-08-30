@@ -40,7 +40,6 @@ class PublishToFacebookJob implements ShouldQueue
             $content = $pub->content;
             $customerId = $content?->customer_id;
             $siteId     = $content?->site_id;
-
             if (!$customerId || !$siteId) {
                 throw new \RuntimeException('Saknar customer_id eller site_id på innehållet.');
             }
@@ -48,13 +47,17 @@ class PublishToFacebookJob implements ShouldQueue
             $integration = SocialIntegration::where('site_id', $siteId)
                 ->where('provider', 'facebook')
                 ->first();
-
             if (!$integration) {
                 throw new \RuntimeException('Ingen Facebook‑integration hittad för denna sajt.');
             }
 
-            $message = trim(($content->title ? $content->title . "\n\n" : '') . ($content->body_md ?? ''));
             $payload = $pub->payload ?? [];
+            // Bygg ren text (ingen MD/hashtags/metablock)
+            $message = $this->buildCleanMessage(
+                title: (string)($content->title ?? ''),
+                md: (string)($content->body_md ?? ''),
+                extra: (string)($payload['text'] ?? '')
+            );
 
             $imagesEnabled = config('features.image_generation', false);
             $imageAssetId  = $payload['image_asset_id'] ?? null;
@@ -62,13 +65,18 @@ class PublishToFacebookJob implements ShouldQueue
             $client = new FacebookClient($integration->access_token);
 
             if ($imageAssetId) {
-                // Använd bytes från S3 och posta som bild-inlägg
                 $asset = ImageAsset::findOrFail((int)$imageAssetId);
                 if ((int)$asset->customer_id !== (int)$customerId) {
                     throw new \RuntimeException('Otillåten bild.');
                 }
+
+                // Läs bytes och posta som foto-inlägg (caption = message)
                 $bytes = Storage::disk($asset->disk)->get($asset->path);
-                $resp  = $client->createPagePhoto($integration->page_id, $bytes, 'image-'.Str::random(8).'.'.pathinfo($asset->path, PATHINFO_EXTENSION), $message);
+                $filename = 'image-'.Str::random(8).'.'.pathinfo($asset->path, PATHINFO_EXTENSION);
+
+                Log::info('[FB] Laddar upp bild', ['pub_id' => $pub->id, 'filename' => $filename, 'size' => strlen($bytes)]);
+
+                $resp  = $client->createPagePhoto($integration->page_id, $bytes, $filename, $message);
 
                 $payload['image_asset_id']  = (int)$imageAssetId;
                 $payload['image_bank_path'] = $asset->path;
@@ -93,7 +101,7 @@ class PublishToFacebookJob implements ShouldQueue
                 if ($wantImage || ($imagesEnabled && $imagePrompt)) {
                     $prompt = $imagePrompt ?: $this->buildAutoPrompt($content->title, $content->body_md ?? '', $content->inputs ?? []);
                     $bytes  = $images->generate($prompt, '1536x1024');
-                    $resp   = $client->createPagePhoto($integration->page_id, $bytes, 'image-' . Str::random(8) . '.png', $message);
+                    $resp   = $client->createPagePhoto($integration->page_id, $bytes, 'image-'.Str::random(8).'.png', $message);
 
                     $pub->update([
                         'status'      => 'published',
@@ -121,6 +129,47 @@ class PublishToFacebookJob implements ShouldQueue
             $pub->update(['status' => 'failed', 'message' => $e->getMessage()]);
             throw $e;
         }
+    }
+
+    private function buildCleanMessage(string $title, string $md, string $extra = ''): string
+    {
+        // Sätt ihop titel + md + ev. extra
+        $raw = trim(($title ? ($title."\n\n") : '').($md ?: '').($extra ? ("\n\n".$extra) : ''));
+
+        // Normalisera radbrytningar
+        $raw = str_replace(["\r\n","\r"], "\n", $raw);
+
+        // Rensa kodblock ```...```
+        if (str_starts_with(trim($raw), '```') && str_ends_with(trim($raw), '```')) {
+            $raw = preg_replace('/^```[a-zA-Z0-9_-]*\n?/','', trim($raw));
+            $raw = preg_replace("/\n?```$/", '', $raw);
+        }
+
+        // Ta bort rubriker (#, ## ...)
+        $raw = preg_replace('/^#{1,6}\s*.+$/m', '', $raw);
+
+        // Ta bort bildreferenser och html-tags
+        $raw = preg_replace('/!\[.*?\]\([^)]*\)/s', '', $raw);
+        $raw = preg_replace('/<img[^>]*\/?>/is', '', $raw);
+
+        // Ta bort meta-rader (Nyckelord: Stil: CTA: ...)
+        $raw = preg_replace('/^\s*(Nyckelord|Keywords|Stil|Style|CTA|Målgrupp|Audience|Brand voice)\s*:\s*.*$/im', '', $raw);
+
+        // Rensa Hashtags (rader med bara hashtags + inline)
+        $raw = preg_replace('/^\s*(?:#[\p{L}\p{N}_-]+(?:\s+|$))+$/um', '', $raw);
+        $raw = preg_replace('/(^|\s)#[\p{L}\p{N}_-]+/u', '$1', $raw);
+
+        // Byt listsymboler till streck
+        $raw = preg_replace('/^\s*[\*\-]\s+/m', '- ', $raw);
+
+        // Komprimera tomrader
+        $raw = preg_replace('/\n{3,}/', "\n\n", $raw);
+        $raw = preg_replace('/^[ \t]+|[ \t]+$/m', '', $raw);
+
+        // Begränsa rimligt
+        $raw = mb_substr(trim($raw), 0, 5000);
+
+        return $raw;
     }
 
     private function buildAutoPrompt(?string $title, string $body, array $inputs): string
