@@ -21,7 +21,7 @@ class PublishToLinkedInJob implements ShouldQueue
     public function __construct(public int $publicationId)
     {
         $this->onQueue('social');
-        $this->afterCommit();
+        $this->delay(now()->addSeconds(60));
     }
 
     public function handle(LinkedInService $li, ImageGenerator $images, Usage $usage): void
