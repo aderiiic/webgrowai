@@ -4,6 +4,7 @@ namespace App\Actions\Fortify;
 
 use App\Actions\Auth\RegisterCompany;
 use App\Models\User;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
@@ -14,13 +15,11 @@ class CreateNewUser implements CreatesNewUsers
     use PasswordValidationRules;
 
     /**
-     * Validate and create a newly registered user.
-     *
-     * @param  array<string, string>  $input
+     * @param  array<string, string|int|null>  $input
      */
     public function create(array $input): User
     {
-        Validator::make($input, [
+        $validator = Validator::make($input, [
             'name'            => ['required','string','max:255'],
             'email'           => ['required','string','email','max:255','unique:users,email'],
             'password'        => ['required','string','min:8','confirmed'],
@@ -32,21 +31,40 @@ class CreateNewUser implements CreatesNewUsers
             'billing_zip'     => ['required','string','max:20'],
             'billing_city'    => ['required','string','max:120'],
             'billing_country' => ['required','string','size:2'],
-            'org_nr'          => ['nullable','string','max:50'],
+            'org_nr'          => ['required','string','max:50'], // ändrat: required
             'vat_nr'          => ['nullable','string','max:50'],
             'contact_phone'   => ['nullable','string','max:50'],
-        ])->validate();
+
+            // Enkel anti‑spam
+            'website'         => ['prohibited'], // honeypot (måste vara tomt)
+            'form_started_at' => ['required','integer'],
+        ]);
+
+        $validator->after(function ($v) use ($input) {
+            // Tidsfälla: kräver minst 5 s mellan laddning och submit
+            $started = (int)($input['form_started_at'] ?? 0);
+            if ($started > 0 && (time() - $started) < 5) {
+                $v->errors()->add('form', 'Formuläret skickades för snabbt. Försök igen.');
+            }
+        });
+
+        $validator->validate();
 
         $user = User::create([
-            'name'     => $input['name'],
-            'email'    => $input['email'],
-            'password' => Hash::make($input['password']),
+            'name'     => (string) $input['name'],
+            'email'    => (string) $input['email'],
+            'password' => Hash::make((string) $input['password']),
             'role'     => 'user',
-            'onboarding_step' => 1, // direkt klar för MVP
+            'onboarding_step' => 1,
         ]);
 
         // Skapa kund + trial (Starter 14d)
         app(RegisterCompany::class)->handle($user, $input);
+
+        // Säkerställ att verifikationsmail skickas
+        if ($user instanceof MustVerifyEmail) {
+            $user->sendEmailVerificationNotification();
+        }
 
         return $user;
     }

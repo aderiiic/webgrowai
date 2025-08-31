@@ -35,6 +35,11 @@
 
         <form method="POST" action="{{ route('register') }}" class="space-y-6">
             @csrf
+            <div class="hidden">
+                <label>Webbplats</label>
+                <input type="text" name="website" tabindex="-1" autocomplete="off">
+                <input type="hidden" name="form_started_at" value="{{ time() }}">
+            </div>
 
             <!-- Konto -->
             <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/60 p-6">
@@ -107,9 +112,10 @@
 
                     <div class="grid md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Org.nr (valfritt)</label>
-                            <input name="org_nr" type="text" value="{{ old('org_nr') }}"
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Org.nr *</label>
+                            <input name="org_nr" type="text" value="{{ old('org_nr') }}" required
                                    class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white/70 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            @error('org_nr')<div class="mt-2 text-sm text-red-600">{{ $message }}</div>@enderror
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Momsnr / VAT (valfritt)</label>

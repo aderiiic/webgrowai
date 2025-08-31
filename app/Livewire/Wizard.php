@@ -236,14 +236,14 @@ class Wizard extends Component
     public function goDashboard()
     {
         $this->completeOnboarding();
-        return $this->redirectRoute('dashboard');
+        return $this->redirectRoute('get-started');
     }
 
     public function complete()
     {
         $this->weeklyConfigured = true;
         $this->completeOnboarding();
-        return $this->redirectRoute('dashboard');
+        return $this->redirectRoute('get-started');
     }
 
     protected function completeOnboarding(): void

@@ -14,7 +14,9 @@ use App\Models\Post;
 use App\Models\WpIntegration;
 use App\Services\Billing\InvoicePdf;
 use App\Support\CurrentCustomer;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SocialAuthController;
@@ -311,6 +313,11 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
     Route::get('/analytics/ga4/connect', [Ga4OAuthController::class, 'connect'])->name('analytics.ga4.connect');
     Route::get('/analytics/ga4/callback', [Ga4OAuthController::class, 'callback'])->name('analytics.ga4.callback');
     Route::post('/analytics/ga4/select', [Ga4OAuthController::class, 'select'])->name('analytics.ga4.select');
+
+    Route::get('/get-started', function () {
+        return view('get-started');
+    })->name('get-started');
+
 });
 
 Route::middleware(['auth','verified','can:admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -458,4 +465,23 @@ Route::post('/webhooks/shopify/shop/redact', [ShopifyWebhookController::class, '
 
 Route::get('/gratis-hemsida', function () {
     return view('free-website');
+});
+
+Route::middleware('auth')->group(function () {
+    // Sidan som ber användaren verifiera sin e‑post
+    Route::get('/email/verify', function () {
+        return view('auth.verify-email');
+    })->name('verification.notice');
+
+    // Länken i mailet (signerad URL)
+    Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+        $request->fulfill(); // markerar e‑post som verifierad
+        return redirect()->route('dashboard', ['verified' => 1]);
+    })->middleware(['signed'])->name('verification.verify');
+
+    // Skicka om verifieringslänk
+    Route::post('/email/verification-notification', function (Request $request) {
+        $request->user()->sendEmailVerificationNotification();
+        return back()->with('status', 'verification-link-sent');
+    })->middleware(['throttle:6,1'])->name('verification.send');
 });
