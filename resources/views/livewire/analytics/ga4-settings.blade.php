@@ -5,56 +5,45 @@
     <div class="p-3 rounded bg-red-50 border border-red-200 text-sm text-red-700">{{ $message }}</div>
     @enderror
 
-    @if($hasOAuth && empty($propertyId))
-        <div class="p-6 bg-white rounded-2xl border shadow space-y-4">
-            <h2 class="font-semibold text-lg">Välj GA4‑property</h2>
+    <div class="p-6 bg-white rounded-2xl border shadow space-y-4">
+        <h2 class="font-semibold text-lg">Koppla Property</h2>
 
+        <div>
+            <label class="block text-sm font-medium">GA4 Property ID</label>
+            <input type="text" wire:model.defer="propertyId" class="mt-1 w-full border rounded-lg px-3 py-2" placeholder="properties/123456789 eller 123456789">
+            <p class="text-xs text-gray-500 mt-1">Tips: Du hittar det i GA4 Admin under Property settings.</p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <button type="button" wire:click="validateProperty" class="px-4 py-2 bg-indigo-600 text-white rounded-lg">Validera</button>
+            @if($validationMessage)
+                <span class="text-sm text-gray-700">{{ $validationMessage }}</span>
+            @endif
+        </div>
+
+        @if(!empty($hostnames))
             <div>
-                <label class="block text-sm font-medium">Property</label>
-                <select wire:model="selectedProperty" class="mt-1 w-full border rounded-lg px-3 py-2">
+                <label class="block text-sm font-medium">Hostname (valfritt)</label>
+                <select wire:model="hostname" class="mt-1 w-full border rounded-lg px-3 py-2">
                     <option value="">— Välj —</option>
-                    @foreach($properties as $p)
-                        <option value="{{ $p['id'] }}">{{ $p['displayName'] }} ({{ $p['id'] }})</option>
+                    @foreach($hostnames as $h)
+                        <option value="{{ $h }}">{{ $h }}</option>
                     @endforeach
                 </select>
+                <p class="text-xs text-gray-500 mt-1">Används för per‑inläggsstatistik (matchning mot dina permalinks).</p>
             </div>
+        @endif
 
-            @if(!empty($streams))
-                <div>
-                    <label class="block text-sm font-medium">Datastream (valfritt)</label>
-                    <select wire:model="selectedStream" class="mt-1 w-full border rounded-lg px-3 py-2">
-                        <option value="">— Ingen —</option>
-                        @foreach($streams as $s)
-                            <option value="{{ $s['id'] }}">{{ $s['displayName'] }} — {{ $s['type'] }}</option>
-                        @endforeach
-                    </select>
-                </div>
-            @endif
-
-            <div>
-                <label class="block text-sm font-medium">Hostname (valfritt, auto från web‑stream)</label>
-                <input type="text" wire:model.defer="hostname" class="mt-1 w-full border rounded-lg px-3 py-2" placeholder="www.exempel.se">
-            </div>
-
-            <div class="flex gap-3">
-                <button wire:click="saveSelection" type="button" class="px-4 py-2 bg-indigo-600 text-white rounded-lg">Spara val</button>
-                <a href="{{ route('analytics.index') }}" class="px-4 py-2 bg-gray-100 rounded-lg">Till Analys</a>
-            </div>
-
-            <div class="text-xs text-gray-500">
-                Saknar du din property? Säkerställ att ditt Google‑konto har åtkomst och rättigheter.
-            </div>
+        <div class="flex gap-3">
+            <button type="button" wire:click="saveSelection" class="px-4 py-2 bg-emerald-600 text-white rounded-lg">Spara</button>
+            <a href="{{ route('analytics.index') }}" class="px-4 py-2 bg-gray-100 rounded-lg">Till Analys</a>
         </div>
-    @endif
+    </div>
 
-    {{-- Befintlig manuell inmatning (behåll som fallback eller ta bort om du bara vill köra OAuth) --}}
+    {{-- Valfri fallback för service account (kan döljas om ni bara kör OAuth) --}}
     <div class="p-6 bg-white rounded-2xl border shadow">
         <form wire:submit.prevent="save" class="space-y-4">
-            <div>
-                <label class="block text-sm font-medium">GA4 Property ID</label>
-                <input type="text" wire:model.defer="propertyId" class="mt-1 w-full border rounded-lg px-3 py-2" placeholder="properties/123456789">
-                @error('propertyId') <div class="text-red-600 text-sm mt-1">{{ $message }}</div> @enderror
-            </div>
+            <h2 class="font-semibold text-lg">Service Account (valfritt)</h2>
 
             <div>
                 <label class="block text-sm font-medium">Service Account JSON</label>
@@ -67,7 +56,6 @@
 
             <div class="flex gap-3">
                 <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg">Spara</button>
-                <a href="{{ route('analytics.index') }}" class="px-4 py-2 bg-gray-100 rounded-lg">Till Analys</a>
             </div>
         </form>
     </div>
