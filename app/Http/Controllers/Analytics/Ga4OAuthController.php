@@ -9,12 +9,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use League\OAuth2\Client\Provider\Google as GoogleProvider;
+use Carbon\Carbon;
 
 class Ga4OAuthController extends Controller
 {
-    /**
-     * Skapa en Google OAuth2-provider (League).
-     */
     private function provider(): GoogleProvider
     {
         return new GoogleProvider([
@@ -24,9 +22,6 @@ class Ga4OAuthController extends Controller
         ]);
     }
 
-    /**
-     * Startar OAuth-flödet för GA4-koppling för den aktiva sajten.
-     */
     public function connect(CurrentCustomer $current)
     {
         $customer = $current->get();
@@ -37,30 +32,23 @@ class Ga4OAuthController extends Controller
 
         $provider = $this->provider();
 
-        // Bygg auth URL med offline access + prompt=consent för refresh_token
         $authUrl = $provider->getAuthorizationUrl([
             'scope'       => ['https://www.googleapis.com/auth/analytics.readonly'],
             'access_type' => 'offline',
             'prompt'      => 'consent',
         ]);
 
-        // Spara state och vald sajt i session
         session()->put('oauth2state', $provider->getState());
         session()->put('ga4_site', $siteId);
 
         return redirect()->away($authUrl);
     }
 
-    /**
-     * OAuth-callback från Google. Byter code -> tokens och sparar dem per sajt.
-     */
     public function callback(Request $request)
     {
-        // Kontrollera state
         $state = (string) $request->query('state', '');
         $expected = (string) session('oauth2state', '');
         abort_if($state === '' || $state !== $expected, 400, 'Ogiltigt state.');
-        // Rensa state
         session()->forget('oauth2state');
 
         $siteId = (int) session('ga4_site');
@@ -77,32 +65,42 @@ class Ga4OAuthController extends Controller
             abort(400, 'OAuth misslyckades.');
         }
 
-        $access = (string) $token->getToken();
+        $access  = (string) $token->getToken();
         $refresh = (string) ($token->getRefreshToken() ?? '');
-        $expires = (int) ($token->getExpires() ?? 3600);
+        $expRaw  = $token->getExpires(); // Kan vara UNIX epoch (rekommenderat), ibland TTL
 
-        // Persist tokens (krypterat)
+        // Robust beräkning: epoch vs TTL
+        $expiresAt = null;
+        if (is_numeric($expRaw)) {
+            $exp = (int) $expRaw;
+            $nowTs = now()->getTimestamp();
+            // Om värdet ser ut som en framtida UNIX-tidsstämpel (> nu + 5 min) => epoch
+            if ($exp > $nowTs + 300) {
+                $expiresAt = Carbon::createFromTimestamp($exp);
+            } else {
+                // Annars tolka som TTL-sekunder
+                $expiresAt = now()->addSeconds(max(300, $exp));
+            }
+        } else {
+            $expiresAt = now()->addHour();
+        }
+
         Ga4Integration::updateOrCreate(
             ['site_id' => $siteId],
             [
                 'provider'       => 'oauth',
                 'access_token'   => $access ? encrypt($access) : null,
                 'refresh_token'  => $refresh ? encrypt($refresh) : DB::raw('refresh_token'),
-                'expires_at'     => now()->addSeconds($expires),
+                'expires_at'     => $expiresAt,
                 'status'         => 'connected',
-                // property_id/stream/hostname väljs i nästa steg via select()
             ]
         );
 
-        // Låt användaren välja GA4-property/datastream i UI
         return redirect()
             ->route('analytics.settings')
             ->with('success', 'Google kopplat. Välj GA4‑property.');
     }
 
-    /**
-     * Spara vald GA4-property/datastream/hostname för sajten.
-     */
     public function select(Request $request)
     {
         $data = $request->validate([

@@ -3,6 +3,7 @@
 namespace App\Services\Analytics;
 
 use App\Models\Ga4Integration;
+use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -22,10 +23,6 @@ class Ga4Client
         ]);
     }
 
-    /**
-     * Säkerställ ett giltigt access token för GA4-anrop.
-     * Förlänger med refresh_token om access_token gått ut.
-     */
     private function ensureAccessToken(Ga4Integration $ga): ?string
     {
         $access = $ga->access_token ? decrypt($ga->access_token) : null;
@@ -35,30 +32,41 @@ class Ga4Client
         }
 
         if (empty($ga->refresh_token)) {
-            return $access; // kan vara null
+            return $access;
         }
 
         try {
-            $provider  = $this->provider();
-            $newToken  = $provider->getAccessToken('refresh_token', [
+            $provider = $this->provider();
+            $newToken = $provider->getAccessToken('refresh_token', [
                 'refresh_token' => decrypt((string) $ga->refresh_token),
             ]);
 
-            $token   = (string) $newToken->getToken();
-            $expires = (int) ($newToken->getExpires() ?: 3600);
+            $newAccess = (string) $newToken->getToken();
+            $expRaw    = $newToken->getExpires();
+
+            $expiresAt = null;
+            if (is_numeric($expRaw)) {
+                $exp   = (int) $expRaw;
+                $nowTs = now()->getTimestamp();
+                $expiresAt = ($exp > $nowTs + 300)
+                    ? Carbon::createFromTimestamp($exp)   // epoch
+                    : now()->addSeconds(max(300, $exp));  // TTL
+            } else {
+                $expiresAt = now()->addHour();
+            }
 
             $ga->update([
-                'access_token' => $token ? encrypt($token) : $ga->access_token,
-                'expires_at'   => now()->addSeconds($expires),
+                'access_token' => $newAccess ? encrypt($newAccess) : $ga->access_token,
+                'expires_at'   => $expiresAt,
             ]);
 
-            return $token ?: $access;
+            return $newAccess ?: $access;
         } catch (\Throwable $e) {
             Log::warning('[GA4] Token refresh misslyckades', [
                 'site_id' => $ga->site_id,
                 'error'   => $e->getMessage(),
             ]);
-            return $access; // låt ev. gammalt fungera om det finns
+            return $access;
         }
     }
 
