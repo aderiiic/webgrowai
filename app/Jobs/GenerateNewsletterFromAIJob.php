@@ -102,7 +102,7 @@ class GenerateNewsletterFromAIJob implements ShouldQueue
         $websiteUrl = $customer->website ?? $site->url ?? 'mailto:' . ($customer->contact_email ?? 'hej@exempel.se');
 
         // Bygg HTML med förbättrad template
-        $html = view('marketing.newsletter-enhanced-html', [
+        $html = view('marketing.newsletter-html', [
             'title' => $this->subject,
             'intro' => $intro,
             'items' => $items,
@@ -127,7 +127,7 @@ class GenerateNewsletterFromAIJob implements ShouldQueue
     {
         $content = [];
 
-        if ($customer->sites()->where('type', 'wordpress')->exists()) {
+        if ($customer->sites()->exists()) {
             $content[] = [
                 'title' => '📝 Senaste från vår blogg',
                 'html' => '<p>Vi har publicerat nya artiklar på vår webbsida med värdefulla insikter och tips som kan hjälpa ditt företag. Missa inte de senaste trenderna och expertråden.</p><p><a href="' . ($customer->website ?? '#') . '" style="color: #ea580c;">Läs mer på vår blogg →</a></p>'
