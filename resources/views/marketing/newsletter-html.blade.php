@@ -65,10 +65,10 @@ $customImages = $customImages ?? [];
 
     <?php if (!empty($customImages)): ?>
         <?php foreach($customImages as $image): ?>
-    <div class="image-container">
-        <img src="<?= e($image['url']) ?>" alt="<?= e($image['name']) ?>" class="custom-image">
-    </div>
-    <?php endforeach; ?>
+            <div class="image-container">
+                <img src="<?= e($image['url']) ?>" alt="<?= e($image['name']) ?>" class="custom-image">
+            </div>
+            <?php endforeach; ?>
     <?php endif; ?>
 
     <?php if (!empty($cta_label) && !empty($cta_url)): ?>

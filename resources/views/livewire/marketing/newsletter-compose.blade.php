@@ -177,13 +177,15 @@
                                 </div>
                             </div>
 
-                            <div class="flex items-start space-x-3">
-                                <input type="checkbox" wire:model.live="includeCustomImages" id="include-images" class="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500 mt-1">
-                                <div>
-                                    <label for="include-images" class="text-sm font-medium text-gray-700">Lägg till anpassade bilder</label>
-                                    <p class="text-xs text-gray-500 mt-1">Ladda upp egna bilder som ska inkluderas i nyhetsbrevet</p>
+                            @if(config('features.image_generation') === true)
+                                <div class="flex items-start space-x-3">
+                                    <input type="checkbox" wire:model.live="includeCustomImages" id="include-images" class="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500 mt-1">
+                                    <div>
+                                        <label for="include-images" class="text-sm font-medium text-gray-700">Lägg till anpassade bilder</label>
+                                        <p class="text-xs text-gray-500 mt-1">Ladda upp egna bilder som ska inkluderas i nyhetsbrevet</p>
+                                    </div>
                                 </div>
-                            </div>
+                            @endif
                         </div>
 
 
@@ -297,12 +299,14 @@
                             </div>
                         @endif
 
-                        @if($includeCustomImages)
-                            <div class="mt-4 p-4 bg-gray-50 rounded-xl">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Ladda upp bilder</label>
-                                <input type="file" wire:model="images" multiple accept="image/*" class="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100">
-                                <p class="mt-1 text-xs text-gray-500">PNG, JPG, GIF upp till 10MB vardera</p>
-                            </div>
+                        @if(config('features.image_generation') === true)
+                            @if($includeCustomImages)
+                                <div class="mt-4 p-4 bg-gray-50 rounded-xl">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Ladda upp bilder</label>
+                                    <input type="file" wire:model="images" accept="image/*" class="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100">
+                                    <p class="mt-1 text-xs text-gray-500">PNG, JPG, GIF upp till 10MB vardera</p>
+                                </div>
+                            @endif
                         @endif
                     </div>
 
