@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class Site extends Model
@@ -26,5 +27,10 @@ class Site extends Model
 
     public function customer(): BelongsTo {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function newsletterProducts(): HasMany
+    {
+        return $this->hasMany(NewsletterProduct::class)->orderBy('sort_order');
     }
 }

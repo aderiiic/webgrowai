@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Customer extends Model
 {
@@ -29,5 +30,17 @@ class Customer extends Model
 
     public function sites(): HasMany {
         return $this->hasMany(Site::class);
+    }
+
+    public function newsletterProducts(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            NewsletterProduct::class,
+            Site::class,
+            'customer_id',
+            'site_id',
+            'id',
+            'id'
+        )->orderBy('newsletter_products.sort_order');
     }
 }
