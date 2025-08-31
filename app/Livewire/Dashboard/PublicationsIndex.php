@@ -6,6 +6,7 @@ use App\Jobs\PublishAiContentToWpJob;
 use App\Jobs\PublishToFacebookJob;
 use App\Jobs\PublishToInstagramJob;
 use App\Models\ContentPublication;
+use App\Services\Analytics\AnalyticsService;
 use App\Support\CurrentCustomer;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
@@ -19,6 +20,7 @@ class PublicationsIndex extends Component
 
     public string $target = ''; // ''|wp|facebook|instagram
     public string $status = ''; // ''|queued|processing|published|failed
+    public array $ga4ByUrl = [];
 
     public function retry(int $id): void
     {
@@ -73,7 +75,7 @@ class PublicationsIndex extends Component
         // Om du cachar listan lokalt, trigga om-laddning här; annars räcker render()-frågan
     }
 
-    public function render(CurrentCustomer $current)
+    public function render(CurrentCustomer $current, AnalyticsService $analytics)
     {
         $customer = $current->get();
         abort_unless($customer, 403);
@@ -93,6 +95,22 @@ class PublicationsIndex extends Component
         if ($this->status !== '') $q->where('status', $this->status);
 
         $pubs = $q->latest()->paginate(20);
+
+        $urls = [];
+        foreach ($pubs as $p) {
+            $u = $p->payload['permalink'] ?? null;
+            if ($u && filter_var($u, FILTER_VALIDATE_URL)) {
+                $urls[] = $u;
+            }
+        }
+        $urls = array_values(array_unique($urls));
+        $this->ga4ByUrl = $analytics->getGa4ForUrls($activeSiteId > 0 ? $activeSiteId : null, $urls);
+
+        return view('livewire.dashboard.publications-index', [
+            'pubs' => $pubs,
+            'activeSiteId' => $activeSiteId > 0 ? $activeSiteId : null,
+            'ga4ByUrl' => $this->ga4ByUrl,
+        ]);
 
         return view('livewire.dashboard.publications-index', [
             'pubs' => $pubs,

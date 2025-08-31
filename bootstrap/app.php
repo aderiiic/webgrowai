@@ -2,6 +2,10 @@
 
 use App\Http\Middleware\EnsureOnboardingCompleted;
 use App\Http\Middleware\LoadCurrentCustomer;
+use App\Jobs\CollectDailyAnalyticsJob;
+use App\Jobs\RollupWeeklyAnalyticsJob;
+use App\Jobs\SendWeeklyAnalyticsDigestJob;
+use App\Models\Customer;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -60,6 +64,38 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->call(function () {
             app(\App\Services\Billing\UsageAlertService::class)->run();
         })->dailyAt('08:10');
+
+        $schedule->call(function () {
+            $date = now()->subDay()->toDateString();
+            dispatch(new CollectDailyAnalyticsJob($date))->onQueue('analytics');
+        })
+            ->name('collect-daily-analytics')
+            ->dailyAt('03:00')
+            ->onOneServer()
+            ->withoutOverlapping();
+
+        $schedule->call(function () {
+            $weekEnding = now()->subDay()->toDateString();
+            dispatch(new RollupWeeklyAnalyticsJob($weekEnding))->onQueue('analytics');
+        })
+            ->name('rollup-weekly-analytics')
+            ->mondays()
+            ->at('03:15')
+            ->onOneServer()
+            ->withoutOverlapping();
+
+        $schedule->call(function () {
+            Customer::query()->chunkById(200, function ($customers) {
+                foreach ($customers as $c) {
+                    dispatch(new SendWeeklyAnalyticsDigestJob($c->id))->onQueue('mail');
+                }
+            });
+        })
+            ->name('send-weekly-digest')
+            ->mondays()
+            ->at('03:45')
+            ->onOneServer()
+            ->withoutOverlapping();
 
     })
     ->withExceptions(function (Exceptions $exceptions): void {
