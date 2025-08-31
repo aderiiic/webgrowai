@@ -1,9 +1,12 @@
 <?php
 
+use App\Http\Controllers\Analytics\Ga4OAuthController;
 use App\Http\Controllers\ImageAssetController;
 use App\Http\Controllers\Integrations\ShopifyOAuthController;
 use App\Http\Controllers\LinkedInSuggestionController;
 use App\Http\Controllers\ShopifyWebhookController;
+use App\Livewire\Analytics\Ga4Settings;
+use App\Livewire\Analytics\Overview;
 use App\Livewire\Sites\IntegrationConnect;
 use App\Models\Integration;
 use App\Models\Invoice;
@@ -302,6 +305,12 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
     Route::get('/media/assets', [ImageAssetController::class, 'index'])->name('assets.index');
     Route::post('/media/assets', [ImageAssetController::class, 'store'])->name('assets.store');
     Route::get('/media/assets/{asset}/thumb', [ImageAssetController::class, 'thumb'])->name('assets.thumb');
+
+    Route::get('/analytics', Overview::class)->name('analytics.index');
+    Route::get('/analytics/settings', Ga4Settings::class)->name('analytics.settings');
+    Route::get('/analytics/ga4/connect', [Ga4OAuthController::class, 'connect'])->name('analytics.ga4.connect');
+    Route::get('/analytics/ga4/callback', [Ga4OAuthController::class, 'callback'])->name('analytics.ga4.callback');
+    Route::post('/analytics/ga4/select', [Ga4OAuthController::class, 'select'])->name('analytics.ga4.select');
 });
 
 Route::middleware(['auth','verified','can:admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -328,6 +337,8 @@ Route::middleware(['auth','verified','can:admin'])->prefix('admin')->name('admin
             'Content-Disposition' => 'attachment; filename="'.$doc['filename'].'"',
         ]);
     })->name('admin.invoices.download');
+
+
 });
 
 // Tracking-endpoint

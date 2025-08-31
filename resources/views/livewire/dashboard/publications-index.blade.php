@@ -121,6 +121,22 @@
                                     </div>
                                 </div>
 
+                                @if(!empty($p->payload['permalink']) && !empty($ga4ByUrl[$p->payload['permalink']]))
+                                    @php($m = $ga4ByUrl[$p->payload['permalink']])
+                                    <div class="mt-2 flex flex-wrap gap-2 text-xs">
+        <span class="inline-flex items-center px-2 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+            Sidvisningar (7d): <span class="ml-1 font-semibold">{{ $m['pageviews_7d'] }}</span>
+        </span>
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+            Sessioner (7d): <span class="ml-1 font-semibold">{{ $m['sessions_7d'] }}</span>
+        </span>
+                                    </div>
+                                @elseif(!empty($p->payload['permalink']))
+                                    <div class="mt-2 text-xs text-gray-500">
+                                        Ingen GA4-data (koppla under Analys → Inställningar)
+                                    </div>
+                                @endif
+
                                 <!-- Content info -->
                                 <div class="mb-3">
                                     <h3 class="text-lg font-semibold text-gray-900 mb-1">

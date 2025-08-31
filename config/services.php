@@ -113,4 +113,9 @@ return [
         // API-version kan användas av adapter om du vill
         'api_version'   => env('SHOPIFY_API_VERSION', '2024-10'),
     ],
+
+    'google' => [
+        'client_id'     => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+    ],
 ];

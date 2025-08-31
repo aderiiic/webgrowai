@@ -9,13 +9,22 @@
         $count = $customer->sites()->count();
         $canAddSite = ($quota === null) || ($count < $quota);
     }
+
+    $currentProvider = null;
+    if ($customer) {
+        $siteId = $current->getSiteId();
+        if ($siteId && $customer->sites()->whereKey($siteId)->exists()) {
+            $integration = \App\Models\Integration::where('site_id', $siteId)->first();
+            $currentProvider = $integration?->provider;
+        }
+    }
 @endphp
     <!doctype html>
 <html lang="sv">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ config('app.name', 'Laravel') }}</title>
+    <title>WebGrow AI - Din marknadsassistent redo för att växa med dig</title>
     @vite(['resources/css/app.css','resources/js/app.js'])
     @livewireStyles
 </head>
@@ -61,6 +70,12 @@
                         </svg>
                         <span>Sajter</span>
                     </a>
+                    <a href="{{ route('analytics.index') }}" class="flex items-center space-x-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 {{ request()->routeIs('analytics.*') ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg' : 'text-gray-700 hover:text-indigo-700 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50' }}">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12h4l3 8 4-16 3 8h4"/>
+                        </svg>
+                        <span>Analys</span>
+                    </a>
                 </div>
             </div>
 
@@ -90,17 +105,19 @@
             </div>
 
             <!-- Leads -->
-            <div>
-                <div class="text-xs uppercase font-semibold text-gray-500 px-3 mb-3 tracking-wider">Leads</div>
-                <div class="space-y-1">
-                    <a href="{{ route('leads.index') }}" class="flex items-center space-x-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 {{ request()->routeIs('leads.*') ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg' : 'text-gray-700 hover:text-indigo-700 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50' }}">
-                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                        </svg>
-                        <span>Leadlista</span>
-                    </a>
+            @if($currentProvider === 'wordpress')
+                <div>
+                    <div class="text-xs uppercase font-semibold text-gray-500 px-3 mb-3 tracking-wider">Leads</div>
+                    <div class="space-y-1">
+                        <a href="{{ route('leads.index') }}" class="flex items-center space-x-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 {{ request()->routeIs('leads.*') ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg' : 'text-gray-700 hover:text-indigo-700 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50' }}">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            </svg>
+                            <span>Leadlista</span>
+                        </a>
+                    </div>
                 </div>
-            </div>
+            @endif
 
             <!-- Publicering -->
             <div>
