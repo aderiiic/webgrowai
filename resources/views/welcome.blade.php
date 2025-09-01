@@ -1142,16 +1142,42 @@
                     </a>
                 </div>
                 <div class="grid md:grid-cols-3 gap-8">
-                    @foreach(\App\Models\Post::query()->whereNotNull('published_at')->latest('published_at')->take(3)->get() as $post)
-                        <a href="{{ route('news.show', $post->slug) }}" class="group block bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-lg hover:border-indigo-200 transition-all duration-300">
-                            <div class="text-sm text-slate-500 mb-3">{{ optional($post->published_at)->format('j M Y') }}</div>
-                            <h4 class="text-lg font-semibold text-slate-800 mb-3 group-hover:text-indigo-600 transition-colors">{{ $post->title }}</h4>
-                            <p class="text-slate-600 line-clamp-3 leading-relaxed">{{ $post->excerpt }}</p>
-                            <div class="flex items-center mt-4 text-indigo-600 font-medium text-sm group-hover:text-indigo-700 transition-colors">
-                                Läs mer
-                                <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-200" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
-                                </svg>
+                    @foreach(\App\Models\Post::with('featuredImage')->whereNotNull('published_at')->latest('published_at')->take(3)->get() as $post)
+                        <a href="{{ route('news.show', $post->slug) }}" class="group block bg-white border border-slate-200 rounded-2xl overflow-hidden hover:shadow-lg hover:border-indigo-200 transition-all duration-300">
+                            @if($post->featuredImage)
+                                <div class="aspect-w-16 aspect-h-9 overflow-hidden">
+                                    <img src="{{ $post->featured_image_url }}"
+                                         alt="{{ $post->title }}"
+                                         class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300">
+                                </div>
+                            @else
+                                <div class="h-48 bg-gradient-to-br from-indigo-100 to-blue-200 flex items-center justify-center">
+                                    <div class="text-center">
+                                        <svg class="w-12 h-12 text-indigo-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9.5a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
+                                        </svg>
+                                        <span class="text-sm text-indigo-500 font-medium">WebGrow AI</span>
+                                    </div>
+                                </div>
+                            @endif
+
+                            <div class="p-6">
+                                <div class="text-sm text-slate-500 mb-3 flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    {{ optional($post->published_at)->format('j M Y') }}
+                                </div>
+                                <h4 class="text-lg font-semibold text-slate-800 mb-3 group-hover:text-indigo-600 transition-colors line-clamp-2">{{ $post->title }}</h4>
+                                @if($post->excerpt)
+                                    <p class="text-slate-600 line-clamp-3 leading-relaxed mb-4">{{ $post->excerpt }}</p>
+                                @endif
+                                <div class="flex items-center text-indigo-600 font-medium text-sm group-hover:text-indigo-700 transition-colors">
+                                    Läs mer
+                                    <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-200" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
                             </div>
                         </a>
                     @endforeach

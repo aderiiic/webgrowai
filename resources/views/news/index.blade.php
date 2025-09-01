@@ -1,3 +1,4 @@
+
 @extends('layouts.guest', ['title' => 'Nyheter – WebGrow AI'])
 
 @section('content')
@@ -18,16 +19,37 @@
 
         <!-- Content -->
         <div class="max-w-7xl mx-auto px-4 py-16">
-            @php($paginator = \App\Models\Post::query()->whereNotNull('published_at')->latest('published_at')->paginate(12))
+            @php($paginator = \App\Models\Post::with('featuredImage')->whereNotNull('published_at')->latest('published_at')->paginate(12))
 
             @if($paginator->count() > 0)
                 <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
                     @foreach($paginator as $post)
                         <article class="group bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-blue-200 transition-all duration-300 overflow-hidden">
+                            <!-- Featured Image -->
+                            @if($post->featuredImage)
+                                <div class="aspect-w-16 aspect-h-9 overflow-hidden">
+                                    <img src="{{ $post->featured_image_url }}"
+                                         alt="{{ $post->title }}"
+                                         class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300">
+                                </div>
+                            @else
+                                <div class="h-48 bg-gradient-to-br from-indigo-100 to-blue-200 flex items-center justify-center">
+                                    <div class="text-center">
+                                        <svg class="w-12 h-12 text-indigo-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9.5a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
+                                        </svg>
+                                        <span class="text-sm text-indigo-500 font-medium">WebGrow AI</span>
+                                    </div>
+                                </div>
+                            @endif
+
                             <div class="p-8">
                                 <!-- Date & Category -->
                                 <div class="flex items-center justify-between mb-4">
-                                    <time class="text-sm font-medium text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+                                    <time class="inline-flex items-center text-sm font-medium text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+                                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
+                                        </svg>
                                         {{ optional($post->published_at)->format('j M Y') }}
                                     </time>
                                     <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
