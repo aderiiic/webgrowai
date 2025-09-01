@@ -130,9 +130,47 @@
         @php $mdReady = !empty($md); @endphp
 
             <!-- Förhandsvisning -->
+        <!-- Förhandsvisning -->
         <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 overflow-hidden">
             @if($mdReady)
                 <div class="p-8">
+                    <!-- Lägg till header med "Generera om"-knapp här -->
+                    <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-900">Genererat innehåll</h2>
+                            <p class="text-sm text-gray-600">{{ $content->provider ? "Genererat med {$content->provider}" : 'AI-genererat innehåll' }}</p>
+                        </div>
+
+                        @if($content->status === 'ready')
+                            <!-- Kontrollera om innehållet är låst efter publicering -->
+                            @php
+                                $isLocked = $content->publications()->where('status', 'published')->exists();
+                            @endphp
+
+                            @if(!$isLocked)
+                                <button wire:click="regenerate"
+                                        wire:loading.attr="disabled"
+                                        class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <svg wire:loading.remove class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                    </svg>
+                                    <svg wire:loading class="animate-spin w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                    </svg>
+                                    <span wire:loading.remove>Generera om</span>
+                                    <span wire:loading>Genererar...</span>
+                                </button>
+                            @else
+                                <div class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-500 rounded-xl">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                    </svg>
+                                    Låst efter publicering
+                                </div>
+                            @endif
+                        @endif
+                    </div>
+
                     <article class="prose prose-lg max-w-none prose-indigo prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-indigo-600 hover:prose-a:text-indigo-800 prose-strong:text-gray-900 prose-code:text-indigo-600 prose-pre:bg-gray-900 prose-pre:text-gray-100">
                         {!! $html !!}
                     </article>

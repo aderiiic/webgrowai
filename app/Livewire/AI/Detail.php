@@ -2,6 +2,7 @@
 
 namespace App\Livewire\AI;
 
+use App\Jobs\GenerateContentJob;
 use App\Jobs\PublishAiContentJob;
 use App\Jobs\PublishToFacebookJob;
 use App\Jobs\PublishToInstagramJob;
@@ -354,5 +355,37 @@ class Detail extends Component
         }
 
         return trim($md);
+    }
+
+    public function regenerate()
+    {
+        if ($this->content->status !== 'ready') {
+            $this->addError('general', 'Kan bara generera om färdigt innehåll.');
+            return;
+        }
+
+        $isPublished = $this->content->publications()->where('status', 'published')->exists();
+        if ($isPublished) {
+            session()->flash('error', 'Kan inte generera om innehåll som redan publicerats.');
+            return;
+        }
+
+        // Markera som köad igen
+        $this->content->update([
+            'status' => 'queued',
+            'body_md' => null,
+            'error' => null,
+        ]);
+
+        // Kör jobbet igen
+        dispatch(new GenerateContentJob($this->content->id))->onQueue('ai');
+
+        session()->flash('success', 'Genererar nytt innehåll...');
+    }
+
+    // Metod för att låsa innehåll efter publicering
+    public function lockAfterPublication()
+    {
+        $this->content->update(['is_locked' => true]);
     }
 }
