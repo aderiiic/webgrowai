@@ -49,14 +49,15 @@
                                 </a>
                             @endif
 
-                            <button @click="demoOpen=true"
-                                    class="inline-flex items-center justify-center px-8 py-4 bg-white/90 backdrop-blur-sm text-slate-800 font-semibold rounded-xl border border-slate-200 hover:bg-white hover:shadow-md hover:border-slate-300 transition-all duration-300"
-                                    data-lead-cta="hero_book_demo">
+                            <a href="#demo-form"
+                               @click="demoOpen=true"
+                               class="inline-flex items-center justify-center px-8 py-4 bg-white/90 backdrop-blur-sm text-slate-800 font-semibold rounded-xl border border-slate-200 hover:bg-white hover:shadow-md hover:border-slate-300 transition-all duration-300"
+                               data-lead-cta="hero_book_demo">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                                 </svg>
-                                Boka demo
-                            </button>
+                                Se demo (3 min)
+                            </a>
                         </div>
 
                         <!-- Fördelar -->
@@ -1036,31 +1037,92 @@
         </section>
 
         <!-- Book a demo modal -->
-        <div x-show="demoOpen" x-cloak class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div @click.outside="demoOpen=false" class="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl">
-                <div class="text-center mb-6">
-                    <h3 class="text-2xl font-bold text-slate-800 mb-2">Boka en demo</h3>
-                    <p class="text-slate-600">Fyll i så återkommer vi inom 24h</p>
+        <!-- Demo Modal (om den inte redan finns) -->
+        <div x-show="demoOpen" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <div x-show="demoOpen" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="demoOpen=false"></div>
+
+                <div x-show="demoOpen" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block align-bottom bg-white rounded-2xl px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+
+                    <!-- Stäng-knapp -->
+                    <div class="absolute top-0 right-0 pt-4 pr-4">
+                        <button @click="demoOpen=false" class="bg-white rounded-md text-gray-400 hover:text-gray-600 focus:outline-none">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Formulär -->
+                    <div class="sm:flex sm:items-start">
+                        <div class="w-full">
+                            <h3 class="text-2xl font-bold text-gray-900 mb-6">Boka en demo</h3>
+
+                            <!-- Success meddelande -->
+                            @if(session('success'))
+                                <div class="mb-4 p-4 bg-green-50 border border-green-200 rounded-xl">
+                                    <div class="flex items-center">
+                                        <svg class="w-5 h-5 text-green-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                        </svg>
+                                        <p class="text-green-800 font-medium">{{ session('success') }}</p>
+                                    </div>
+                                </div>
+                            @endif
+
+                            <form action="{{ route('demo.request') }}" method="POST" class="space-y-4">
+                                @csrf
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Namn *</label>
+                                    <input type="text" name="name" required value="{{ old('name') }}"
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    @error('name')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">E-post *</label>
+                                    <input type="email" name="email" required value="{{ old('email') }}"
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    @error('email')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Företag</label>
+                                    <input type="text" name="company" value="{{ old('company') }}"
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    @error('company')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Meddelande (valfritt)</label>
+                                    <textarea name="notes" rows="3" placeholder="Berätta kort om ditt företag och vad du är intresserad av att se..."
+                                              class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">{{ old('notes') }}</textarea>
+                                    @error('notes')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div class="flex gap-3 pt-4">
+                                    <button type="button" @click="demoOpen=false"
+                                            class="flex-1 px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors">
+                                        Avbryt
+                                    </button>
+                                    <button type="submit"
+                                            class="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-colors">
+                                        Skicka förfrågan
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </div>
-                <form class="space-y-4" method="POST" action="{{ route('demo.request') }}">
-                    @csrf
-                    <div>
-                        <input type="text" name="name" class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Ditt namn" required>
-                    </div>
-                    <div>
-                        <input type="email" name="email" class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Din e‑post" required>
-                    </div>
-                    <div>
-                        <input type="text" name="company" class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Företag (valfritt)">
-                    </div>
-                    <div>
-                        <textarea name="notes" rows="3" class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors resize-none" placeholder="Vad vill du fokusera på i demon? (valfritt)"></textarea>
-                    </div>
-                    <div class="flex items-center justify-between gap-3 pt-4">
-                        <button type="button" class="px-6 py-3 text-slate-600 font-medium rounded-xl border border-slate-300 hover:bg-slate-50 transition-colors" @click="demoOpen=false">Avbryt</button>
-                        <button type="submit" class="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-colors shadow-lg" data-lead-cta="book_demo_submit">Skicka</button>
-                    </div>
-                </form>
             </div>
         </div>
 

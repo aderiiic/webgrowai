@@ -92,8 +92,18 @@ Route::post('/demo-request', function (\Illuminate\Http\Request $request) {
         'company' => 'nullable|string|max:180',
         'notes' => 'nullable|string|max:2000',
     ]);
+
+    // Spara i databasen
     \App\Models\DemoRequest::create($data);
-    return back()->with('success', 'Tack! Vi återkommer snarast för att boka en demo.');
+
+    // Skicka mejl till info@webbi.se
+    \Illuminate\Support\Facades\Mail::send('emails.demo-request', $data, function ($message) use ($data) {
+        $message->to('info@webbi.se')
+            ->subject('Ny demo-förfrågan från ' . $data['name'])
+            ->replyTo($data['email'], $data['name']);
+    });
+
+    return back()->with('success', 'Tack! Vi återkommer inom 24 timmar för att boka en demo.');
 })->name('demo.request');
 
 Route::get('/integritet', function () {
