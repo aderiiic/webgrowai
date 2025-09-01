@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Integration;
 use App\Models\WpIntegration;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
@@ -22,6 +23,9 @@ class WordPressClient
         ]);
     }
 
+    /**
+     * Bakåtkompatibel fabrik som bygger klient från WpIntegration.
+     */
     public static function for(WpIntegration $integration): self
     {
         return new self(
@@ -29,6 +33,32 @@ class WordPressClient
             $integration->wp_username,
             Crypt::decryptString($integration->wp_app_password)
         );
+    }
+
+    /**
+     * Ny fabrik: bygger klient från Integration (provider=wordpress) där credentials är ett JSON/array-fält.
+     * Stödjer nycklarna: wp_url|url, wp_username|username, wp_app_password|app_password.
+     * Kastar RuntimeException om något saknas.
+     */
+    public static function fromIntegration(Integration $integration): self
+    {
+        $creds = (array) ($integration->credentials ?? []);
+
+        $baseUrl = rtrim((string)($creds['wp_url'] ?? $creds['url'] ?? ''), '/');
+        $username = (string)($creds['wp_username'] ?? $creds['username'] ?? '');
+        $rawPass  = (string)($creds['wp_app_password'] ?? $creds['app_password'] ?? '');
+
+        if ($baseUrl === '' || $username === '' || $rawPass === '') {
+            throw new \RuntimeException('Ogiltiga WordPress-uppgifter (url/användare/lösen saknas).');
+        }
+
+        try {
+            $appPassword = Crypt::decryptString($rawPass);
+        } catch (\Throwable) {
+            $appPassword = $rawPass;
+        }
+
+        return new self($baseUrl, $username, $appPassword);
     }
 
     public function getMe(): array
@@ -125,7 +155,6 @@ class WordPressClient
             $body = (string) ($e->getResponse()?->getBody() ?? '');
             $statusCode = $e->getCode();
 
-            // Försök att parsa WordPress fel-respons
             $error = json_decode($body, true);
             $errorMessage = $error['message'] ?? $body;
 

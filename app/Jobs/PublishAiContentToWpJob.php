@@ -6,13 +6,12 @@ use App\Models\AiContent;
 use App\Models\ContentPublication;
 use App\Models\ImageAsset;
 use App\Models\Integration;
-use App\Models\WpIntegration;
 use App\Services\ImageGenerator;
+use App\Services\Usage;
 use App\Services\WordPressClient;
-use App\Support\Usage;
+use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -35,7 +34,6 @@ class PublishAiContentToWpJob implements ShouldQueue
     public function handle(Usage $usage, ImageGenerator $images): void
     {
         $content = AiContent::with('site')->findOrFail($this->aiContentId);
-        $integration = Integration::where('site_id', $this->siteId)->firstOrFail();
 
         $pub = $this->publicationId ? ContentPublication::find($this->publicationId) : null;
         if (!$pub) {
@@ -62,11 +60,33 @@ class PublishAiContentToWpJob implements ShouldQueue
         }
 
         $pub->update(['status' => 'processing', 'message' => null]);
-        $client = WordPressClient::for($integration);
+
+        // Hämta Integration för WordPress
+        $integration = Integration::where('site_id', $this->siteId)
+            ->where('provider', 'wordpress')
+            ->first();
+
+        if (!$integration) {
+            $pub->update([
+                'status'  => 'failed',
+                'message' => 'Ingen WordPress‑integration hittades för vald sajt.',
+            ]);
+            return;
+        }
+
+        try {
+            $client = WordPressClient::fromIntegration($integration);
+        } catch (\Throwable $e) {
+            $pub->update([
+                'status'  => 'failed',
+                'message' => $e->getMessage(),
+            ]);
+            return;
+        }
 
         try {
             $me = $client->getMe();
-            \Log::debug('[WP Publish] Auth OK', ['user' => $me['name'] ?? $me['slug'] ?? null, 'id' => $me['id'] ?? null]);
+            Log::debug('[WP Publish] Auth OK', ['user' => $me['name'] ?? $me['slug'] ?? null, 'id' => $me['id'] ?? null]);
         } catch (\Throwable $e) {
             $pub->update(['status' => 'failed', 'message' => 'WP-auth misslyckades: '.$e->getMessage()]);
             throw $e;
@@ -74,10 +94,10 @@ class PublishAiContentToWpJob implements ShouldQueue
 
         $md = $this->normalizeMd($content->body_md ?? '');
         $blocks = $this->toGutenbergBlocks($md);
-        $htmlFallback = \Illuminate\Support\Str::of($md)->markdown();
+        $htmlFallback = Str::of($md)->markdown();
 
         $payload = [
-            'title'   => $content->title ?: \Illuminate\Support\Str::limit(strip_tags($htmlFallback), 48, '...'),
+            'title'   => $content->title ?: Str::limit(strip_tags($htmlFallback), 48, '...'),
             'content' => $blocks !== '' ? $blocks : $htmlFallback,
             'status'  => $this->status,
         ];
@@ -112,10 +132,11 @@ class PublishAiContentToWpJob implements ShouldQueue
                     $payload['featured_media'] = $featuredMediaId;
 
                     if ($mediaUrl) {
-//                        $imgBlock = "<!-- wp:image {\"id\":{$featuredMediaId},\"sizeSlug\":\"full\",\"linkDestination\":\"none\"} -->
-//<figure class=\"wp-block-image size-full\"><img src=\"{$mediaUrl}\" alt=\"\" class=\"wp-image-{$featuredMediaId}\"/></figure>
-//<!-- /wp:image -->";
-//                        $payload['content'] = $imgBlock . "\n\n" . $payload['content'];
+                        // Om du vill lägga in block-bild före innehållet, avkommentera nedan:
+                        // $imgBlock = "<!-- wp:image {\"id\":{$featuredMediaId},\"sizeSlug\":\"full\",\"linkDestination\":\"none\"} -->
+                        // <figure class=\"wp-block-image size-full\"><img src=\"{$mediaUrl}\" alt=\"\" class=\"wp-image-{$featuredMediaId}\"/></figure>
+                        // <!-- /wp:image -->";
+                        // $payload['content'] = $imgBlock . "\n\n" . $payload['content'];
                     }
                 }
             } else {
@@ -134,13 +155,13 @@ class PublishAiContentToWpJob implements ShouldQueue
 
                     if ($want && $prompt) {
                         $bytes    = $images->generateJpeg($prompt, '1024x1024', 85);
-                        $filename = 'ai-image-' . \Illuminate\Support\Str::uuid() . '.jpg';
+                        $filename = 'ai-image-' . Str::uuid() . '.jpg';
 
                         $media    = $client->uploadMedia($bytes, $filename, 'image/jpeg');
                         $featuredMediaId = $media['id'] ?? null;
                         $mediaUrl = $media['source_url'] ?? ($media['guid']['rendered'] ?? null) ?? null;
 
-                        \Log::debug('[WP Publish] Media upload result', [
+                        Log::debug('[WP Publish] Media upload result', [
                             'id'  => $featuredMediaId,
                             'url' => $mediaUrl,
                         ]);
@@ -173,11 +194,11 @@ class PublishAiContentToWpJob implements ShouldQueue
             $pub->update([
                 'status'      => 'published',
                 'external_id' => $postId,
-                'payload'     => $pubPayload ?: $payload, // spara ev. image_asset_id m.m.
+                'payload'     => $pubPayload ?? $payload,
                 'message'     => null,
             ]);
 
-            if (!empty($pubPayload['image_asset_id'])) {
+            if (!empty(($pubPayload ?? [])['image_asset_id']) && method_exists(ImageAsset::class, 'markUsed')) {
                 ImageAsset::markUsed((int)$pubPayload['image_asset_id'], $pub->id);
             }
 
@@ -242,7 +263,7 @@ Style: modern, photographic, 16:9, minimal, no text overlays.");
     {
         if ($md === '') return '';
         try {
-            $html = (string) \Illuminate\Support\Str::of($md)->markdown();
+            $html = (string) Str::of($md)->markdown();
 
             $dom = new \DOMDocument('1.0', 'UTF-8');
             libxml_use_internal_errors(true);
