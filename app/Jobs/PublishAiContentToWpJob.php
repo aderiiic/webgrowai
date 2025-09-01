@@ -7,7 +7,7 @@ use App\Models\ContentPublication;
 use App\Models\ImageAsset;
 use App\Models\Integration;
 use App\Services\ImageGenerator;
-use App\Services\Usage;
+use App\Support\Usage;
 use App\Services\WordPressClient;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
