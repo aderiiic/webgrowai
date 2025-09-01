@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\AiContent;
 use App\Models\ContentPublication;
 use App\Models\ImageAsset;
+use App\Models\Integration;
 use App\Models\WpIntegration;
 use App\Services\ImageGenerator;
 use App\Services\WordPressClient;
@@ -34,7 +35,7 @@ class PublishAiContentToWpJob implements ShouldQueue
     public function handle(Usage $usage, ImageGenerator $images): void
     {
         $content = AiContent::with('site')->findOrFail($this->aiContentId);
-        $integration = WpIntegration::where('site_id', $this->siteId)->firstOrFail();
+        $integration = Integration::where('site_id', $this->siteId)->firstOrFail();
 
         $pub = $this->publicationId ? ContentPublication::find($this->publicationId) : null;
         if (!$pub) {
