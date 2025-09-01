@@ -1,4 +1,5 @@
-<div>
+
+<div x-data="{ showConfirmation: false }">
     <div class="max-w-6xl mx-auto space-y-8">
         <!-- Header -->
         <div class="flex items-center justify-between">
@@ -380,7 +381,7 @@
 
                     <!-- Action buttons -->
                     <div class="space-y-4">
-                        <button wire:click="submit" class="w-full inline-flex items-center justify-center px-6 py-4 bg-gradient-to-r from-orange-600 to-red-600 text-white font-semibold rounded-xl hover:from-orange-700 hover:to-red-700 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transform hover:scale-[1.02] transition-all duration-200 shadow-lg hover:shadow-xl">
+                        <button @click="showConfirmation = true" class="w-full inline-flex items-center justify-center px-6 py-4 bg-gradient-to-r from-orange-600 to-red-600 text-white font-semibold rounded-xl hover:from-orange-700 hover:to-red-700 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transform hover:scale-[1.02] transition-all duration-200 shadow-lg hover:shadow-xl">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
                             </svg>
@@ -529,5 +530,95 @@
                 </div>
             </div>
         @endif
+    </div>
+
+    <!-- Bekräftelsedialog -->
+    <div x-show="showConfirmation"
+         x-transition:enter="ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 overflow-y-auto"
+         style="display: none;"
+         x-cloak>
+
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <!-- Bakgrund overlay -->
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+                 @click="showConfirmation = false"></div>
+
+            <!-- Dialog -->
+            <div class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-6 pt-6 pb-4">
+                    <div class="flex items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-orange-100">
+                            <svg class="h-6 w-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                            </svg>
+                        </div>
+                        <div class="mt-0 ml-4 text-left">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900">
+                                Bekräfta kampanjsändning
+                            </h3>
+                            <div class="mt-4">
+                                <p class="text-sm text-gray-600 mb-4">
+                                    Innan du skickar kampanjen till alla prenumeranter, vänligen bekräfta följande:
+                                </p>
+
+                                <div class="space-y-3 mb-6 text-sm text-gray-700">
+                                    <div class="flex items-start space-x-3 p-3 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg border border-orange-200">
+                                        <svg class="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        <div>
+                                            <p class="font-semibold">Har du skickat och kontrollerat ett testmejl?</p>
+                                            <p class="text-xs text-gray-600 mt-1">För att säkerställa att innehåll och utseende ser bra ut</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-start space-x-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                                        <svg class="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        <div>
+                                            <p class="font-semibold">Godkänner du innehållet och utseendet?</p>
+                                            <p class="text-xs text-gray-600 mt-1">Ämnesrad: "{{ $subject }}"</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-start space-x-3 p-3 bg-gradient-to-r from-red-50 to-pink-50 rounded-lg border border-red-200">
+                                        <svg class="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        <div>
+                                            <p class="font-semibold">Kampanjen skickas till alla prenumeranter</p>
+                                            <p class="text-xs text-gray-600 mt-1">
+                                                {{ $sendAt ? 'Schemalagt för: ' . \Carbon\Carbon::parse($sendAt)->format('Y-m-d H:i') : 'Skickas omedelbart' }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 px-6 py-4 flex flex-col-reverse sm:flex-row sm:justify-end space-y-3 space-y-reverse sm:space-y-0 sm:space-x-3">
+                    <button @click="showConfirmation = false"
+                            class="w-full sm:w-auto inline-flex justify-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200">
+                        Avbryt
+                    </button>
+                    <button @click="showConfirmation = false; $wire.submit()"
+                            class="w-full sm:w-auto inline-flex justify-center px-4 py-2 bg-gradient-to-r from-orange-600 to-red-600 text-white font-semibold rounded-lg hover:from-orange-700 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-all duration-200">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                        </svg>
+                        Ja, skicka kampanj
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>

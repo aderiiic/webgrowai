@@ -1,4 +1,3 @@
-
 @php
     $plans = app(\App\Services\Billing\PlanService::class);
     $current = app(\App\Support\CurrentCustomer::class);
@@ -25,6 +24,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>WebGrow AI - Din marknadsassistent redo för att växa med dig</title>
+    <link rel="icon" type="image/png" href="https://webbiab.s3.eu-north-1.amazonaws.com/webgrowai/WebGrowAI_iconTransparent.png" sizes="32x32">
     @vite(['resources/css/app.css','resources/js/app.js'])
     @livewireStyles
 </head>
