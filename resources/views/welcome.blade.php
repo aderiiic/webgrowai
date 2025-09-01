@@ -845,8 +845,8 @@
                             <!-- Duplicate set for seamless loop -->
                             <div class="flex items-center justify-center min-w-max px-8">
                                 <div class="group mx-8">
-                                    <div class="w-32 h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-500 hover:shadow-lg animate-float-4">
-                                        <img src="https://rabattello-bucket.s3.eu-north-1.amazonaws.com/webbiqr/webbiqr_logo.png" alt="Rabattello" class="max-w-24 max-h-12 object-contain">
+                                    <div class="w-32 h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-500 hover:shadow-lg animate-float-1">
+                                        <img src="https://carilo.se/wp-content/uploads/2024/09/LOGGA-CARILO-PNG.png" alt="Carilo" class="max-w-24 max-h-12 object-contain">
                                     </div>
                                 </div>
                                 <div class="group mx-8">
@@ -855,23 +855,38 @@
                                     </div>
                                 </div>
                                 <div class="group mx-8">
+                                    <div class="w-32 h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-500 hover:shadow-lg animate-float-6">
+                                        <img src="https://bymoi.se/cdn/shop/files/With_background_Black_logo_version_01_aa1d876f-2703-47e2-9e03-f9e136167492_650x326.png?v=1735120259" alt="CarOnSpot" class="max-w-24 max-h-12 object-contain">
+                                    </div>
+                                </div>
+                                <div class="group mx-8">
+                                    <div class="w-32 h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-500 hover:shadow-lg animate-float-1">
+                                        <img src="https://scontent-vie1-1.xx.fbcdn.net/v/t39.30808-6/278241355_409461631179505_3184951711944655993_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=cKiCXMdON0AQ7kNvwF0Sr0r&_nc_oc=AdkONiD_WoP0DbWOj4HLhLiDOvItblIUXIIEhm097WaYsKDaeBgg5Jx8lV81hZAQGhU&_nc_zt=23&_nc_ht=scontent-vie1-1.xx&_nc_gid=-2dtD1nJlrYTb-uYcWODRw&oh=00_AfXJ55Mqdja1gKiS7AYWkqteT7WXn0SND5iIWll5CbLuUw&oe=68BC1315" alt="TheRightWay" class="max-w-24 max-h-12 object-contain">
+                                    </div>
+                                </div>
+                                <div class="group mx-8">
                                     <div class="w-32 h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-500 hover:shadow-lg animate-float-3">
                                         <img src="https://caronspot.com/storage/img/logotype-no-bg.png" alt="CarOnSpot" class="max-w-24 max-h-12 object-contain">
                                     </div>
                                 </div>
                                 <div class="group mx-8">
-                                    <div class="w-32 h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-500 hover:shadow-lg animate-float-4">
-                                        <img src="https://rabattello-bucket.s3.eu-north-1.amazonaws.com/webbiqr/webbiqr_logo.png" alt="CarOnSpot" class="max-w-24 max-h-12 object-contain">
-                                    </div>
-                                </div>
-                                <div class="group mx-8">
                                     <div class="w-32 h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-500 hover:shadow-lg animate-float-5">
-                                        <img src="https://darm.se/cdn/shop/files/Darm-NoBG.png?v=1755973519&width=120" alt="CarOnSpot" class="max-w-24 max-h-12 object-contain">
+                                        <img src="https://darm.se/cdn/shop/files/Darm-NoBG.png?v=1755973519&width=120" alt="Darm" class="max-w-24 max-h-12 object-contain">
                                     </div>
                                 </div>
                                 <div class="group mx-8">
-                                    <div class="w-32 h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-500 hover:shadow-lg animate-float-6">
-                                        <img src="https://bymoi.se/cdn/shop/files/With_background_Black_logo_version_01_aa1d876f-2703-47e2-9e03-f9e136167492_650x326.png?v=1735120259" alt="CarOnSpot" class="max-w-24 max-h-12 object-contain">
+                                    <div class="w-32 h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-500 hover:shadow-lg animate-float-4">
+                                        <img src="https://scontent-vie1-1.xx.fbcdn.net/v/t39.30808-1/509355954_122121348812841568_8951393074492947963_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=2d3e12&_nc_ohc=clYzibfSZj4Q7kNvwHK_RqE&_nc_oc=Adky4VE1O6-Ct-YzFv2-lkAhq-aaaabGGlC9fiHi-NjG6CFqKqzBPjYySGWcM4YszZo&_nc_zt=24&_nc_ht=scontent-vie1-1.xx&_nc_gid=gGDkSbN5Yu61gMpluUM9MA&oh=00_AfXc5UW1fCtoHGVA0ksU9lDYYdLaDPcpkxIbhr_Z4HMMZA&oe=68BC1942" alt="Notisnook" class="max-w-24 max-h-12 object-contain">
+                                    </div>
+                                </div>
+                                <div class="group mx-8">
+                                    <div class="w-32 h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-500 hover:shadow-lg animate-float-4">
+                                        <img src="https://webbiab.s3.eu-north-1.amazonaws.com/WebbiQR/WebbiQR+-+new+logo.png" alt="WebbiQR" class="max-w-24 max-h-12 object-contain">
+                                    </div>
+                                </div>
+                                <div class="group mx-8">
+                                    <div class="w-32 h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-500 hover:shadow-lg animate-float-4">
+                                        <img src="https://rabattello-bucket.s3.eu-north-1.amazonaws.com/rabattello/rabattello-logo.png" alt="Rabattello" class="max-w-24 max-h-12 object-contain">
                                     </div>
                                 </div>
                             </div>
