@@ -23,6 +23,10 @@ class Show extends Component
     public bool $overageApproved = false;
     public ?string $overageNote = null;
 
+    public $showAddSiteForm = false;
+    public $newSiteName = '';
+    public $newSiteUrl = '';
+
     public function mount(int $id): void
     {
         $this->customer = Customer::findOrFail($id);
@@ -176,5 +180,80 @@ class Show extends Component
     public function render()
     {
         return view('livewire.admin.customers.show');
+    }
+
+    public function toggleAddSiteForm()
+    {
+        $this->showAddSiteForm = !$this->showAddSiteForm;
+        $this->reset(['newSiteName', 'newSiteUrl']);
+    }
+
+    public function createSiteForCustomer()
+    {
+        $this->validate([
+            'newSiteName' => 'required|string|max:255',
+            'newSiteUrl' => 'required|url|max:255',
+        ]);
+
+        $this->customer->sites()->create([
+            'name' => $this->newSiteName,
+            'url' => rtrim($this->newSiteUrl, '/'),
+            'public_key' => (string) Str::uuid(),
+        ]);
+
+        $this->reset(['newSiteName', 'newSiteUrl', 'showAddSiteForm']);
+
+        session()->flash('success', 'Sajt skapad för kunden!');
+    }
+
+    public function runSeoAudit($siteId)
+    {
+        // Implementera SEO audit logik eller redirect
+        $site = Site::findOrFail($siteId);
+
+        // Kör audit eller redirect till audit-sidan
+        return redirect()->route('sites.seo.audit.run', $site);
+    }
+
+    public function deleteSite($siteId)
+    {
+        $site = Site::findOrFail($siteId);
+
+        // Kontrollera att sajten tillhör denna kund
+        if ($site->customer_id !== $this->customer->id) {
+            session()->flash('error', 'Du kan inte ta bort denna sajt.');
+            return;
+        }
+
+        $site->delete();
+
+        session()->flash('success', 'Sajt borttagen!');
+    }
+
+    public function impersonateCustomer()
+    {
+        // Implementera impersonation - logga in som kunden
+        // Detta kräver troligtvis additional logic för att säkert impersonera
+
+        // För säkerhets skull, bara admin bör kunna göra detta
+        if (!auth()->user()->isAdmin()) {
+            abort(403);
+        }
+
+        // Här kan du implementera impersonation logic
+        // Till exempel med Laravel Impersonate package eller egen implementation
+
+        session()->flash('success', 'Inloggad som kund (implementera impersonation logic)');
+    }
+
+    public function resetCustomerOnboarding()
+    {
+        // Återställ kundens onboarding till steg 1
+        $user = $this->customer->user; // Assuming customer has a user relationship
+
+        if ($user) {
+            $user->update(['onboarding_step' => 1]);
+            session()->flash('success', 'Onboarding återställd till steg 1');
+        }
     }
 }
