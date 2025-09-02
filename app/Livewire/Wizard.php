@@ -56,6 +56,15 @@ class Wizard extends Component
             $this->step = 2;
         }
 
+        // Ladda befintlig site data om vi redan har en site (för att fixa problem 1)
+        if ($this->primarySiteId) {
+            $site = Site::find($this->primarySiteId);
+            if ($site) {
+                $this->site_name = $site->name;
+                $this->site_url = $site->url;
+            }
+        }
+
         $this->persistStep();
     }
 
@@ -86,6 +95,37 @@ class Wizard extends Component
             : false;
 
         $this->leadTrackerReady = $this->leadTrackerReady && (bool)$this->primarySiteId;
+    }
+
+    // NYTT: Funktion för att uppdatera befintlig site (löser problem 1)
+    public function updateSite(CurrentCustomer $current): void
+    {
+        if (!$this->primarySiteId) {
+            $this->createSite($current);
+            return;
+        }
+
+        $data = $this->validate([
+            'site_name' => ['required', 'string', 'min:2', 'max:120'],
+            'site_url'  => ['required', 'url', 'max:255'],
+        ]);
+
+        $normalizedUrl = rtrim($data['site_url'], '/');
+        $customer = $current->get();
+
+        $site = $customer->sites()->find($this->primarySiteId);
+        if ($site) {
+            $site->update([
+                'name' => $data['site_name'],
+                'url'  => $normalizedUrl,
+            ]);
+        }
+
+        $this->step = 2;
+        $this->persistStep();
+
+        $this->resetErrorBag();
+        $this->refreshStatus();
     }
 
     public function createSite(CurrentCustomer $current): void
@@ -120,10 +160,19 @@ class Wizard extends Component
 
     public function next(): void
     {
-        if ($this->step === 3 && !$this->integrationConnected) {
-            $this->addError('integrationConnected', 'Koppla din sajt (WordPress/Shopify/Custom) för att fortsätta.');
+        // För steg 3: hoppa direkt till steg 4 om provider är shopify eller custom
+        if ($this->step === 3 && in_array($this->provider, ['shopify', 'custom'])) {
+            $this->step = 4;
+            $this->persistStep();
             return;
         }
+
+        // Endast för WordPress krävs integration i steg 3
+        if ($this->step === 3 && $this->provider === 'wordpress' && !$this->integrationConnected) {
+            $this->addError('integrationConnected', 'Koppla WordPress för att fortsätta, eller välj en annan plattform.');
+            return;
+        }
+
         if ($this->step === 4 && !$this->leadTrackerReady) {
             $this->addError('leadTrackerReady', 'Bekräfta att lead-spårningen är installerad.');
             return;
@@ -195,7 +244,7 @@ class Wizard extends Component
     {
         return match ($this->provider) {
             'shopify'   => 'Shopify',
-            'custom'    => 'Custom',
+            'custom'    => 'Anpassad webbplats',
             default     => 'WordPress',
         };
     }

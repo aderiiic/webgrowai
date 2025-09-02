@@ -122,9 +122,13 @@ Route::middleware(['auth','verified'])->group(function () {
 Route::middleware(['auth','verified'])->get('/onboarding/tracker', \App\Livewire\Onboarding\Tracker::class)
     ->name('onboarding.tracker');
 
-Route::middleware(['auth','verified'])->get('/downloads/webbi-lead-tracker', function () {
-    $path = public_path('downloads/webbi-lead-tracker.zip'); // placera zip här
-    abort_unless(file_exists($path), 404);
+Route::get('/downloads/plugin', function () {
+    $path = storage_path('app/public/webbi-lead-tracker.zip');
+
+    if (!file_exists($path)) {
+        abort(404, 'Plugin file not found');
+    }
+
     return response()->download($path, 'webbi-lead-tracker.zip');
 })->name('downloads.webbi-lead-tracker');
 
@@ -497,6 +501,6 @@ Route::middleware('auth')->group(function () {
     })->middleware(['throttle:6,1'])->name('verification.send');
 });
 
-Route::get('/register', function () {
-   return view('coming-soon');
-})->name('register');;
+//Route::get('/register', function () {
+//   return view('coming-soon');
+//})->name('register');

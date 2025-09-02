@@ -175,10 +175,11 @@
             <div class="max-w-7xl mx-auto px-4">
                 <div class="text-center mb-16">
                     <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-4">
-                        Integrerar med dina befintliga verktyg
+                        Koppla till din befintliga webbplats
                     </h2>
                     <p class="text-xl text-slate-600 max-w-3xl mx-auto">
-                        Enkelt och säkert via oAuth. Som Shopify partner erbjuder vi gratis onboarding och support.
+                        Vi kopplar enkelt till din webbplats på 5 minuter. Oavsett om du använder
+                        WordPress, Shopify eller någon annan plattform går det att koppla till din befintliga webbplats.
                     </p>
                 </div>
 
@@ -191,10 +192,10 @@
                             </svg>
                         </div>
                         <h3 class="text-xl font-bold text-slate-800 mb-3">WordPress</h3>
-                        <p class="text-slate-600 leading-relaxed">Säker oAuth-anslutning för automatisk optimering av innehåll och SEO-inställningar.</p>
+                        <p class="text-slate-600 leading-relaxed">Logga in med ditt WordPress-konto så kopplar vi din sajt automatiskt. Inga tekniska kunskaper krävs.</p>
                         <div class="mt-4 inline-flex items-center text-blue-600 font-medium">
                             <span class="w-2 h-2 bg-emerald-500 rounded-full mr-2"></span>
-                            Säker integration
+                            Enkel inloggning
                         </div>
                     </div>
 
@@ -206,10 +207,10 @@
                             </svg>
                         </div>
                         <h3 class="text-xl font-bold text-slate-800 mb-3">Shopify</h3>
-                        <p class="text-slate-600 leading-relaxed">Shopify Partner med specialiserad e-handelsoptimering och produktmarknadsföring.</p>
+                        <p class="text-slate-600 leading-relaxed">Vi är Shopify-partners. Enkel uppsättning utan krångel. Vårt support-team är alltid redo för att hjälpa dig.</p>
                         <div class="mt-4 inline-flex items-center text-emerald-600 font-medium">
                             <span class="w-2 h-2 bg-emerald-500 rounded-full mr-2"></span>
-                            <a href="https://webbi.se" target="_blank" class="hover:underline">Webbi - Shopify Partner</a>
+                            <a href="https://webbi.se" target="_blank" class="hover:underline">Certifierad partner</a>
                         </div>
                     </div>
 
@@ -220,48 +221,45 @@
                                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                             </svg>
                         </div>
-                        <h3 class="text-xl font-bold text-slate-800 mb-3">Custom Sidor</h3>
-                        <p class="text-slate-600 leading-relaxed">API-integration för anpassade webbplatser och plattformar via säker oAuth-autentisering.</p>
+                        <h3 class="text-xl font-bold text-slate-800 mb-3">Andra webbplatser</h3>
+                        <p class="text-slate-600 leading-relaxed">Har du en anpassad webbplats? Vi hjälper dig att koppla den också - kontakta oss så löser vi det.</p>
                         <div class="mt-4 inline-flex items-center text-purple-600 font-medium">
                             <span class="w-2 h-2 bg-emerald-500 rounded-full mr-2"></span>
-                            Flexibel API
+                            Personlig hjälp
                         </div>
                     </div>
                 </div>
 
                 <!-- Support Features -->
                 <div class="bg-gradient-to-r from-slate-50 to-indigo-50 rounded-2xl p-8 text-center">
-                    <h3 class="text-2xl font-bold text-slate-800 mb-4">Fullständig support från dag ett</h3>
+                    <h3 class="text-2xl font-bold text-slate-800 mb-4">Vi hjälper dig hela vägen</h3>
                     <div class="grid md:grid-cols-3 gap-6 mb-8">
                         <div class="flex items-center justify-center">
                             <svg class="w-6 h-6 text-emerald-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                             </svg>
-                            <span class="font-semibold text-slate-800">Gratis onboarding</span>
+                            <span class="font-semibold text-slate-800">Gratis installation</span>
                         </div>
                         <div class="flex items-center justify-center">
                             <svg class="w-6 h-6 text-emerald-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                             </svg>
-                            <span class="font-semibold text-slate-800">Personlig support</span>
+                            <span class="font-semibold text-slate-800">Support via telefon & mejl</span>
                         </div>
                         <div class="flex items-center justify-center">
                             <svg class="w-6 h-6 text-emerald-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                             </svg>
-                            <span class="font-semibold text-slate-800">Shopify partner</span>
+                            <span class="font-semibold text-slate-800">Shopify-partner</span>
                         </div>
                     </div>
                     <p class="text-slate-600 max-w-2xl mx-auto">
-                        Vi hjälper dig att komma igång snabbt och säkert. Som Shopify partner har vi djup expertis inom e-handel och kan anpassa lösningen efter dina specifika behov.
+                        Vi sköter den tekniska biten så du slipper. Som Shopify-partner och WordPress-experter vet vi exakt hur allt ska fungera tillsammans.
                     </p>
                 </div>
             </div>
         </section>
 
-        <!-- Free Website Program -->
-        <!-- Free Website Program - Refined Premium Version -->
-        <!-- Free Website Program - Refined Premium Version -->
         <section class="py-32 bg-slate-900 relative overflow-hidden">
             <!-- Subtle background elements -->
             <div class="absolute inset-0">
