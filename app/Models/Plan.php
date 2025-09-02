@@ -27,7 +27,6 @@ class Plan extends Model
     }
 
     // Hjälpmetoder
-
     public function scopeActive($q)
     {
         return $q->where('is_active', true);

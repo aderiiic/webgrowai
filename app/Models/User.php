@@ -12,10 +12,20 @@ class User extends Authenticatable implements MustVerifyEmail
     use HasFactory, Notifiable;
 
     protected $fillable = [
-        'name', 'email', 'password', 'role', 'onboarding_step',
+        'name',
+        'email',
+        'password',
+        'role',
+        'onboarding_step',
+        'contact_phone',
+        'email_verified_at',
     ];
 
     protected $hidden = ['password','remember_token'];
+
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+    ];
 
     public function customers(): BelongsToMany {
         return $this->belongsToMany(Customer::class)->withPivot('role_in_customer');

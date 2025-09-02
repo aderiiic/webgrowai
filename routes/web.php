@@ -341,6 +341,7 @@ Route::middleware(['auth','verified','can:admin'])->prefix('admin')->name('admin
     Route::get('/customers/{id}', AdminCustomerShow::class)->whereNumber('id')->name('customers.show');
 
     Route::get('/customers', AdminCustomersIndex::class)->name('customers.index');
+    Route::get('/customers/create', \App\Livewire\Admin\Customers\Create::class)->name('customers.create');
 
     Route::get('/invoices', AdminInvoicesIndex::class)->name('invoices.index');
     Route::get('/invoices/{id}', AdminInvoicesShow::class)->whereNumber('id')->name('invoices.show');

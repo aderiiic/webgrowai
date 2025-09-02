@@ -22,6 +22,16 @@ class Customer extends Model
         'mailchimp_audience_id',
         'mailchimp_from_name',
         'mailchimp_reply_to',
+        'company_name',
+        'org_nr',
+        'vat_nr',
+        'contact_name',
+        'contact_phone',
+        'billing_email',
+        'billing_address',
+        'billing_zip',
+        'billing_city',
+        'billing_country',
     ];
 
     public function users(): BelongsToMany {
