@@ -66,6 +66,7 @@ use App\Livewire\Admin\Invoices\Index as AdminInvoicesIndex;
 use App\Livewire\Admin\Invoices\Show as AdminInvoicesShow;
 use App\Livewire\Admin\Subscriptions\RequestsIndex as AdminSubRequests;
 use App\Livewire\Admin\Customers\Index as AdminCustomersIndex;
+use App\Livewire\Admin\Sites\Index as AdminSitesIndex;
 
 Route::get('/', function () {
     return view('welcome');
@@ -346,6 +347,8 @@ Route::middleware(['auth','verified','can:admin'])->prefix('admin')->name('admin
 
     Route::get('/customers', AdminCustomersIndex::class)->name('customers.index');
     Route::get('/customers/create', \App\Livewire\Admin\Customers\Create::class)->name('customers.create');
+
+    Route::get('/sites', AdminSitesIndex::class)->name('sites.index');
 
     Route::get('/invoices', AdminInvoicesIndex::class)->name('invoices.index');
     Route::get('/invoices/{id}', AdminInvoicesShow::class)->whereNumber('id')->name('invoices.show');

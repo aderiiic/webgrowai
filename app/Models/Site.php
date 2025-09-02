@@ -33,4 +33,9 @@ class Site extends Model
     {
         return $this->hasMany(NewsletterProduct::class)->orderBy('sort_order');
     }
+
+    public function integrations(): HasMany
+    {
+        return $this->hasMany(Integration::class);
+    }
 }
