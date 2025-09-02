@@ -30,7 +30,7 @@ class Index extends Component
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('name', 'like', '%' . $this->search . '%')
-                        ->orWhere('domain', 'like', '%' . $this->search . '%')
+                        ->orWhere('url', 'like', '%' . $this->search . '%')
                         ->orWhereHas('customer', function ($customer) {
                             $customer->where('name', 'like', '%' . $this->search . '%');
                         });
