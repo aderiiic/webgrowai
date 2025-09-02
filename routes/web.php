@@ -501,6 +501,6 @@ Route::middleware('auth')->group(function () {
     })->middleware(['throttle:6,1'])->name('verification.send');
 });
 
-//Route::get('/register', function () {
-//   return view('coming-soon');
-//})->name('register');
+Route::get('/register', function () {
+   return view('coming-soon');
+})->name('register');
