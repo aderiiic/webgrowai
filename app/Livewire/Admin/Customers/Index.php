@@ -21,16 +21,19 @@ class Index extends Component
 
     public function resendWelcomeEmail(int $customerId): void
     {
+        Log::info('[Admin/Customers/Index] resendWelcomeEmail called', ['customer_id' => $customerId]);
+
         try {
             $customer = Customer::findOrFail($customerId);
             $user = $customer->users()->first();
 
             if (!$user) {
                 session()->flash('error', 'Ingen användare kopplad till kunden.');
+                $this->dispatch('toast', type: 'error', message: 'Ingen användare kopplad till kunden.');
                 return;
             }
 
-            // Säkerställ att reset-tabellen finns och brokern fungerar
+            // Skapa nytt reset-token
             $token = Password::createToken($user);
 
             Mail::send('emails.admin-welcome', [
@@ -42,8 +45,12 @@ class Index extends Component
             });
 
             session()->flash('success', 'Välkomstmejl skickades till ' . $user->email);
+            $this->dispatch('toast', type: 'success', message: 'Välkomstmejl skickades.');
+            Log::info('[Admin/Customers/Index] resendWelcomeEmail success', ['email' => $user->email]);
         } catch (\Throwable $e) {
+            Log::error('[Admin/Customers/Index] resendWelcomeEmail failed', ['error' => $e->getMessage()]);
             session()->flash('error', 'Kunde inte skicka mejlet: ' . $e->getMessage());
+            $this->dispatch('toast', type: 'error', message: 'Utskick misslyckades.');
         }
     }
 
