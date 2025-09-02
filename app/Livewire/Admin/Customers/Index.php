@@ -16,46 +16,34 @@ class Index extends Component
     public $q = '';
     public $status = 'all';
 
-    public function updatingQ()
-    {
-        $this->resetPage();
-    }
+    public function updatingQ() { $this->resetPage(); }
+    public function updatingStatus() { $this->resetPage(); }
 
-    public function updatingStatus()
-    {
-        $this->resetPage();
-    }
-
-    public function resendWelcomeEmail($customerId)
+    public function resendWelcomeEmail(int $customerId): void
     {
         try {
             $customer = Customer::findOrFail($customerId);
-
-            // Hämta den första användaren för denna kund
             $user = $customer->users()->first();
 
             if (!$user) {
-                session()->flash('error', 'Ingen användare hittades för denna kund.');
+                session()->flash('error', 'Ingen användare kopplad till kunden.');
                 return;
             }
 
-            // Skapa nytt password reset token
+            // Säkerställ att reset-tabellen finns och brokern fungerar
             $token = Password::createToken($user);
 
-            // Skicka välkomstmejl
             Mail::send('emails.admin-welcome', [
                 'user' => $user,
                 'customer' => $customer,
-                'reset_url' => url(route('password.reset', ['token' => $token, 'email' => $user->email]))
+                'reset_url' => url(route('password.reset', ['token' => $token, 'email' => $user->email])),
             ], function ($message) use ($user) {
-                $message->to($user->email)
-                    ->subject('Välkommen till WebGrow AI - Sätt ditt lösenord');
+                $message->to($user->email)->subject('Välkommen till WebGrow AI - Sätt ditt lösenord');
             });
 
-            session()->flash('success', 'Välkomstmejl har skickats om till ' . $user->email);
-
-        } catch (\Exception $e) {
-            session()->flash('error', 'Fel vid sändning av mejl: ' . $e->getMessage());
+            session()->flash('success', 'Välkomstmejl skickades till ' . $user->email);
+        } catch (\Throwable $e) {
+            session()->flash('error', 'Kunde inte skicka mejlet: ' . $e->getMessage());
         }
     }
 
