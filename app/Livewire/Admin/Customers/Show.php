@@ -200,7 +200,6 @@ class Show extends Component
         $this->customer->sites()->create([
             'name' => $this->newSiteName,
             'url' => rtrim($this->newSiteUrl, '/'),
-            'public_key' => (string) Str::uuid(),
         ]);
 
         $this->reset(['newSiteName', 'newSiteUrl', 'showAddSiteForm']);

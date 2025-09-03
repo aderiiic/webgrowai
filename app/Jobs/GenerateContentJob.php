@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\AiContent;
+use App\Models\Site;
 use App\Services\AI\AiProviderManager;
 use App\Support\Usage;
 use Illuminate\Bus\Queueable;
@@ -35,6 +36,17 @@ class GenerateContentJob implements ShouldQueue
         $guidelines = (array) ($content->inputs['guidelines'] ?? []);
         $brandVoice = (string) ($vars['brand']['voice'] ?? '');
         $tone       = (string) $content->tone;
+
+        $bizContext = '';
+        if (!empty($content->site_id)) {
+            $site = Site::find($content->site_id);
+            if ($site) {
+                $summary = trim($site->aiContextSummary());
+                if ($summary !== '') {
+                    $bizContext = "KONCERN-/VERKSAMHETSKONTEXT: {$summary}\n";
+                }
+            }
+        }
 
         $gStyle  = $guidelines['style']  ?? null;
         $gCta    = $guidelines['cta']    ?? null;
@@ -76,6 +88,9 @@ class GenerateContentJob implements ShouldQueue
         ]);
 
         $context = [];
+        if ($bizContext !== '') {
+            $context[] = rtrim($bizContext);
+        }
         $context[] = "Titel/ämne: " . ($content->title ?: '-');
         if (!empty($vars['audience'])) $context[] = "Målgrupp: {$vars['audience']}";
         if (!empty($vars['goal']))     $context[] = "Affärsmål: {$vars['goal']}";

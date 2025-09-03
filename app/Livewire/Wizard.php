@@ -19,6 +19,12 @@ class Wizard extends Component
     public string $site_name = '';
     public string $site_url = '';
 
+    public ?string $industry = null;
+    public ?string $business_description = null;
+    public ?string $target_audience = null;
+    public ?string $brand_voice = null;
+    public ?string $locale = 'sv_SE';
+
     public string $provider = 'wordpress';
     public ?string $connectedProvider = null;
 
@@ -41,12 +47,11 @@ class Wizard extends Component
     {
         $user = auth()->user();
         if ($user && isset($user->onboarding_step)) {
-            $this->step = max(1, min(7, (int) $user->onboarding_step ?: 1));
+            $this->step = max(1, min(8, (int) ($user->onboarding_step ?: 1)));
         }
 
-        // NYTT: tillåt explicit steg via ?step=3 i query (från Shopify-callback)
         $reqStep = (int) request()->query('step', 0);
-        if ($reqStep >= 1 && $reqStep <= 7) {
+        if ($reqStep >= 1 && $reqStep <= 8) {
             $this->step = $reqStep;
         }
 
@@ -56,12 +61,17 @@ class Wizard extends Component
             $this->step = 2;
         }
 
-        // Ladda befintlig site data om vi redan har en site (för att fixa problem 1)
         if ($this->primarySiteId) {
             $site = Site::find($this->primarySiteId);
             if ($site) {
                 $this->site_name = $site->name;
-                $this->site_url = $site->url;
+                $this->site_url  = $site->url;
+
+                $this->industry             = $site->industry;
+                $this->business_description = $site->business_description;
+                $this->target_audience      = $site->target_audience;
+                $this->brand_voice          = $site->brand_voice;
+                $this->locale               = $site->locale ?: 'sv_SE';
             }
         }
 
@@ -73,8 +83,8 @@ class Wizard extends Component
         $current ??= app(CurrentCustomer::class);
         $customer = $current->get();
 
-        $this->sitesUsed  = (int) ($customer?->sites()->count() ?? 0);
-        $this->sitesLimit = (int) ($customer->plan_max_sites ?? 1);
+        $this->sitesUsed         = (int) ($customer?->sites()->count() ?? 0);
+        $this->sitesLimit        = (int) ($customer->plan_max_sites ?? 1);
         $this->sitesQuotaExceeded = $this->sitesUsed >= $this->sitesLimit;
 
         $this->primarySiteId = $customer?->sites()->value('id');
@@ -84,7 +94,7 @@ class Wizard extends Component
             : null;
 
         $this->integrationConnected = (bool) $integration;
-        $this->connectedProvider = $integration?->provider;
+        $this->connectedProvider    = $integration?->provider;
 
         if ($this->integrationConnected && $this->connectedProvider) {
             $this->provider = $this->connectedProvider;
@@ -94,10 +104,9 @@ class Wizard extends Component
             ? WpIntegration::where('site_id', $this->primarySiteId)->exists()
             : false;
 
-        $this->leadTrackerReady = $this->leadTrackerReady && (bool)$this->primarySiteId;
+        $this->leadTrackerReady = $this->leadTrackerReady && (bool) $this->primarySiteId;
     }
 
-    // NYTT: Funktion för att uppdatera befintlig site (löser problem 1)
     public function updateSite(CurrentCustomer $current): void
     {
         if (!$this->primarySiteId) {
@@ -111,7 +120,7 @@ class Wizard extends Component
         ]);
 
         $normalizedUrl = rtrim($data['site_url'], '/');
-        $customer = $current->get();
+        $customer      = $current->get();
 
         $site = $customer->sites()->find($this->primarySiteId);
         if ($site) {
@@ -141,12 +150,11 @@ class Wizard extends Component
         ]);
 
         $normalizedUrl = rtrim($data['site_url'], '/');
-        $customer = $current->get();
+        $customer      = $current->get();
 
         $site = $customer->sites()->create([
             'name'       => $data['site_name'],
             'url'        => $normalizedUrl,
-            'public_key' => (string) Str::uuid(),
         ]);
 
         $this->primarySiteId = $site->id;
@@ -158,38 +166,81 @@ class Wizard extends Component
         $this->refreshStatus();
     }
 
+    // Steg 3 – spara verksamhetsuppgifter
+    public function saveBusiness(): void
+    {
+        if (!$this->primarySiteId) {
+            $this->addError('site_name', 'Skapa en sajt först.');
+            return;
+        }
+
+        $data = $this->validate([
+            'industry'              => ['nullable', 'string', 'max:120'],
+            'business_description'  => ['nullable', 'string', 'max:2000'],
+            'target_audience'       => ['nullable', 'string', 'max:500'],
+            'brand_voice'           => ['nullable', 'string', 'max:120'],
+            'locale'                => ['nullable', 'string', 'max:16'],
+        ]);
+
+        $site = Site::find($this->primarySiteId);
+        if ($site) {
+            $site->update([
+                'industry'             => $data['industry'] ?? null,
+                'business_description' => $data['business_description'] ?? null,
+                'target_audience'      => $data['target_audience'] ?? null,
+                'brand_voice'          => $data['brand_voice'] ?? null,
+                'locale'               => $data['locale'] ?: 'sv_SE',
+            ]);
+        }
+
+        $this->step = 4; // integration
+        $this->persistStep();
+        $this->resetErrorBag();
+    }
+
     public function next(): void
     {
-        // För steg 3: hoppa direkt till steg 4 om provider är shopify eller custom
-        if ($this->step === 3 && in_array($this->provider, ['shopify', 'custom'])) {
-            $this->step = 4;
-            $this->persistStep();
+        // Steg 3: spara verksamhetsinfo
+        if ($this->step === 3) {
+            $this->saveBusiness();
             return;
         }
 
-        // Endast för WordPress krävs integration i steg 3
-        if ($this->step === 3 && $this->provider === 'wordpress' && !$this->integrationConnected) {
-            $this->addError('integrationConnected', 'Koppla WordPress för att fortsätta, eller välj en annan plattform.');
-            return;
+        // Steg 4: integration (kräv för WordPress, hoppa annars)
+        if ($this->step === 4) {
+            if (in_array($this->provider, ['shopify', 'custom'], true)) {
+                $this->step = 5;
+                $this->persistStep();
+                return;
+            }
+            if ($this->provider === 'wordpress' && !$this->integrationConnected) {
+                $this->addError('integrationConnected', 'Koppla WordPress för att fortsätta, eller välj en annan plattform.');
+                return;
+            }
         }
 
-        if ($this->step === 4 && !$this->leadTrackerReady) {
+        // Steg 5: kräver lead tracker bekräftad
+        if ($this->step === 5 && !$this->leadTrackerReady) {
             $this->addError('leadTrackerReady', 'Bekräfta att lead-spårningen är installerad.');
             return;
         }
-        if ($this->step === 7 && !$this->weeklyConfigured) {
+
+        // Steg 8: Weekly (valfritt) – visa varning om du vill kräva val
+        if ($this->step === 8 && !$this->weeklyConfigured) {
+            // valfritt att kräva; behålls för konsekvens
             $this->addError('weeklyConfigured', 'Spara Weekly Digest-inställningarna eller hoppa över.');
             return;
         }
 
-        $this->step = min($this->step + 1, 7);
+        $this->step = min($this->step + 1, 8);
         $this->persistStep();
     }
 
     public function skip(): void
     {
-        if (in_array($this->step, [5, 6, 7], true)) {
-            $this->step = min($this->step + 1, 7);
+        // Valfria steg: 6 (social), 7 (nyhetsbrev), 8 (weekly)
+        if (in_array($this->step, [6, 7, 8], true)) {
+            $this->step = min($this->step + 1, 8);
             $this->persistStep();
         }
     }
@@ -202,7 +253,7 @@ class Wizard extends Component
 
     public function goto(int $step): void
     {
-        $this->step = max(1, min(7, $step));
+        $this->step = max(1, min(8, $step));
         $this->persistStep();
     }
 
@@ -243,9 +294,9 @@ class Wizard extends Component
     public function providerLabel(): string
     {
         return match ($this->provider) {
-            'shopify'   => 'Shopify',
-            'custom'    => 'Anpassad webbplats',
-            default     => 'WordPress',
+            'shopify' => 'Shopify',
+            'custom'  => 'Anpassad webbplats',
+            default   => 'WordPress',
         };
     }
 
