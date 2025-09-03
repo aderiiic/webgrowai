@@ -78,6 +78,11 @@ class AnalyzeConversionJob implements ShouldQueue
         $prov = $manager->choose(null, 'short');
         $guidelines = "Du är en svensk CRO-specialist. Ge konkreta förbättringar utan meta-kommentarer, inga emojis.";
 
+        $biz = trim($site->aiContextSummary());
+        if ($biz !== '') {
+            $guidelines .= "\nKontext: {$biz}";
+        }
+
         foreach ($pages as $p) {
             try {
                 $quota->checkOrFail($customer, 'ai.generate');

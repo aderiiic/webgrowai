@@ -101,6 +101,7 @@ class AnalyzeKeywordsJob implements ShouldQueue
             $excerpt = trim((string)($doc['excerpt'] ?? ''));
             $html = (string)($doc['html'] ?? '');
             $text = Str::of($html)->stripTags()->squish()->limit(4000);
+            $biz = trim($site->aiContextSummary());
 
             $topicHint = Str::of(($site->name ?? '').' '.$title.' '.$excerpt)
                 ->replaceMatches('/[^0-9A-Za-zÅÄÖåäö\s\-]/u', ' ')
@@ -118,17 +119,20 @@ class AnalyzeKeywordsJob implements ShouldQueue
                 'position' => $r->position
             ])->values()->all();
 
-            $prompt = "Du är en svensk SEO-specialist. Professionell ton, inga meta-fraser.\n".
-                "Uppgift: föreslå nya relevanta nyckelord (5–10) och optimera meta-title (max 60 tecken) ".
-                "samt meta-description (minst 140 teken max 155 tecken).\n".
-                "Data:\nTitel: {$title}\nUtdrag: {$excerpt}\nInnehåll (trimmat): {$text}\n".
-                "Ranking: ".json_encode($rankInfo, JSON_UNESCAPED_UNICODE)."\n".
-                "Returnera ENDAST JSON i detta format:\n".
-                "{\n".
-                "  \"keywords\": [\"...\"],\n".
-                "  \"title\": {\"current\":\"...\",\"suggested\":\"...\"},\n".
-                "  \"meta\": {\"current\":\"...\",\"suggested\":\"...\"},\n".
-                "  \"insights\": [\"Minst tre korta insikter om varför förslagen förbättrar SEO och användarupplevelse\"]\n".
+            $prompt =
+                "Du är en svensk SEO-specialist. Professionell ton, inga meta-fraser. " .
+                "Bevara å/ä/ö korrekt och håll dig till verksamhetens kontext.\n" .
+                ($biz ? "Kontext: {$biz}\n" : "") .
+                "Uppgift: föreslå nya relevanta nyckelord (5–10) och optimera meta-title (max 60 tecken) " .
+                "samt meta-description (minst 140 teken max 155 tecken).\n" .
+                "Data:\nTitel: {$title}\nUtdrag: {$excerpt}\nInnehåll (trimmat): {$text}\n" .
+                "Ranking: " . json_encode($rankInfo, JSON_UNESCAPED_UNICODE) . "\n" .
+                "Returnera ENDAST JSON i detta format:\n" .
+                "{\n" .
+                "  \"keywords\": [\"...\"],\n" .
+                "  \"title\": {\"current\":\"...\",\"suggested\":\"...\"},\n" .
+                "  \"meta\": {\"current\":\"...\",\"suggested\":\"...\"},\n" .
+                "  \"insights\": [\"Minst tre korta insikter om varför förslagen förbättrar SEO och användarupplevelse\"]\n" .
                 "}";
 
             $out = $prov->generate($prompt, ['max_tokens' => 600, 'temperature' => 0.5]);

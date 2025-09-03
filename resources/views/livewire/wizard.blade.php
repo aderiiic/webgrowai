@@ -4,7 +4,7 @@
             <!-- Progress: 1..7 -->
             <div class="mb-8">
                 <div class="flex items-center justify-center space-x-4">
-                    @for($i = 1; $i <= 7; $i++)
+                    @for($i = 1; $i <= 8; $i++)
                         <div class="flex items-center">
                             <div class="flex items-center justify-center w-10 h-10 rounded-2xl {{ $step >= $i ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md' : 'bg-gray-100 text-gray-500 border border-gray-200' }} font-semibold">
                                 @if($step > $i)
@@ -15,7 +15,7 @@
                                     {{ $i }}
                                 @endif
                             </div>
-                            @if($i < 7)
+                            @if($i < 8)
                                 <div class="w-16 h-0.5 {{ $step > $i ? 'bg-gradient-to-r from-indigo-600 to-purple-600' : 'bg-gray-200' }}"></div>
                             @endif
                         </div>
@@ -177,6 +177,61 @@
                         </div>
 
                     @elseif($step === 3)
+                        <div class="space-y-6">
+                            <div class="text-center">
+                                <h2 class="text-2xl font-bold text-gray-900 mb-2">Berätta om din verksamhet</h2>
+                                <p class="text-gray-600">Detta hjälper AI:n att ge mer relevanta förslag. Du kan fylla i mer senare.</p>
+                            </div>
+
+                            <div class="grid grid-cols-1 gap-5">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Bransch</label>
+                                    <input type="text" wire:model.defer="industry" class="w-full px-4 py-3 rounded-2xl border border-gray-300 bg-white/80 shadow-sm focus:ring-2 focus:ring-indigo-500" placeholder="T.ex. Läxhjälp, Bygg, Advokatbyrå">
+                                    @error('industry') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Beskrivning av verksamheten</label>
+                                    <textarea wire:model.defer="business_description" rows="4" class="w-full px-4 py-3 rounded-2xl border border-gray-300 bg-white/80 shadow-sm focus:ring-2 focus:ring-indigo-500" placeholder="Vad erbjuder ni? Tjänster/produkter, geografi, differentiatorer..."></textarea>
+                                    @error('business_description') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Målgrupp</label>
+                                    <input type="text" wire:model.defer="target_audience" class="w-full px-4 py-3 rounded-2xl border border-gray-300 bg-white/80 shadow-sm focus:ring-2 focus:ring-indigo-500" placeholder="T.ex. Föräldrar till högstadieelever i Stockholm">
+                                    @error('target_audience') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                                </div>
+
+                                <div class="grid md:grid-cols-2 gap-5">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Tonalitet/Brand voice</label>
+                                        <input type="text" wire:model.defer="brand_voice" class="w-full px-4 py-3 rounded-2xl border border-gray-300 bg-white/80 shadow-sm focus:ring-2 focus:ring-indigo-500" placeholder="T.ex. Varm, professionell och pedagogisk">
+                                        @error('brand_voice') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Språk/Locale</label>
+                                        <input type="text" wire:model.defer="locale" class="w-full px-4 py-3 rounded-2xl border border-gray-300 bg-white/80 shadow-sm focus:ring-2 focus:ring-indigo-500" placeholder="sv_SE">
+                                        @error('locale') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pt-2 flex items-center justify-between">
+                                <button wire:click="prev" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50">
+                                    Tillbaka
+                                </button>
+                                <div class="flex items-center gap-3">
+                                    <button wire:click="next" class="inline-flex items-center justify-center px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-lg hover:from-indigo-700 hover:to-purple-700 transition">
+                                        <span>Spara & fortsätt</span>
+                                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    @elseif($step === 4)
                         <!-- Steg 3: Koppla integration (endast för WordPress) -->
                         <div class="space-y-6">
                             <div class="text-center">
@@ -275,7 +330,7 @@
                             </div>
                         </div>
 
-                    @elseif($step === 4)
+                    @elseif($step === 5)
                         <!-- Steg 4: Lead tracker -->
                         <div class="space-y-6">
                             <div class="text-center">
@@ -331,7 +386,7 @@
                             </div>
                         </div>
 
-                    @elseif($step === 5)
+                    @elseif($step === 6)
                         <!-- Steg 5: Sociala medier (valfritt) -->
                         <div class="space-y-6">
                             <div class="text-center">
@@ -374,7 +429,7 @@
                             </div>
                         </div>
 
-                    @elseif($step === 6)
+                    @elseif($step === 7)
                         <!-- Steg 6: Mailchimp (valfritt) -->
                         <div class="space-y-6">
                             <div class="text-center">
@@ -417,8 +472,8 @@
                             </div>
                         </div>
 
-                    @elseif($step === 7)
-                        <!-- Steg 7: Weekly Digest -->
+                    @elseif($step === 8)
+                        <!-- Steg 8: Weekly Digest -->
                         <div class="space-y-6">
                             <div class="text-center">
                                 <h2 class="text-2xl font-bold text-gray-900 mb-2">Veckorapport</h2>
