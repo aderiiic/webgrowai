@@ -1,3 +1,4 @@
+
 <div>
     <div class="max-w-6xl mx-auto space-y-8">
         <!-- Header -->
@@ -6,20 +7,21 @@
                 <svg class="w-8 h-8 mr-3 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
-                {{ $content->title ?: 'AI Innehåll' }}
+                {{ $content->title ?: 'Min AI-genererade text' }}
             </h1>
             <div class="flex items-center space-x-4">
                 @php
                     $statusColors = [
-                        'completed' => ['bg' => 'from-green-50 to-emerald-50', 'border' => 'border-green-200/50', 'text' => 'text-green-800'],
-                        'processing' => ['bg' => 'from-blue-50 to-indigo-50', 'border' => 'border-blue-200/50', 'text' => 'text-blue-800'],
-                        'draft' => ['bg' => 'from-yellow-50 to-amber-50', 'border' => 'border-yellow-200/50', 'text' => 'text-yellow-800'],
-                        'error' => ['bg' => 'from-red-50 to-pink-50', 'border' => 'border-red-200/50', 'text' => 'text-red-800'],
+                        'completed' => ['bg' => 'from-green-50 to-emerald-50', 'border' => 'border-green-200/50', 'text' => 'text-green-800', 'label' => 'Klar'],
+                        'processing' => ['bg' => 'from-blue-50 to-indigo-50', 'border' => 'border-blue-200/50', 'text' => 'text-blue-800', 'label' => 'Skapas'],
+                        'draft' => ['bg' => 'from-yellow-50 to-amber-50', 'border' => 'border-yellow-200/50', 'text' => 'text-yellow-800', 'label' => 'Utkast'],
+                        'error' => ['bg' => 'from-red-50 to-pink-50', 'border' => 'border-red-200/50', 'text' => 'text-red-800', 'label' => 'Fel'],
+                        'ready' => ['bg' => 'from-green-50 to-emerald-50', 'border' => 'border-green-200/50', 'text' => 'text-green-800', 'label' => 'Klar'],
                     ];
-                    $colors = $statusColors[strtolower($content->status)] ?? ['bg' => 'from-gray-50 to-slate-50', 'border' => 'border-gray-200/50', 'text' => 'text-gray-800'];
+                    $colors = $statusColors[strtolower($content->status)] ?? ['bg' => 'from-gray-50 to-slate-50', 'border' => 'border-gray-200/50', 'text' => 'text-gray-800', 'label' => $content->status];
                 @endphp
                 <div class="inline-flex items-center px-4 py-2 bg-gradient-to-r {{ $colors['bg'] }} {{ $colors['border'] }} border rounded-xl">
-                    <span class="text-sm font-medium {{ $colors['text'] }} uppercase">{{ $content->status }}</span>
+                    <span class="text-sm font-medium {{ $colors['text'] }} uppercase">{{ $colors['label'] }}</span>
                     @if($content->provider)
                         <span class="mx-2 text-gray-400">•</span>
                         <span class="text-sm font-medium {{ $colors['text'] }}">{{ $content->provider }}</span>
@@ -34,9 +36,9 @@
             </div>
         </div>
 
+        <!-- Publishing status overview -->
         @php
             $pubs = $content->relationLoaded('publications') ? $content->publications : ($content->publications ?? collect());
-            // Stöd både 'wp' och 'wordpress'
             $byTarget = [
                 'wordpress' => $pubs->whereIn('target',['wp','wordpress']),
                 'shopify'   => $pubs->where('target','shopify'),
@@ -50,44 +52,54 @@
                 if ($col->where('status','failed')->count() > 0) return 'failed';
                 return 'none';
             };
-            $statusToColor = fn($s) => match($s) {
-                'ok' => 'text-emerald-600',
-                'pending' => 'text-amber-500',
-                'failed' => 'text-red-600',
-                default => 'text-gray-400',
-            };
-            $statusToLabel = fn($s) => match($s) {
-                'ok' => 'Publicerad',
-                'pending' => 'Köad/Pågår',
-                'failed' => 'Misslyckad',
-                default => 'Inte publicerad',
-            };
-            $isShopify = ($currentProvider ?? null) === 'shopify';
         @endphp
 
-        <div class="mt-2 flex items-center gap-4">
-            @foreach(['wordpress'=>'WordPress','shopify'=>'Shopify','facebook'=>'Facebook','instagram'=>'Instagram','linkedin'=>'LinkedIn'] as $t=>$label)
-                @php $st = $state($byTarget[$t]); @endphp
-                <div class="flex items-center gap-1" title="{{ $label }} – {{ $statusToLabel($st) }}">
-                    <svg class="w-4 h-4 {{ $statusToColor($st) }}" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                        @if($t === 'wordpress')
-                            <path d="M10 1.25A8.75 8.75 0 1018.75 10 8.76 8.76 0 0010 1.25zm0 1.5A7.25 7.25 0 1117.25 10 7.26 7.26 0 0110 2.75zM6.1 7.5l2.6 7.2.9-2.7-1.7-4.5H6.1zm4.2 0l2.6 7.2c1.5-.8 2.4-2.5 2.4-4.4 0-1.1-.4-2-.8-2.8h-1.9l-1.4 4.3-1-4.3H10.3z"/>
-                        @elseif($t === 'shopify')
-                            <path d="M6 2a2 2 0 00-2 2v1H3a1 1 0 00-1 .8L1 9a2 2 0 002 2h14a2 2 0 002-2l-2-3.2A1 1 0 0016 5h-1V4a2 2 0 00-2-2H6zm7 3H7V4a1 1 0 011-1h4a1 1 0 011 1v1zM3 12v4a2 2 0 002 2h10a2 2 0 002-2v-4H3z"/>
-                        @elseif($t === 'facebook')
-                            <path d="M11 2h3a1 1 0 011 1v3h-2a1 1 0 00-1 1v2h3l-.5 3H12v7H9v-7H7V9h2V7a3 3 0 013-3z"/>
-                        @elseif($t === 'instagram')
-                            <path d="M7 2h6a5 5 0 015 5v6a5 5 0 01-5 5H7a5 5 0 01-5-5V7a5 5 0 015-5zm0 2a3 3 0 00-3 3v6a3 3 0 003 3h6a3 3 0 003-3V7a3 3 0 00-3-3H7zm3 2.5A3.5 3.5 0 1110 13a3.5 3.5 0 010-7zM15 6.5a1 1 0 110 2 1 1 0 010-2z"/>
-                        @else
-                            <path d="M4 3h12a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1zm2 4h2v6H6V7zm4 0h2.2l.1 3.2h.1c.5-1.6 1.6-3.3 3.5-3.3 1.8 0 2.6 1.1 2.6 3.5V17h-2.2v-5.5c0-1.2-.4-2-1.5-2-1.2 0-1.8 1-2.1 2v5.5H10V7z"/>
-                        @endif
+        <div class="bg-gradient-to-r from-slate-50 to-gray-50 rounded-2xl border border-slate-200/50 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
                     </svg>
-                    <span class="text-xs text-gray-600">{{ $label }}</span>
-                </div>
-            @endforeach
+                    Publiceringstatus
+                </h3>
+                <span class="text-sm text-gray-600">Var har du delat texten?</span>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                @foreach([
+                    'wordpress' => ['label' => 'Hemsida', 'icon' => 'M10 1.25A8.75 8.75 0 1018.75 10 8.76 8.76 0 0010 1.25zm0 1.5A7.25 7.25 0 1117.25 10 7.26 7.26 0 0110 2.75zM6.1 7.5l2.6 7.2.9-2.7-1.7-4.5H6.1zm4.2 0l2.6 7.2c1.5-.8 2.4-2.5 2.4-4.4 0-1.1-.4-2-.8-2.8h-1.9l-1.4 4.3-1-4.3H10.3z'],
+                    'facebook' => ['label' => 'Facebook', 'icon' => 'M11 2h3a1 1 0 011 1v3h-2a1 1 0 00-1 1v2h3l-.5 3H12v7H9v-7H7V9h2V7a3 3 0 013-3z'],
+                    'instagram' => ['label' => 'Instagram', 'icon' => 'M7 2h6a5 5 0 015 5v6a5 5 0 01-5 5H7a5 5 0 01-5-5V7a5 5 0 015-5zm0 2a3 3 0 00-3 3v6a3 3 0 003 3h6a3 3 0 003-3V7a3 3 0 00-3-3H7zm3 2.5A3.5 3.5 0 1110 13a3.5 3.5 0 010-7zM15 6.5a1 1 0 110 2 1 1 0 010-2z'],
+                    'linkedin' => ['label' => 'LinkedIn', 'icon' => 'M4 3h12a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1zm2 4h2v6H6V7zm4 0h2.2l.1 3.2h.1c.5-1.6 1.6-3.3 3.5-3.3 1.8 0 2.6 1.1 2.6 3.5V17h-2.2v-5.5c0-1.2-.4-2-1.5-2-1.2 0-1.8 1-2.1 2v5.5H10V7z'],
+                    'shopify' => ['label' => 'Shopify', 'icon' => 'M6 2a2 2 0 00-2 2v1H3a1 1 0 00-1 .8L1 9a2 2 0 002 2h14a2 2 0 002-2l-2-3.2A1 1 0 0016 5h-1V4a2 2 0 00-2-2H6zm7 3H7V4a1 1 0 011-1h4a1 1 0 011 1v1zM3 12v4a2 2 0 002 2h10a2 2 0 002-2v-4H3z']
+                ] as $target => $info)
+                    @php
+                        $status = $state($byTarget[$target]);
+                        $statusConfig = [
+                            'ok' => ['color' => 'text-emerald-600 bg-emerald-50', 'label' => 'Publicerad', 'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
+                            'pending' => ['color' => 'text-amber-600 bg-amber-50', 'label' => 'Pågår', 'icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'],
+                            'failed' => ['color' => 'text-red-600 bg-red-50', 'label' => 'Misslyckad', 'icon' => 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'],
+                            'none' => ['color' => 'text-gray-400 bg-gray-50', 'label' => 'Inte publicerad', 'icon' => 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z']
+                        ];
+                        $config = $statusConfig[$status];
+                    @endphp
+                    <div class="text-center p-3 rounded-xl border border-gray-200 {{ $config['color'] }}">
+                        <svg class="w-6 h-6 mx-auto mb-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="{{ $info['icon'] }}"/>
+                        </svg>
+                        <p class="text-xs font-medium">{{ $info['label'] }}</p>
+                        <div class="flex items-center justify-center mt-1">
+                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $config['icon'] }}"/>
+                            </svg>
+                            <p class="text-xs">{{ $config['label'] }}</p>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
         </div>
 
-        <!-- Success/Error -->
+        <!-- Success/Error Messages -->
         @if(session('success'))
             <div id="flash-success" class="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl">
                 <div class="flex items-center space-x-3">
@@ -117,11 +129,11 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                     <p class="text-sm font-medium text-red-800">
-                        Kvot för publiceringar uppnådd
+                        Du har nått gränsen för antal publiceringar denna månad
                         @if(!is_null($publishQuotaLimit))
                             ({{ $publishQuotaUsed }} / {{ $publishQuotaLimit }})
                         @endif
-                        – uppgradera plan eller begär extraanvändning.
+                        – <a href="{{ route('account.upgrade') }}" class="underline hover:no-underline">uppgradera din plan</a> för fler publiceringar.
                     </p>
                 </div>
             </div>
@@ -129,20 +141,23 @@
 
         @php $mdReady = !empty($md); @endphp
 
-            <!-- Förhandsvisning -->
-        <!-- Förhandsvisning -->
+            <!-- Content Preview -->
         <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 overflow-hidden">
             @if($mdReady)
                 <div class="p-8">
-                    <!-- Lägg till header med "Generera om"-knapp här -->
+                    <!-- Header med regenerate-knapp -->
                     <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
-                        <div>
-                            <h2 class="text-xl font-bold text-gray-900">Genererat innehåll</h2>
-                            <p class="text-sm text-gray-600">{{ $content->provider ? "Genererat med {$content->provider}" : 'AI-genererat innehåll' }}</p>
+                        <div class="flex items-center space-x-3">
+                            <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <div>
+                                <h2 class="text-xl font-bold text-gray-900">Din färdiga text</h2>
+                                <p class="text-sm text-gray-600">{{ $content->provider ? "Skapad med {$content->provider}" : 'AI-genererad text' }}</p>
+                            </div>
                         </div>
 
                         @if($content->status === 'ready')
-                            <!-- Kontrollera om innehållet är låst efter publicering -->
                             @php
                                 $isLocked = $content->publications()->where('status', 'published')->exists();
                             @endphp
@@ -157,15 +172,15 @@
                                     <svg wire:loading class="animate-spin w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                                     </svg>
-                                    <span wire:loading.remove>Generera om</span>
-                                    <span wire:loading>Genererar...</span>
+                                    <span wire:loading.remove>Skapa om texten</span>
+                                    <span wire:loading>Skapar ny text...</span>
                                 </button>
                             @else
                                 <div class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-500 rounded-xl">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                                     </svg>
-                                    Låst efter publicering
+                                    Texten är publicerad
                                 </div>
                             @endif
                         @endif
@@ -182,131 +197,147 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
                         </svg>
                     </div>
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Innehåll genereras...</h3>
-                    <p class="text-gray-600">Detta kan ta upp till några minuter. Uppdatera sidan om en stund.</p>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">
+                        <span class="flex items-center justify-center">
+                            <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                            </svg>
+                            AI skapar din text...
+                        </span>
+                    </h3>
+                    <p class="text-gray-600">Detta tar vanligtvis 1-2 minuter. Du kan uppdatera sidan om en stund.</p>
                 </div>
             @endif
         </div>
 
-        <!-- Bildsektion: ENDAST bildbank -->
+        <!-- Image Selection -->
         <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6">
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
-                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M4 5a2 2 0 012-2h6l2 2h4a2 2 0 012 2v2H4V5zm0 4h20v8a2 2 0 01-2 2H6l-2-2H2a2 2 0 01-2-2V9h4z"/>
+                    <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                         </svg>
                     </div>
                     <div>
-                        <h2 class="text-xl font-bold text-gray-900">Bild från bildbank</h2>
-                        <p class="text-sm text-gray-600">Välj en bild att använda vid publicering.</p>
+                        <h2 class="text-xl font-bold text-gray-900">Välj bild för sociala medier</h2>
+                        <p class="text-sm text-gray-600">Instagram kräver alltid en bild. Övriga plattformar är valfritt.</p>
                     </div>
                 </div>
-                <div class="text-sm text-gray-600">
+                <div class="flex items-center text-sm">
                     @if($selectedImageAssetId)
-                        Vald bild: #{{ $selectedImageAssetId }}
+                        <svg class="w-4 h-4 mr-1 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span class="text-emerald-600 font-medium">Bild vald</span>
                     @else
-                        Ingen bild vald
+                        <svg class="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span class="text-gray-600">Ingen bild vald</span>
                     @endif
                 </div>
             </div>
 
             <div class="flex flex-wrap gap-3 items-center">
                 <button type="button"
-                        class="px-3 py-2 border rounded-lg"
+                        class="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-medium rounded-xl hover:from-emerald-700 hover:to-teal-700 transition-all duration-200 flex items-center"
                         x-data
                         @click="$dispatch('media-picker:open')">
-                    Öppna mediaväljare
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    Välj bild från bibliotek
                 </button>
 
                 @if($selectedImageAssetId)
-                    <div class="flex items-center gap-3">
-                        <img class="w-16 h-16 rounded-lg border object-cover" src="{{ route('assets.thumb', $selectedImageAssetId) }}" alt="Vald bild">
-                        <button class="text-sm text-gray-600 underline" wire:click="$set('selectedImageAssetId', 0)">Rensa val</button>
+                    <div class="flex items-center gap-3 p-2 bg-emerald-50 rounded-lg border border-emerald-200">
+                        <img class="w-12 h-12 rounded-lg object-cover" src="{{ route('assets.thumb', $selectedImageAssetId) }}" alt="Vald bild">
+                        <span class="text-sm text-emerald-800 font-medium flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Bild vald
+                        </span>
+                        <button class="text-sm text-emerald-600 underline hover:no-underline" wire:click="$set('selectedImageAssetId', 0)">Ta bort</button>
                     </div>
                 @endif
-
-                <div class="text-xs text-gray-500">
-                    Instagram kräver att en bild är vald.
-                </div>
             </div>
         </div>
 
-        <!-- WordPress/Shopify publishing -->
-        @if($currentProvider === 'wordpress')
+        <!-- Publishing Sections -->
         <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
-            <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6">
-                <div class="flex items-center space-x-4 mb-6">
-                    <div class="w-12 h-12 {{ $isShopify ? 'bg-gradient-to-br from-emerald-500 to-teal-600' : 'bg-gradient-to-br from-emerald-500 to-teal-600' }} rounded-xl flex items-center justify-center">
-                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            @if($isShopify)
-                                <path d="M7 3a2 2 0 00-2 2v1H4a1 1 0 00-.96.72L2 10a2 2 0 002 2h16a2 2 0 002-2l-2.2-3.3A1 1 0 0019 6h-2V5a2 2 0 00-2-2H7zm8 3H9V5a1 1 0 011-1h4a1 1 0 011 1v1zM4 13v5a2 2 0 002 2h12a2 2 0 002-2v-5H4z"/>
-                            @else
+
+            <!-- WordPress/Shopify publishing -->
+            @if($currentProvider === 'wordpress')
+                <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6">
+                    <div class="flex items-center space-x-4 mb-6">
+                        <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M21.469 6.825c.84 1.537 1.318 3.3 1.318 5.175 0 3.979-2.156 7.456-5.363 9.325l3.295-9.527c.615-1.54.82-2.771.82-3.864 0-.405-.026-.78-.07-1.11m-7.981.105c.647-.03 1.232-.105 1.232-.105.582-.075.514-.93-.067-.899 0 0-1.755.135-2.88.135-1.064 0-2.85-.15-2.85-.15-.584-.03-.661.854-.075.884 0 0 .54.061 1.125.09l1.68 4.605-2.37 7.08L5.354 6.9c.649-.03 1.234-.1 1.234-.1.585-.075.516-.93-.065-.896 0 0-1.746.138-2.874.138-.2 0-.438-.008-.69-.015C4.911 3.15 8.235 1.215 12 1.215c2.809 0 5.365 1.072 7.286 2.833-.046-.003-.091-.009-.141-.009-1.06 0-1.812.923-1.812 1.914 0 .89.513 1.643 1.06 2.531.411.72.89 1.643.89 2.977 0 .915-.354 1.994-.821 3.479l-1.075 3.585-3.9-11.61.001.014z"/>
-                            @endif
-                        </svg>
-                    </div>
-                    <div>
-                        <h2 class="text-xl font-bold text-gray-900">
-                            {{ $isShopify ? 'Shopify' : 'WordPress' }}
-                        </h2>
-                        <p class="text-sm text-gray-600">
-                            {{ $isShopify ? 'Publicera direkt till din Shopify-butik' : 'Publicera direkt till din WordPress-sajt' }}
-                        </p>
-                    </div>
-                </div>
-
-                <div class="space-y-4">
-                    <div class="grid grid-cols-1 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Sajt</label>
-                            <select wire:model="publishSiteId" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200">
-                                @foreach($sites as $s)
-                                    <option value="{{ $s->id }}">{{ $s->name }}</option>
-                                @endforeach
-                            </select>
+                            </svg>
                         </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-900 flex items-center">
+                                <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                Publicera på hemsidan
+                            </h2>
+                            <p class="text-sm text-gray-600">Lägg upp texten direkt på din WordPress-sajt</p>
+                        </div>
+                    </div>
 
-                        <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                                <select wire:model="publishStatus" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200" @if($publishQuotaReached) disabled @endif>
-                                    <option value="draft">Utkast</option>
-                                    <option value="publish">Publicera</option>
-                                    <option value="future">Schemalägg</option>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Vilken hemsida?</label>
+                                <select wire:model="publishSiteId" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                                    @foreach($sites as $s)
+                                        <option value="{{ $s->id }}">{{ $s->name }}</option>
+                                    @endforeach
                                 </select>
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Publiceringstid</label>
-                                <input type="datetime-local" wire:model="publishAt" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200" @if($publishQuotaReached) disabled @endif>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                                    <select wire:model="publishStatus" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" @if($publishQuotaReached) disabled @endif>
+                                        <option value="draft">Utkast (syns inte för besökare)</option>
+                                        <option value="publish">Publicera direkt</option>
+                                        <option value="future">Schemalägg för senare</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Publiceringsdatum</label>
+                                    <input type="datetime-local" wire:model="publishAt" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" @if($publishQuotaReached) disabled @endif>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="flex justify-between items-center pt-4 border-t border-gray-200">
-                        @php $mdReady = !empty($md); @endphp
-                        @if($mdReady && $publishSiteId)
-                            <button wire:click="quickDraft" class="inline-flex items-center px-4 py-2 bg-emerald-100 text-emerald-800 font-medium rounded-lg hover:bg-emerald-200 transition-colors duration-200 text-sm {{ $publishQuotaReached ? 'opacity-50 cursor-not-allowed' : '' }}" @if($publishQuotaReached) disabled @endif>
+                        <div class="flex justify-between items-center pt-4 border-t border-gray-200">
+                            @if($mdReady && $publishSiteId)
+                                <button wire:click="quickDraft" class="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 font-medium rounded-lg hover:bg-blue-200 transition-colors duration-200 text-sm {{ $publishQuotaReached ? 'opacity-50 cursor-not-allowed' : '' }}" @if($publishQuotaReached) disabled @endif>
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                    </svg>
+                                    Snabbt som utkast
+                                </button>
+                            @else
+                                <div></div>
+                            @endif
+
+                            <button wire:click="publish" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl {{ (!$mdReady || $publishQuotaReached) ? 'opacity-50 cursor-not-allowed' : '' }}"
+                                    @if(!$mdReady || $publishQuotaReached) disabled @endif>
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
                                 </svg>
-                                Snabb-utkast
+                                Publicera på hemsida
                             </button>
-                        @else
-                            <div></div>
-                        @endif
-
-                        <button wire:click="publish" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl hover:from-emerald-700 hover:to-teal-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl {{ (!$mdReady || $publishQuotaReached) ? 'opacity-50 cursor-not-allowed' : '' }}"
-                                @if(!$mdReady || $publishQuotaReached) disabled @endif>
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
-                            </svg>
-                            Köa publicering
-                        </button>
+                        </div>
                     </div>
                 </div>
-            </div>
             @endif
 
             <!-- Social media publishing -->
@@ -314,22 +345,36 @@
                 <div class="flex items-center space-x-4 mb-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-pink-500 to-purple-600 rounded-xl flex items-center justify-center">
                         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V1a1 1 0 011-1h2a1 1 0 011 1v2m0 0v2a1 1 0 01-1 1H8a1 1 0 01-1-1V4z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
                         </svg>
                     </div>
                     <div>
-                        <h2 class="text-xl font-bold text-gray-900">Sociala kanaler</h2>
-                        <p class="text-sm text-gray-600">Publicera till Facebook och Instagram</p>
+                        <h2 class="text-xl font-bold text-gray-900 flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            Dela på sociala medier
+                        </h2>
+                        <p class="text-sm text-gray-600">Publicera på Facebook eller Instagram</p>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Kanal</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Vilken plattform?</label>
                         <select wire:model="socialTarget" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200" @if($publishQuotaReached) disabled @endif>
-                            <option value="facebook">Facebook</option>
-                            <option value="instagram">Instagram</option>
+                            <option value="facebook">
+                                <svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M11 2h3a1 1 0 011 1v3h-2a1 1 0 00-1 1v2h3l-.5 3H12v7H9v-7H7V9h2V7a3 3 0 013-3z"/>
+                                </svg>
+                                Facebook
+                            </option>
+                            <option value="instagram">
+                                <svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M7 2h6a5 5 0 015 5v6a5 5 0 01-5 5H7a5 5 0 01-5-5V7a5 5 0 015-5zm0 2a3 3 0 00-3 3v6a3 3 0 003 3h6a3 3 0 003-3V7a3 3 0 00-3-3H7zm3 2.5A3.5 3.5 0 1110 13a3.5 3.5 0 010-7zM15 6.5a1 1 0 110 2 1 1 0 010-2z"/>
+                                </svg>
+                                Instagram (kräver bild)
+                            </option>
                         </select>
                         @error('socialTarget')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -337,22 +382,16 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Publiceringstid (valfritt)</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">När ska det publiceras?</label>
                         <input type="datetime-local" wire:model="socialScheduleAt" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200" @if($publishQuotaReached) disabled @endif>
+                        <p class="text-xs text-gray-500 mt-1">Lämna tomt för omedelbar publicering</p>
                         @error('socialScheduleAt')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
                 </div>
 
-                <div class="text-xs text-gray-600 mb-4 p-3 bg-gray-50 rounded-lg">
-                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    Lämna publiceringstid tom för omedelbar publicering.
-                </div>
-
-                <div class="flex justify-end space-x-3">
+                <div class="flex justify-end">
                     <button wire:click="publishSocialNow"
                             class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-semibold rounded-xl hover:from-pink-700 hover:to-purple-700 focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl {{ (!$mdReady || $publishQuotaReached) ? 'opacity-50 cursor-not-allowed' : '' }}"
                             @if(!$mdReady || $publishQuotaReached) disabled @endif>
@@ -361,22 +400,12 @@
                         </svg>
                         Publicera nu
                     </button>
-
-                    <button wire:click="queueSocial"
-                            class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-600 text-white font-semibold rounded-xl hover:from-yellow-600 hover:to-orange-700 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl {{ (!$mdReady || $publishQuotaReached) ? 'opacity-50 cursor-not-allowed' : '' }}"
-                            @if(!$mdReady || $publishQuotaReached) disabled @endif>
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3"/>
-                        </svg>
-                        Schemalägg
-                    </button>
                 </div>
             </div>
         </div>
 
-
-        <!-- Snabb publicering – LinkedIn -->
-        <div class="mt-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6">
+        <!-- LinkedIn -->
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6">
             <div class="flex items-center space-x-3 mb-4">
                 <div class="w-10 h-10 bg-gradient-to-br from-sky-600 to-blue-700 rounded-xl flex items-center justify-center">
                     <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -384,15 +413,18 @@
                     </svg>
                 </div>
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-900">LinkedIn publicering</h3>
-                    <p class="text-sm text-gray-600">Publicera direkt till LinkedIn. Bild kan väljas via bildbanken ovan.</p>
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2V6"/>
+                        </svg>
+                        Dela på LinkedIn
+                    </h3>
+                    <p class="text-sm text-gray-600">Perfekt för professionella inlägg och nätverkande</p>
                 </div>
             </div>
 
             <div class="space-y-3">
-                <div class="grid grid-cols-1 gap-3">
-                    <input type="text" wire:model.defer="liQuickText" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm" placeholder="Inläggstext (lämna tom för att använda AI-innehåll)" @if($publishQuotaReached) disabled @endif>
-                </div>
+                <input type="text" wire:model.defer="liQuickText" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-all duration-200" placeholder="Egen text för LinkedIn (lämna tomt för AI-texten)" @if($publishQuotaReached) disabled @endif>
 
                 <div class="flex justify-end">
                     <button wire:click="queueLinkedInQuick" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-sky-600 to-blue-700 text-white font-semibold rounded-xl hover:from-sky-700 hover:to-blue-800 focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl {{ (!$mdReady || $publishQuotaReached) ? 'opacity-50 cursor-not-allowed' : '' }}"
@@ -400,7 +432,7 @@
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
                         </svg>
-                        Publicera till LinkedIn
+                        Publicera på LinkedIn
                     </button>
                 </div>
             </div>

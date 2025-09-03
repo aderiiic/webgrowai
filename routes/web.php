@@ -133,6 +133,8 @@ Route::get('/downloads/plugin', function () {
     return response()->download($path, 'webbi-lead-tracker.zip');
 })->name('downloads.webbi-lead-tracker');
 
+Route::get('/media/assets/{asset}/thumb', [ImageAssetController::class, 'thumb'])->name('assets.thumb');
+
 Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(function () {
     Route::get('/account/usage', AccountUsage::class)->name('account.usage');
     Route::get('/account/upgrade', AccountUpgrade::class)->name('account.upgrade');
@@ -321,7 +323,6 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
 
     Route::get('/media/assets', [ImageAssetController::class, 'index'])->name('assets.index');
     Route::post('/media/assets', [ImageAssetController::class, 'store'])->name('assets.store');
-    Route::get('/media/assets/{asset}/thumb', [ImageAssetController::class, 'thumb'])->name('assets.thumb');
 
     Route::get('/analytics', Overview::class)->name('analytics.index');
     Route::get('/analytics/settings', Ga4Settings::class)->name('analytics.settings');
