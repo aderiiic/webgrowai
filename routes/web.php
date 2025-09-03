@@ -368,7 +368,10 @@ Route::middleware(['auth','verified','can:admin'])->prefix('admin')->name('admin
 });
 
 // Tracking-endpoint
-Route::middleware('throttle:60,1')->post('/track', [TrackController::class, 'store'])->name('track.store');
+Route::middleware('throttle:60,1')
+    ->post('/track', [TrackController::class, 'store'])
+    ->withoutMiddleware(VerifyCsrfToken::class)
+    ->name('track.store');
 
 Route::middleware('web')->group(function() {
     Route::get('/auth/facebook/redirect', [SocialAuthController::class, 'facebookRedirect'])->name('auth.facebook.redirect');

@@ -88,8 +88,8 @@ class AnalyzeKeywordsJob implements ShouldQueue
                 $doc = [
                     'id'      => $pid,
                     'url'     => $snap->url,
-                    'title'   => $snap->keyword,
-                    'excerpt' => '',
+                    'title'   => $snap->ttle ?? 'Sida',
+                    'excerpt' => $snap->meta_description ?? '',
                     'html'    => '',
                 ];
             }
@@ -101,6 +101,17 @@ class AnalyzeKeywordsJob implements ShouldQueue
             $excerpt = trim((string)($doc['excerpt'] ?? ''));
             $html = (string)($doc['html'] ?? '');
             $text = Str::of($html)->stripTags()->squish()->limit(4000);
+
+            $topicHint = Str::of(($site->name ?? '').' '.$title.' '.$excerpt)
+                ->replaceMatches('/[^0-9A-Za-zÅÄÖåäö\s\-]/u', ' ')
+                ->squish()
+                ->limit(140, '')
+                ->toString();
+
+            $rankInfo = $list->map(fn($r) => [
+                'keyword'  => $r->keyword,
+                'position' => $r->position
+            ])->values()->all();
 
             $rankInfo = $list->map(fn($r) => [
                 'keyword'  => $r->keyword,
@@ -137,6 +148,23 @@ class AnalyzeKeywordsJob implements ShouldQueue
                 ]);
                 continue;
             }
+
+            $suggested = Arr::get($obj, 'keywords', []);
+            if (!is_array($suggested)) $suggested = [];
+
+            $topicLower = mb_strtolower($topicHint, 'UTF-8');
+
+            $suggested = array_values(array_filter($suggested, function ($k) use ($topicLower) {
+                $kLower = mb_strtolower((string)$k, 'UTF-8');
+
+                // Om sidan klart handlar om "läx" (läxhjälp etc), uteslut "lax..."-ord
+                if (str_contains($topicLower, 'läx') && str_starts_with($kLower, 'lax')) {
+                    return false;
+                }
+
+                // Behåll som standard – vidare relevansbedömning sker i UI/av användare
+                return true;
+            }));
 
             $insights = Arr::get($obj, 'insights', []);
             if (empty($insights)) {
