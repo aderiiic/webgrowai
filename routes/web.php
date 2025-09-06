@@ -4,6 +4,7 @@ use App\Http\Controllers\Analytics\Ga4OAuthController;
 use App\Http\Controllers\ImageAssetController;
 use App\Http\Controllers\Integrations\ShopifyOAuthController;
 use App\Http\Controllers\LinkedInSuggestionController;
+use App\Http\Controllers\SeoController;
 use App\Http\Controllers\ShopifyWebhookController;
 use App\Livewire\Analytics\Ga4Settings;
 use App\Livewire\Analytics\Overview;
@@ -511,3 +512,6 @@ Route::middleware('auth')->group(function () {
 Route::get('/register', function () {
    return view('coming-soon');
 })->name('register');
+
+Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
+Route::get('/robots.txt', [SeoController::class, 'robots'])->name('robots');
