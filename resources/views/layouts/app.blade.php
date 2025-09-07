@@ -266,6 +266,12 @@
                             </svg>
                             <span>Blogg</span>
                         </a>
+                        <a href="{{ route('admin.news.index') }}" class="flex items-center space-x-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 {{ request()->routeIs('admin.news.*') ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg' : 'text-gray-700 hover:text-indigo-700 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50' }}">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V7a2 2 0 012-2h9l5 5v8a2 2 0 01-2 2z"/>
+                            </svg>
+                            <span>Interna nyheter</span>
+                        </a>
                     </div>
                 </div>
             @endcan

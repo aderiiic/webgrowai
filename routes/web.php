@@ -366,7 +366,8 @@ Route::middleware(['auth','verified','can:admin'])->prefix('admin')->name('admin
         ]);
     })->name('admin.invoices.download');
 
-
+    Route::get('/news', \App\Livewire\Admin\News\Index::class)->name('news.index');
+    Route::get('/news/edit/{id?}', \App\Livewire\Admin\News\Edit::class)->whereNumber('id')->name('news.edit');
 });
 
 // Tracking-endpoint

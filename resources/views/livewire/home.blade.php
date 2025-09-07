@@ -14,6 +14,9 @@
     </div>
 
     <!-- Interna nyheter och kommande uppdateringar -->
+    <div>
+        @livewire('partials.system-news')
+    </div>
 
     <!-- Utbyggda alternativ (dold som standard) -->
     <div id="more-actions" class="hidden bg-white rounded-xl shadow-sm border p-6">
