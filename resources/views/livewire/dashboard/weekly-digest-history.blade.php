@@ -1,4 +1,3 @@
-
 <div>
     <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6 h-full flex flex-col">
         <div class="flex items-center justify-between mb-6">
@@ -18,8 +17,36 @@
             </div>
         </div>
 
+        <?php
+        // Visa ENDAST senaste körning per run_tag (monday och friday)
+        // Fungerar både med Collection och Paginator
+        $all = $plans instanceof \Illuminate\Pagination\AbstractPaginator ? collect($plans->items()) : collect($plans);
+
+        $latestMondayDate = optional(
+            $all->where('run_tag', 'monday')->sortByDesc(fn($p) => $p->run_date)->first()
+        )->run_date;
+
+        $latestFridayDate = optional(
+            $all->where('run_tag', 'friday')->sortByDesc(fn($p) => $p->run_date)->first()
+        )->run_date;
+
+        $displayPlans = $all->filter(function($p) use ($latestMondayDate, $latestFridayDate) {
+            if ($p->run_tag === 'monday' && $latestMondayDate) {
+                return $p->run_date->equalTo($latestMondayDate);
+            }
+            if ($p->run_tag === 'friday' && $latestFridayDate) {
+                return $p->run_date->equalTo($latestFridayDate);
+            }
+            return false;
+        })->sortBy([
+            // Sortera så att måndag kommer först, sedan fredag, och inom samma datum typ-ordning
+            ['run_tag', 'asc'],
+            ['type', 'asc'],
+        ]);
+        ?>
+
         <div class="flex-1 overflow-y-auto max-h-96 custom-scrollbar">
-            @forelse($plans as $plan)
+            @forelse($displayPlans as $plan)
                 <div class="mb-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-200/50 hover:border-gray-300/50 hover:shadow-md transition-all duration-200 overflow-hidden">
                     <!-- Header - alltid synlig -->
                     <div class="p-4 border-b border-gray-100/50">
@@ -103,12 +130,8 @@
             @endforelse
         </div>
 
-        <!-- Pagination -->
-        @if($plans->hasPages())
-            <div class="mt-6 pt-4 border-t border-gray-200/50">
-                {{ $plans->links() }}
-            </div>
-        @endif
+        <!-- Pagination (döljs eftersom vi bara visar senaste måndag/fredag) -->
+        {{-- Ingen pagination för detta urval --}}
     </div>
 
     <style>

@@ -11,17 +11,29 @@ class GenerateWeeklyPlanJob implements ShouldQueue
 {
     use Queueable;
 
-    public $queue = 'ai';
-
-    public function __construct(public int $customerId) {}
+    public function __construct(public int $customerId) {
+        $this->onQueue('ai');
+    }
 
     public function handle(AiProviderManager $manager): void
     {
         $customer = Customer::findOrFail($this->customerId);
 
+        $siteContexts = $customer->sites()->get()
+            ->map(fn($site) => trim($site->aiContextSummary()))
+            ->filter()
+            ->values()
+            ->all();
+
+        $contextBlock = implode("\n", array_map(
+            fn($c, $i) => "- Site ".($i+1).": ".$c,
+            $siteContexts,
+            array_keys($siteContexts)
+        )) ?: null;
+
         $template = ContentTemplate::firstOrCreate(
             ['slug' => 'campaign'],
-            ['name' => 'Kampanjidéer', 'provider' => 'openai', 'max_tokens' => 1000, 'temperature' => 0.7, 'visibility' => 'system']
+            ['name' => 'Kampanjidéer', 'provider' => 'openai', 'max_tokens' => 1000, 'temperature' => 0.6, 'visibility' => 'system']
         );
 
         $content = AiContent::create([
@@ -32,9 +44,18 @@ class GenerateWeeklyPlanJob implements ShouldQueue
             'tone'        => 'short',
             'status'      => 'queued',
             'inputs'      => [
-                'audience' => 'Befintliga och potentiella kunder',
-                'goal'     => 'Fler leads nästa vecka',
-                'brand'    => ['voice' => 'hjälpsam, tydlig, handlingsinriktad'],
+                'audience' => $customer->weekly_audience ?: 'Befintliga och potentiella kunder',
+                'goal'     => $customer->weekly_goal ?: 'Fler leads nästa vecka',
+                'brand'    => ['name' => $customer->name, 'voice' => ($customer->weekly_brand_voice ?: 'hjälpsam, tydlig, handlingsinriktad')],
+                'context'  => $contextBlock, // <-- injicera verksamhetskontekst
+                'period'   => [
+                    'week_start' => now()->startOfWeek()->format('Y-m-d'),
+                    'week_end'   => now()->endOfWeek()->format('Y-m-d'),
+                    'prev_week'  => [
+                        'start' => now()->subWeek()->startOfWeek()->format('Y-m-d'),
+                        'end'   => now()->subWeek()->endOfWeek()->format('Y-m-d'),
+                    ],
+                ],
             ],
         ]);
 

@@ -20,7 +20,11 @@ class WeeklyDigestHistory extends Component
         $customer = $current->get();
         abort_unless($customer, 403);
 
-        $q = WeeklyPlan::where('customer_id', $customer->id)
+        $activeSiteId = $current->getSiteId();
+
+        $q = WeeklyPlan::query()
+            ->where('customer_id', $customer->id)
+            ->when($activeSiteId, fn($x) => $x->where('site_id', $activeSiteId))
             ->when($this->filterTag !== '', fn($x) => $x->where('run_tag', $this->filterTag))
             ->latest();
 

@@ -5,7 +5,6 @@ namespace App\Livewire\Settings;
 use App\Jobs\GenerateWeeklyDigestJob;
 use App\Models\Customer;
 use App\Support\CurrentCustomer;
-use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -25,7 +24,6 @@ class WeeklySettings extends Component
         $this->customer = $current->get();
         abort_unless($this->customer, 403);
 
-        // Förifyll fält från kunden
         $this->weekly_recipients  = (string) ($this->customer->weekly_recipients ?? '');
         $this->weekly_brand_voice = (string) ($this->customer->weekly_brand_voice ?? '');
         $this->weekly_audience    = (string) ($this->customer->weekly_audience ?? '');
@@ -49,14 +47,12 @@ class WeeklySettings extends Component
             'weekly_keywords'    => 'nullable|string|max:2000',
         ]);
 
-        // Normalisera mottagare (komma-separerat -> strippad, dedupl.)
         $emails = collect(preg_split('/\s*,\s*/', (string) $this->weekly_recipients, -1, PREG_SPLIT_NO_EMPTY))
             ->filter(fn($e) => filter_var($e, FILTER_VALIDATE_EMAIL))
             ->unique()
             ->values()
             ->all();
 
-        // Nyckelord till array
         $keywords = collect(preg_split('/\s*,\s*/', (string) $this->weekly_keywords, -1, PREG_SPLIT_NO_EMPTY))
             ->filter()
             ->unique()
@@ -74,19 +70,24 @@ class WeeklySettings extends Component
         session()->flash('success', 'Inställningarna sparades.');
     }
 
-    public function sendTest(): void
+    public function sendTest(CurrentCustomer $current): void
     {
         abort_unless($this->customer, 403);
 
-        // Kör måndagsvarianten som test (kan bytas till friday vid behov)
-        dispatch(new GenerateWeeklyDigestJob($this->customer->id, 'monday'))->onQueue('ai');
+        $siteId = $current->getSiteId();
+        if (!$siteId) {
+            session()->flash('error', 'Välj en aktiv sajt i toppbaren för att skicka ett test.');
+            return;
+        }
 
-        session()->flash('success', 'Test-sammandrag köat. Kolla din mail om en liten stund.');
+        // Kör måndagsvarianten som test för den aktiva sajten
+        dispatch(new GenerateWeeklyDigestJob($siteId, 'monday'))->onQueue('ai');
+
+        session()->flash('success', 'Test-sammandrag köat för vald sajt. Kolla din mail om en liten stund.');
     }
 
     public function render()
     {
-        // Visa en förhandsvisning av mottagarna
         $recipientsPreview = collect(preg_split('/\s*,\s*/', (string) $this->weekly_recipients, -1, PREG_SPLIT_NO_EMPTY))
             ->filter(fn($e) => filter_var($e, FILTER_VALIDATE_EMAIL))
             ->unique()

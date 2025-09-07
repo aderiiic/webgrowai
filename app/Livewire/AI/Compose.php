@@ -40,6 +40,11 @@ class Compose extends Component
                 $this->site_id = $current->get()?->sites()->orderBy('name')->value('id');
             }
         }
+
+        $qTitle = request()->query('title');
+        if (is_string($qTitle) && $qTitle !== '') {
+            $this->title = trim($qTitle);
+        }
     }
 
     // Nytt: lyssna på topbarens event och uppdatera valet live

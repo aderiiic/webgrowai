@@ -203,6 +203,7 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
     Route::get('/ai', AiIndex::class)->name('ai.list');
     Route::get('/ai/compose', AiCompose::class)->name('ai.compose');
     Route::get('/ai/{id}', AiDetail::class)->name('ai.detail')->whereNumber('id');
+    Route::get('/content/weekly', \App\Livewire\Content\WeeklyPlanning::class)->name('content.weekly');
 
     Route::get('/publications', PublicationsIndex::class)->name('publications.index');
 

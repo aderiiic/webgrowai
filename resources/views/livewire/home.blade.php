@@ -7,79 +7,13 @@
                 Hej {{ auth()->user()->name }}!
             </h1>
             <p class="text-blue-100">
-                Välj vad du vill göra idag
+                Vi hoppas att du får en bra dag! Vi finns alltid tillgängliga för att
+                hjälpa dig: <a href="mailto:info@webbi.se" class="text-blue-200 hover:underline">Mejla oss</a>
             </p>
         </div>
     </div>
 
-    <!-- Mest använda åtgärder (max 4) -->
-    <div class="bg-white rounded-xl shadow-sm border p-6">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Kom igång</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <a href="{{ route('seo.audit.run') }}" class="simple-action-btn">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <p class="font-medium text-gray-900">SEO Kontroll</p>
-                        <p class="text-sm text-gray-500">Analysera din webbplats</p>
-                    </div>
-                </div>
-            </a>
-
-            <a href="{{ route('seo.keywords.fetch_analyze') }}" class="simple-action-btn">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1721 9z"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <p class="font-medium text-gray-900">Nyckelord</p>
-                        <p class="text-sm text-gray-500">Hitta nya möjligheter</p>
-                    </div>
-                </div>
-            </a>
-
-            <a href="{{ route('cro.analyze.run') }}" class="simple-action-btn">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <p class="font-medium text-gray-900">Konvertering</p>
-                        <p class="text-sm text-gray-500">Förbättra dina resultat</p>
-                    </div>
-                </div>
-            </a>
-
-            <a href="{{ route('marketing.newsletter') }}" class="simple-action-btn">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                        <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 7.89a2 2 0 002.83 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <p class="font-medium text-gray-900">Nyhetsbrev</p>
-                        <p class="text-sm text-gray-500">Skapa kampanjer</p>
-                    </div>
-                </div>
-            </a>
-        </div>
-
-        <!-- Länk till fler alternativ -->
-        <div class="mt-4 pt-4 border-t border-gray-100">
-            <button class="text-sm text-blue-600 hover:text-blue-700 font-medium" onclick="document.getElementById('more-actions').classList.toggle('hidden')">
-                Visa fler alternativ ↓
-            </button>
-        </div>
-    </div>
+    <!-- Interna nyheter och kommande uppdateringar -->
 
     <!-- Utbyggda alternativ (dold som standard) -->
     <div id="more-actions" class="hidden bg-white rounded-xl shadow-sm border p-6">

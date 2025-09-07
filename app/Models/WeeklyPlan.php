@@ -8,7 +8,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class WeeklyPlan extends Model
 {
     protected $fillable = [
-        'customer_id','run_date','run_tag','type','title','content_md','emailed_at',
+        'customer_id',
+        'site_id',
+        'run_date',
+        'run_tag',
+        'type',
+        'title',
+        'content_md',
+        'emailed_at',
     ];
 
     protected $casts = [
@@ -19,5 +26,10 @@ class WeeklyPlan extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function site(): BelongsTo
+    {
+        return $this->belongsTo(Site::class);
     }
 }
