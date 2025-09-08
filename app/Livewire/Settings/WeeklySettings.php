@@ -4,6 +4,7 @@ namespace App\Livewire\Settings;
 
 use App\Jobs\GenerateWeeklyDigestJob;
 use App\Models\Customer;
+use App\Models\Site;
 use App\Support\CurrentCustomer;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -12,6 +13,7 @@ use Livewire\Component;
 class WeeklySettings extends Component
 {
     public ?Customer $customer = null;
+    public ?Site $site = null;
 
     public string $weekly_recipients = '';
     public string $weekly_brand_voice = '';
@@ -24,20 +26,34 @@ class WeeklySettings extends Component
         $this->customer = $current->get();
         abort_unless($this->customer, 403);
 
-        $this->weekly_recipients  = (string) ($this->customer->weekly_recipients ?? '');
-        $this->weekly_brand_voice = (string) ($this->customer->weekly_brand_voice ?? '');
-        $this->weekly_audience    = (string) ($this->customer->weekly_audience ?? '');
-        $this->weekly_goal        = (string) ($this->customer->weekly_goal ?? '');
+        $siteId = $current->getSiteId();
+        $this->site = $siteId ? Site::query()->where('customer_id', $this->customer->id)->find($siteId) : null;
 
-        $keywords = $this->customer->weekly_keywords
-            ? (array) json_decode($this->customer->weekly_keywords, true)
-            : [];
+        $recipients = $this->site?->weekly_recipients ?? $this->customer->weekly_recipients ?? '';
+        $this->weekly_recipients = (string) $recipients;
+
+        $this->weekly_brand_voice = (string) ($this->site?->weekly_brand_voice ?? $this->customer->weekly_brand_voice ?? '');
+        $this->weekly_audience    = (string) ($this->site?->weekly_audience    ?? $this->customer->weekly_audience    ?? '');
+        $this->weekly_goal        = (string) ($this->site?->weekly_goal        ?? $this->customer->weekly_goal        ?? '');
+
+        $keywords = $this->site?->weekly_keywords
+            ? (array) json_decode($this->site->weekly_keywords, true)
+            : ($this->customer->weekly_keywords ? (array) json_decode($this->customer->weekly_keywords, true) : []);
+
         $this->weekly_keywords = implode(', ', $keywords);
     }
 
-    public function save(): void
+    public function save(CurrentCustomer $current): void
     {
         abort_unless($this->customer, 403);
+
+        $siteId = $current->getSiteId();
+        if (!$siteId) {
+            session()->flash('error', 'Välj en aktiv sajt i toppbaren för att spara sajtens inställningar.');
+            return;
+        }
+
+        $this->site = Site::query()->where('customer_id', $this->customer->id)->findOrFail($siteId);
 
         $this->validate([
             'weekly_recipients'  => 'nullable|string|max:5000',
@@ -59,15 +75,16 @@ class WeeklySettings extends Component
             ->values()
             ->all();
 
-        $this->customer->update([
-            'weekly_recipients'  => implode(',', $emails),
-            'weekly_brand_voice' => $this->weekly_brand_voice ?: null,
-            'weekly_audience'    => $this->weekly_audience ?: null,
-            'weekly_goal'        => $this->weekly_goal ?: null,
+        // Spara på site-nivå (tömda fält sätts till null => ärver från kund)
+        $this->site->update([
+            'weekly_recipients'  => !empty($emails) ? implode(',', $emails) : null,
+            'weekly_brand_voice' => $this->weekly_brand_voice !== '' ? $this->weekly_brand_voice : null,
+            'weekly_audience'    => $this->weekly_audience !== '' ? $this->weekly_audience : null,
+            'weekly_goal'        => $this->weekly_goal !== '' ? $this->weekly_goal : null,
             'weekly_keywords'    => !empty($keywords) ? json_encode($keywords) : null,
         ]);
 
-        session()->flash('success', 'Inställningarna sparades.');
+        session()->flash('success', 'Inställningarna för sajten sparades.');
     }
 
     public function sendTest(CurrentCustomer $current): void
@@ -80,7 +97,6 @@ class WeeklySettings extends Component
             return;
         }
 
-        // Kör måndagsvarianten som test för den aktiva sajten
         dispatch(new GenerateWeeklyDigestJob($siteId, 'monday'))->onQueue('ai');
 
         session()->flash('success', 'Test-sammandrag köat för vald sajt. Kolla din mail om en liten stund.');
@@ -93,8 +109,19 @@ class WeeklySettings extends Component
             ->unique()
             ->values();
 
+        // Effektiva värden (visning): site-värde eller kund-värde
+        $effective = [
+            'brand_voice' => $this->weekly_brand_voice !== '' ? $this->weekly_brand_voice : (string) ($this->customer->weekly_brand_voice ?? ''),
+            'audience'    => $this->weekly_audience    !== '' ? $this->weekly_audience    : (string) ($this->customer->weekly_audience ?? ''),
+            'goal'        => $this->weekly_goal        !== '' ? $this->weekly_goal        : (string) ($this->customer->weekly_goal ?? ''),
+            'keywords'    => $this->weekly_keywords !== '' ? $this->weekly_keywords : implode(', ', $this->customer->weekly_keywords ? (array) json_decode($this->customer->weekly_keywords, true) : []),
+            'recipients'  => $this->weekly_recipients !== '' ? $this->weekly_recipients : (string) ($this->customer->weekly_recipients ?? ''),
+        ];
+
         return view('livewire.settings.weekly-settings', [
             'recipientsPreview' => $recipientsPreview,
+            'activeSite'        => $this->site,
+            'effective'         => $effective,
         ]);
     }
 }

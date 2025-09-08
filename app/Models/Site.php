@@ -22,10 +22,16 @@ class Site extends Model
         'brand_voice',
         'locale',
         'ai_prefs',
+        'weekly_brand_voice',
+        'weekly_audience',
+        'weekly_goal',
+        'weekly_keywords',   // json
+        'weekly_recipients',
     ];
 
     protected $casts = [
         'ai_prefs' => 'array',
+        'weekly_keywords' => 'array',
     ];
 
     protected static function booted(): void
@@ -66,5 +72,40 @@ class Site extends Model
             $this->brand_voice ? "Ton: {$this->brand_voice}" : null,
         ]);
         return trim(implode(' | ', $parts));
+    }
+
+    public function effectiveBrandVoice(): ?string
+    {
+        return $this->weekly_brand_voice ?: ($this->customer?->weekly_brand_voice ?? null);
+    }
+
+    public function effectiveAudience(): ?string
+    {
+        return $this->weekly_audience ?: ($this->customer?->weekly_audience ?? null);
+    }
+
+    public function effectiveGoal(): ?string
+    {
+        return $this->weekly_goal ?: ($this->customer?->weekly_goal ?? null);
+    }
+
+    public function effectiveKeywords(): array
+    {
+        if (!empty($this->weekly_keywords) && is_array($this->weekly_keywords)) {
+            return $this->weekly_keywords;
+        }
+        $cust = $this->customer?->weekly_keywords;
+        return $cust ? (array) json_decode($cust, true) : [];
+    }
+
+    public function effectiveRecipients(): array
+    {
+        $raw = $this->weekly_recipients ?: ($this->customer?->weekly_recipients ?? '');
+        $emails = preg_split('/\s*,\s*/', (string) $raw, -1, PREG_SPLIT_NO_EMPTY);
+        return collect($emails)
+            ->filter(fn ($e) => filter_var($e, FILTER_VALIDATE_EMAIL))
+            ->unique()
+            ->values()
+            ->all();
     }
 }
