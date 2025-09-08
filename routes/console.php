@@ -28,13 +28,16 @@ Artisan::command('weekly:digest {tag=monday}', function (string $tag) {
     $count = 0;
     $valid = in_array($tag, ['monday','friday'], true) ? $tag : 'monday';
 
-    Customer::query()->where('status','active')->pluck('id')->each(function ($cid) use (&$count, $valid) {
-        dispatch(new GenerateWeeklyDigestJob((int)$cid, $valid))->onQueue('ai');
-        $count++;
-    });
+    Site::query()
+        ->whereHas('customer', fn($q) => $q->where('status', 'active'))
+        ->pluck('id')
+        ->each(function ($sid) use (&$count, $valid) {
+            dispatch(new GenerateWeeklyDigestJob((int) $sid, $valid))->onQueue('ai');
+            $count++;
+        });
 
-    $this->info("Köade veckodigest ({$valid}) för {$count} kund(er).");
-})->describe('Queue weekly digest for all active customers');
+    $this->info("Köade veckodigest ({$valid}) för {$count} site(s).");
+})->describe('Queue weekly digest for all sites belonging to active customers');
 
 // Schemalägg ENDAST weekly:digest
 Schedule::command('weekly:digest monday')->mondays()->at('08:00');
@@ -58,10 +61,10 @@ Artisan::command('leads:recalculate {--sync}', function () {
     }
 })->describe('Recalculate lead scores for all leads now');
 
-Artisan::command('weekly:digest:one {customerId} {tag=monday}', function (int $customerId, string $tag) {
+Artisan::command('weekly:digest:one {siteId} {tag=monday}', function (int $siteId, string $tag) {
     $valid = in_array($tag, ['monday','friday'], true) ? $tag : 'monday';
 
-    dispatch(new App\Jobs\GenerateWeeklyDigestJob($customerId, $valid))->onQueue('ai');
+    dispatch(new App\Jobs\GenerateWeeklyDigestJob($siteId, $valid))->onQueue('ai');
 
-    $this->info("Köade veckodigest ({$valid}) för kund {$customerId}.");
-})->describe('Queue weekly digest for one customer');
+    $this->info("Köade veckodigest ({$valid}) för site {$siteId}.");
+})->describe('Queue weekly digest for one site');
