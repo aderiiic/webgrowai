@@ -1,4 +1,3 @@
-
 <div>
     <div class="max-w-6xl mx-auto space-y-8">
         <!-- Header -->
@@ -9,7 +8,7 @@
                 </svg>
                 {{ $content->title ?: 'Min AI-genererade text' }}
             </h1>
-            <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-3">
                 @php
                     $statusColors = [
                         'completed' => ['bg' => 'from-green-50 to-emerald-50', 'border' => 'border-green-200/50', 'text' => 'text-green-800', 'label' => 'Klar'],
@@ -20,14 +19,34 @@
                     ];
                     $colors = $statusColors[strtolower($content->status)] ?? ['bg' => 'from-gray-50 to-slate-50', 'border' => 'border-gray-200/50', 'text' => 'text-gray-800', 'label' => $content->status];
                 @endphp
-                <div class="inline-flex items-center px-4 py-2 bg-gradient-to-r {{ $colors['bg'] }} {{ $colors['border'] }} border rounded-xl">
+                <div class="inline-flex items-center px-3 py-1.5 bg-gradient-to-r {{ $colors['bg'] }} {{ $colors['border'] }} border rounded-xl">
                     <span class="text-sm font-medium {{ $colors['text'] }} uppercase">{{ $colors['label'] }}</span>
                     @if($content->provider)
                         <span class="mx-2 text-gray-400">•</span>
                         <span class="text-sm font-medium {{ $colors['text'] }}">{{ $content->provider }}</span>
                     @endif
                 </div>
-                <a href="{{ route('ai.list') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 hover:border-gray-400 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 shadow-sm hover:shadow-md">
+
+                @php $mdReady = !empty($md); @endphp
+
+                @if(!$isLocked && $mdReady)
+                    @if(!$isEditing)
+                        <button wire:click="startEditing"
+                                class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 hover:border-gray-400 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 shadow-sm hover:shadow-md">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h2m-1 0v14m-7-7h14"/>
+                            </svg>
+                            Redigera
+                        </button>
+                    @else
+                        <button wire:click="cancelEditing"
+                                class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 hover:border-gray-400 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200">
+                            Avbryt
+                        </button>
+                    @endif
+                @endif
+
+                <a href="{{ route('ai.list') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 hover:border-gray-400 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                     </svg>
@@ -36,7 +55,22 @@
             </div>
         </div>
 
-        <!-- Publishing status overview -->
+        <!-- Lås-banner när publicerad -->
+        @if($isLocked)
+            <div class="p-4 bg-gray-50 border border-gray-200 rounded-xl">
+                <div class="flex items-start space-x-3">
+                    <svg class="w-5 h-5 text-gray-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                    <div>
+                        <p class="text-sm text-gray-800 font-medium">Texten är publicerad</p>
+                        <p class="text-sm text-gray-600">Den här texten kan inte längre redigeras eftersom den redan har publicerats.</p>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        <!-- Publishing status overview (oförändrad) -->
         @php
             $pubs = $content->relationLoaded('publications') ? $content->publications : ($content->publications ?? collect());
             $byTarget = [
@@ -71,7 +105,7 @@
                     'facebook' => ['label' => 'Facebook', 'icon' => 'M11 2h3a1 1 0 011 1v3h-2a1 1 0 00-1 1v2h3l-.5 3H12v7H9v-7H7V9h2V7a3 3 0 013-3z'],
                     'instagram' => ['label' => 'Instagram', 'icon' => 'M7 2h6a5 5 0 015 5v6a5 5 0 01-5 5H7a5 5 0 01-5-5V7a5 5 0 015-5zm0 2a3 3 0 00-3 3v6a3 3 0 003 3h6a3 3 0 003-3V7a3 3 0 00-3-3H7zm3 2.5A3.5 3.5 0 1110 13a3.5 3.5 0 010-7zM15 6.5a1 1 0 110 2 1 1 0 010-2z'],
                     'linkedin' => ['label' => 'LinkedIn', 'icon' => 'M4 3h12a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1zm2 4h2v6H6V7zm4 0h2.2l.1 3.2h.1c.5-1.6 1.6-3.3 3.5-3.3 1.8 0 2.6 1.1 2.6 3.5V17h-2.2v-5.5c0-1.2-.4-2-1.5-2-1.2 0-1.8 1-2.1 2v5.5H10V7z'],
-                    'shopify' => ['label' => 'Shopify', 'icon' => 'M6 2a2 2 0 00-2 2v1H3a1 1 0 00-1 .8L1 9a2 2 0 002 2h14a2 2 0 002-2l-2-3.2A1 1 0 0016 5h-1V4a2 2 0 00-2-2H6zm7 3H7V4a1 1 0 011-1h4a1 1 0 011 1v1zM3 12v4a2 2 0 002 2h10a2 2 0 002-2v-4H3z']
+                    'shopify' => ['label' => 'Shopify', 'icon' => 'M6 2a2 2 0 00-2 2v1H3a1 1 0 00-1 .8L1 9a2 2 0 002 2h14a2 2 0 002-2l-2-3.2A1 1 0 0016 5h-1V4a2 2 0 00-2-2H6zm7 3H7V4a1 1 0 011-1h4a1 1 0 011 1v1z']
                 ] as $target => $info)
                     @php
                         $status = $state($byTarget[$target]);
@@ -99,7 +133,7 @@
             </div>
         </div>
 
-        <!-- Success/Error Messages -->
+        <!-- Flash -->
         @if(session('success'))
             <div id="flash-success" class="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl">
                 <div class="flex items-center space-x-3">
@@ -107,6 +141,16 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                     <p class="text-sm font-medium text-emerald-800">{{ session('success') }}</p>
+                </div>
+            </div>
+        @endif
+        @if(session('error'))
+            <div class="p-4 bg-red-50 border border-red-200 rounded-xl">
+                <div class="flex items-center space-x-3">
+                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <p class="text-sm font-medium text-red-800">{{ session('error') }}</p>
                 </div>
             </div>
         @endif
@@ -122,73 +166,109 @@
             </div>
         @endif
 
-        @if($publishQuotaReached)
-            <div class="p-4 bg-red-50 border border-red-200 rounded-xl">
-                <div class="flex items-center space-x-3">
-                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <p class="text-sm font-medium text-red-800">
-                        Du har nått gränsen för antal publiceringar denna månad
-                        @if(!is_null($publishQuotaLimit))
-                            ({{ $publishQuotaUsed }} / {{ $publishQuotaLimit }})
-                        @endif
-                        – <a href="{{ route('account.upgrade') }}" class="underline hover:no-underline">uppgradera din plan</a> för fler publiceringar.
-                    </p>
-                </div>
-            </div>
-        @endif
-
-        @php $mdReady = !empty($md); @endphp
-
-            <!-- Content Preview -->
+        <!-- Innehåll: redigering eller förhandsvisning -->
         <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 overflow-hidden">
-            @if($mdReady)
+            @if(!empty($md))
                 <div class="p-8">
-                    <!-- Header med regenerate-knapp -->
                     <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
                         <div class="flex items-center space-x-3">
                             <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                             </svg>
                             <div>
-                                <h2 class="text-xl font-bold text-gray-900">Din färdiga text</h2>
+                                <h2 class="text-xl font-bold text-gray-900">Din text</h2>
                                 <p class="text-sm text-gray-600">{{ $content->provider ? "Skapad med {$content->provider}" : 'AI-genererad text' }}</p>
                             </div>
                         </div>
 
-                        @if($content->status === 'ready')
-                            @php
-                                $isLocked = $content->publications()->where('status', 'published')->exists();
-                            @endphp
+                        @if($content->status === 'ready' && !$isLocked && !$isEditing)
+                            <button wire:click="startEditing"
+                                    class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h2m-1 0v14m-7-7h14"/>
+                                </svg>
+                                Redigera
+                            </button>
+                        @endif
 
-                            @if(!$isLocked)
-                                <button wire:click="regenerate"
-                                        wire:loading.attr="disabled"
-                                        class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed">
-                                    <svg wire:loading.remove class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                                    </svg>
-                                    <svg wire:loading class="animate-spin w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                                    </svg>
-                                    <span wire:loading.remove>Skapa om texten</span>
-                                    <span wire:loading>Skapar ny text...</span>
-                                </button>
-                            @else
-                                <div class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-500 rounded-xl">
-                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                                    </svg>
-                                    Texten är publicerad
-                                </div>
-                            @endif
+                        @if($content->status === 'ready' && !$isLocked && !$isEditing)
+                            <button wire:click="regenerate"
+                                    wire:loading.attr="disabled"
+                                    class="ml-3 inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50">
+                                <svg wire:loading.remove class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                </svg>
+                                <svg wire:loading class="animate-spin w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                </svg>
+                                <span wire:loading.remove>Skapa om texten</span>
+                                <span wire:loading>Skapar ny text...</span>
+                            </button>
+                        @elseif($content->status === 'ready' && $isLocked)
+                            <div class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-500 rounded-xl">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                </svg>
+                                Texten är publicerad
+                            </div>
                         @endif
                     </div>
 
-                    <article class="prose prose-lg max-w-none prose-indigo prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-indigo-600 hover:prose-a:text-indigo-800 prose-strong:text-gray-900 prose-code:text-indigo-600 prose-pre:bg-gray-900 prose-pre:text-gray-100">
-                        {!! $html !!}
-                    </article>
+                    @if($isEditing && !$isLocked)
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Titel</label>
+                                <input type="text"
+                                       wire:model.defer="editTitle"
+                                       class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="Titel (valfritt)">
+                            </div>
+                            <div class="hidden lg:block"></div>
+
+                            <div class="lg:col-span-1">
+                                <div class="flex items-center justify-between mb-2">
+                                    <label class="block text-sm font-medium text-gray-700">Text (Markdown stöds)</label>
+                                    <span class="text-xs text-gray-500">Tips: Använd rubriker (##) och listor (-)</span>
+                                </div>
+                                <textarea
+                                    wire:model.live.debounce.500ms="editBody"
+                                    rows="16"
+                                    class="w-full px-3 py-3 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                    placeholder="Skriv eller redigera din text här..."></textarea>
+
+                                <div class="mt-4 flex items-center gap-3">
+                                    <button wire:click="saveEdits"
+                                            class="inline-flex items-center px-5 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                        Spara
+                                    </button>
+                                    <button wire:click="cancelEditing"
+                                            class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50">
+                                        Avbryt
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="lg:col-span-1">
+                                <div class="flex items-center justify-between mb-2">
+                                    <p class="text-sm font-medium text-gray-700">Förhandsgranskning</p>
+                                    <span class="text-xs text-gray-500">Så här kommer texten att visas</span>
+                                </div>
+                                @php
+                                    $previewMd = \Illuminate\Support\Str::of((string) ($editBody ?? ''))->markdown();
+                                @endphp
+                                <article class="prose prose-lg max-w-none prose-indigo border border-gray-100 rounded-xl p-4">
+                                    {!! $previewMd !!}
+                                </article>
+                            </div>
+                        </div>
+                    @else
+                        <article class="prose prose-lg max-w-none prose-indigo prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-indigo-600 hover:prose-a:text-indigo-800 prose-strong:text-gray-900 prose-code:text-indigo-600 prose-pre:bg-gray-900 prose-pre:text-gray-100">
+                            {!! $html !!}
+                        </article>
+                    @endif
                 </div>
             @else
                 <div class="p-12 text-center">
@@ -205,11 +285,12 @@
                             AI skapar din text...
                         </span>
                     </h3>
-                    <p class="text-gray-600">Detta tar vanligtvis 1-2 minuter. Du kan uppdatera sidan om en stund.</p>
+                    <p class="text-gray-600">Detta tar vanligtvis 1–2 minuter. Du kan uppdatera sidan om en stund.</p>
                 </div>
             @endif
         </div>
 
+        <!-- Resten: Bildval, publicering m.m. (oförändrat) -->
         <!-- Image Selection -->
         <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6">
             <div class="flex items-center justify-between mb-4">
@@ -265,10 +346,8 @@
             </div>
         </div>
 
-        <!-- Publishing Sections -->
+        <!-- Publicering och socialt (oförändrat i sak) -->
         <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
-
-            <!-- WordPress/Shopify publishing -->
             @if($currentProvider === 'wordpress')
                 <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6">
                     <div class="flex items-center space-x-4 mb-6">
@@ -340,7 +419,6 @@
                 </div>
             @endif
 
-            <!-- Social media publishing -->
             <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6">
                 <div class="flex items-center space-x-4 mb-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-pink-500 to-purple-600 rounded-xl flex items-center justify-center">
@@ -351,7 +429,7 @@
                     <div>
                         <h2 class="text-xl font-bold text-gray-900 flex items-center">
                             <svg class="w-5 h-5 mr-2 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2z"/>
                             </svg>
                             Dela på sociala medier
                         </h2>
@@ -363,18 +441,8 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Vilken plattform?</label>
                         <select wire:model="socialTarget" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200" @if($publishQuotaReached) disabled @endif>
-                            <option value="facebook">
-                                <svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M11 2h3a1 1 0 011 1v3h-2a1 1 0 00-1 1v2h3l-.5 3H12v7H9v-7H7V9h2V7a3 3 0 013-3z"/>
-                                </svg>
-                                Facebook
-                            </option>
-                            <option value="instagram">
-                                <svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M7 2h6a5 5 0 015 5v6a5 5 0 01-5 5H7a5 5 0 01-5-5V7a5 5 0 015-5zm0 2a3 3 0 00-3 3v6a3 3 0 003 3h6a3 3 0 003-3V7a3 3 0 00-3-3H7zm3 2.5A3.5 3.5 0 1110 13a3.5 3.5 0 010-7zM15 6.5a1 1 0 110 2 1 1 0 010-2z"/>
-                                </svg>
-                                Instagram (kräver bild)
-                            </option>
+                            <option value="facebook">Facebook</option>
+                            <option value="instagram">Instagram (kräver bild)</option>
                         </select>
                         @error('socialTarget')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -393,8 +461,8 @@
 
                 <div class="flex justify-end">
                     <button wire:click="publishSocialNow"
-                            class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-semibold rounded-xl hover:from-pink-700 hover:to-purple-700 focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl {{ (!$mdReady || $publishQuotaReached) ? 'opacity-50 cursor-not-allowed' : '' }}"
-                            @if(!$mdReady || $publishQuotaReached) disabled @endif>
+                            class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-semibold rounded-xl hover:from-pink-700 hover:to-purple-700 focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl {{ (empty($md) || $publishQuotaReached) ? 'opacity-50 cursor-not-allowed' : '' }}"
+                            @if(empty($md) || $publishQuotaReached) disabled @endif>
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
                         </svg>
@@ -427,8 +495,8 @@
                 <input type="text" wire:model.defer="liQuickText" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-all duration-200" placeholder="Egen text för LinkedIn (lämna tomt för AI-texten)" @if($publishQuotaReached) disabled @endif>
 
                 <div class="flex justify-end">
-                    <button wire:click="queueLinkedInQuick" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-sky-600 to-blue-700 text-white font-semibold rounded-xl hover:from-sky-700 hover:to-blue-800 focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl {{ (!$mdReady || $publishQuotaReached) ? 'opacity-50 cursor-not-allowed' : '' }}"
-                            @if(!$mdReady || $publishQuotaReached) disabled @endif>
+                    <button wire:click="queueLinkedInQuick" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-sky-600 to-blue-700 text-white font-semibold rounded-xl hover:from-sky-700 hover:to-blue-800 focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl {{ (empty($md) || $publishQuotaReached) ? 'opacity-50 cursor-not-allowed' : '' }}"
+                            @if(empty($md) || $publishQuotaReached) disabled @endif>
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
                         </svg>

@@ -16,6 +16,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
@@ -42,6 +43,11 @@ class Detail extends Component
     public ?int $publishQuotaLimit = null;
     public int $publishQuotaUsed = 0;
 
+    // Inline-redigering
+    public bool $isEditing = false;
+    public string $editTitle = '';
+    public string $editBody = '';
+
     #[On('media-selected')]
     public function setSelectedImage(int $id): void
     {
@@ -61,6 +67,62 @@ class Detail extends Component
             $this->socialTarget = 'facebook';
         }
     }
+
+    // ----- Inline-redigering -----
+
+    public function startEditing(): void
+    {
+        Gate::authorize('update', $this->content);
+
+        if ($this->isLocked()) {
+            session()->flash('error', 'Texten är redan publicerad och kan inte redigeras.');
+            return;
+        }
+
+        $this->editTitle = (string) ($this->content->title ?? '');
+        $this->editBody  = (string) ($this->content->body_md ?? '');
+        $this->isEditing = true;
+    }
+
+    public function cancelEditing(): void
+    {
+        $this->isEditing = false;
+    }
+
+    public function saveEdits(): void
+    {
+        Gate::authorize('update', $this->content);
+
+        if ($this->isLocked()) {
+            session()->flash('error', 'Texten är redan publicerad och kan inte redigeras.');
+            return;
+        }
+
+        $this->validate([
+            'editTitle' => 'nullable|string|max:200',
+            'editBody'  => 'nullable|string|max:20000',
+        ]);
+
+        $normalized = $this->normalizeMd($this->editBody ?? '');
+
+        $this->content->update([
+            'title'   => $this->editTitle !== '' ? $this->editTitle : $this->content->title,
+            'body_md' => $normalized !== '' ? $normalized : null,
+            // status lämnas oförändrad (t.ex. 'ready')
+        ]);
+
+        $this->isEditing = false;
+        session()->flash('success', 'Texten sparades.');
+    }
+
+    private function isLocked(): bool
+    {
+        // Låst om publicerad (eller om modellen har ett explicit lås)
+        return $this->content->publications()->where('status', 'published')->exists()
+            || (bool) ($this->content->is_locked ?? false);
+    }
+
+    // ----- Publicering & socialt (oförändrat) -----
 
     public function publish(): void
     {
@@ -101,9 +163,8 @@ class Detail extends Component
             $iso = Carbon::parse($this->publishAt)->toIso8601String();
         }
 
-        // Provider
         $client = app(IntegrationManager::class)->forSite($this->publishSiteId);
-        $provider = $client->provider(); // 'wordpress' | 'shopify' | 'custom'
+        $provider = $client->provider();
         $target = $provider;
 
         $payload = [
@@ -112,7 +173,6 @@ class Detail extends Component
             'date'    => $iso,
         ];
 
-        // ENDAST bildbank: lägg till om vald
         if ($this->selectedImageAssetId > 0) {
             $payload['image_asset_id'] = (int)$this->selectedImageAssetId;
         }
@@ -145,7 +205,6 @@ class Detail extends Component
         $this->publish();
     }
 
-
     public function queueSocial(): void
     {
         Gate::authorize('update', $this->content);
@@ -155,7 +214,6 @@ class Detail extends Component
             'socialScheduleAt' => 'nullable|date',
         ]);
 
-        // Om Instagram: kräver bild
         if ($this->socialTarget === 'instagram' && $this->selectedImageAssetId <= 0) {
             session()->flash('success', 'Instagram kräver en vald bild från bildbanken.');
             return;
@@ -189,7 +247,6 @@ class Detail extends Component
             }
             session()->flash('success', ucfirst($this->socialTarget).' publicering startad.');
         } else {
-            // För schemalagda: dispatcha med delay
             $delay = $scheduledAt->diffInSeconds($now);
             if ($this->socialTarget === 'facebook') {
                 dispatch(new PublishToFacebookJob($pub->id))->delay($delay)->afterCommit()->onQueue('social');
@@ -224,7 +281,7 @@ class Detail extends Component
         $pub = ContentPublication::create([
             'ai_content_id' => $this->content->id,
             'target'        => $this->socialTarget,
-            'status'        => 'queued', // ändrat från 'processing' -> låt jobbet ta processing
+            'status'        => 'queued',
             'scheduled_at'  => null,
             'message'       => null,
             'payload'       => $payload,
@@ -258,7 +315,7 @@ class Detail extends Component
             'ai_content_id' => $this->content->id,
             'target'        => 'linkedin',
             'status'        => 'queued',
-            'scheduled_at'  => $scheduledAt,
+            'scheduled_at'  => $this->liQuickScheduleAt ? Carbon::parse($this->liQuickScheduleAt) : null,
             'message'       => null,
             'payload'       => $payload,
         ]);
@@ -305,6 +362,8 @@ class Detail extends Component
         $this->publishQuotaUsed  = $used;
         $this->publishQuotaReached = $limit !== null ? ($used >= (int)$limit) : false;
 
+        $isLocked = $this->isLocked();
+
         return view('livewire.a-i.detail', [
             'sites'               => $this->sites,
             'md'                  => $md,
@@ -313,6 +372,7 @@ class Detail extends Component
             'publishQuotaReached' => $this->publishQuotaReached,
             'publishQuotaLimit'   => $this->publishQuotaLimit,
             'publishQuotaUsed'    => $this->publishQuotaUsed,
+            'isLocked'            => $isLocked,
         ]);
     }
 
@@ -370,20 +430,17 @@ class Detail extends Component
             return;
         }
 
-        // Markera som köad igen
         $this->content->update([
             'status' => 'queued',
             'body_md' => null,
             'error' => null,
         ]);
 
-        // Kör jobbet igen
         dispatch(new GenerateContentJob($this->content->id))->onQueue('ai');
 
         session()->flash('success', 'Genererar nytt innehåll...');
     }
 
-    // Metod för att låsa innehåll efter publicering
     public function lockAfterPublication()
     {
         $this->content->update(['is_locked' => true]);
