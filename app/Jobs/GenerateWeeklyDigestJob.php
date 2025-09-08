@@ -28,11 +28,13 @@ class GenerateWeeklyDigestJob implements ShouldQueue
         $customer = $site->customer;
 
         // Personalisering från kundinställningar (med fallbackar)
-        $brandVoice = $customer->weekly_brand_voice ?: 'professionell, hjälpsam';
-        $audience   = $customer->weekly_audience ?: 'SMB-kunder';
-        $goal       = $customer->weekly_goal ?: 'öka kvalificerade leads';
-        $keywordsRaw = $customer->weekly_keywords ? (array) json_decode($customer->weekly_keywords, true) : [];
-        $keywords   = collect($keywordsRaw)->filter()->unique()->values()->all();
+        $brandVoice = $site->weekly_brand_voice ?: ($customer->weekly_brand_voice ?: 'professionell, hjälpsam');
+        $audience   = $site->weekly_audience   ?: ($customer->weekly_audience   ?: 'SMB-kunder');
+        $goal       = $site->weekly_goal       ?: ($customer->weekly_goal       ?: 'öka kvalificerade leads');
+
+        $keywordsRawSite = $site->weekly_keywords ? (array) json_decode($site->weekly_keywords, true) : [];
+        $keywordsRawCust = $customer->weekly_keywords ? (array) json_decode($customer->weekly_keywords, true) : [];
+        $keywords = collect($keywordsRawSite ?: $keywordsRawCust)->filter()->unique()->values()->all();
 
         $siteContexts = $customer->sites()->get()
             ->map(fn($site) => trim($site->aiContextSummary()))
@@ -86,55 +88,52 @@ class GenerateWeeklyDigestJob implements ShouldQueue
             ]);
         }
 
+        $recipientsRaw = $site->weekly_recipients ?: $customer->weekly_recipients;
+        $recipients = collect(preg_split('/\s*,\s*/', (string) $recipientsRaw, -1, PREG_SPLIT_NO_EMPTY))
+            ->filter(fn($e) => filter_var($e, FILTER_VALIDATE_EMAIL))
+            ->values()
+            ->all();
+
+        if (empty($recipients) && $customer->contact_email) {
+            $recipients = [$customer->contact_email];
+        }
+
         // Mottagare: weekly_recipients (komma-separerat) eller fallback till contact_email
         $cacheKey = sprintf('weekly_digest_notified:%d:%s:%s', $customer->id, $runDate, $this->runTag);
         $sentNow = Cache::add($cacheKey, 1, now()->addHours(12)); // true endast första gången
 
-        if ($sentNow) {
-            // Mottagare: weekly_recipients eller fallback till contact_email
-            $recipients = collect(preg_split('/\s*,\s*/', (string) $customer->weekly_recipients, -1, PREG_SPLIT_NO_EMPTY))
-                ->filter(fn($e) => filter_var($e, FILTER_VALIDATE_EMAIL))
-                ->values()
-                ->all();
-            if (empty($recipients) && $customer->contact_email) {
-                $recipients = [$customer->contact_email];
-            }
+        if ($sentNow && !empty($recipients)) {
+            $plansToday = WeeklyPlan::query()
+                ->where('customer_id', $customer->id)
+                ->whereDate('run_date', $runDate)
+                ->where('run_tag', $this->runTag)
+                ->get()
+                ->groupBy('site_id');
 
-            if (!empty($recipients)) {
-                // Beräkna enkel sammanfattning per site för mejlet
-                $plansToday = WeeklyPlan::query()
-                    ->where('customer_id', $customer->id)
-                    ->whereDate('run_date', $runDate)
-                    ->where('run_tag', $this->runTag)
-                    ->get()
-                    ->groupBy('site_id');
+            $summary = $plansToday->map(function ($items, $sid) {
+                $siteName = optional($items->first()?->site)->name ?? 'Okänd sajt';
+                return [
+                    'site_id'   => (int) $sid,
+                    'site_name' => $siteName,
+                    'sections'  => $items->pluck('type')->values()->all(),
+                ];
+            })->values()->all();
 
-                $summary = $plansToday->map(function ($items, $sid) {
-                    $siteName = optional($items->first()?->site)->name ?? 'Okänd sajt';
-                    return [
-                        'site_id'   => (int) $sid,
-                        'site_name' => $siteName,
-                        'sections'  => $items->pluck('type')->values()->all(),
-                    ];
-                })->values()->all();
+            Mail::to($recipients)->queue(new WeeklyDigestMail(
+                customer: $customer,
+                runTag: $this->runTag,
+                payload: [
+                    'date'     => $runDate,
+                    'sites'    => $summary,
+                    'cta_url'  => route('dashboard'),
+                    'cta_text' => 'Logga in för att läsa veckans förslag',
+                ]
+            ));
 
-                Mail::to($recipients)->queue(new WeeklyDigestMail(
-                    customer: $customer,
-                    runTag: $this->runTag,
-                    payload: [
-                        'date'     => $runDate,
-                        'sites'    => $summary,
-                        'cta_url'  => route('dashboard'),
-                        'cta_text' => 'Logga in för att läsa veckans förslag',
-                    ]
-                ));
-
-                // Markera emailed_at för dagens poster
-                WeeklyPlan::where('customer_id', $customer->id)
-                    ->whereDate('run_date', $runDate)
-                    ->where('run_tag', $this->runTag)
-                    ->update(['emailed_at' => now()]);
-            }
+            WeeklyPlan::where('customer_id', $customer->id)
+                ->whereDate('run_date', $runDate)
+                ->where('run_tag', $this->runTag)
+                ->update(['emailed_at' => now()]);
         }
 
         // Usage logg

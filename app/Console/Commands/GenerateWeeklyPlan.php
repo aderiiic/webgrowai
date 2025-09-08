@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Jobs\GenerateWeeklyPlanJob;
+use App\Models\Customer;
 use Illuminate\Console\Command;
 
 class GenerateWeeklyPlan extends Command
@@ -18,16 +20,18 @@ class GenerateWeeklyPlan extends Command
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Generera veckoplan per site';
 
     /**
      * Execute the console command.
      */
     public function handle(): void
     {
-        \App\Models\Customer::query()
-            ->where('status','active')
-            ->pluck('id')
-            ->each(fn($cid) => dispatch(new \App\Jobs\GenerateWeeklyPlanJob((int)$cid))->onQueue('ai'));
+        Customer::query()
+            ->where('status', 'active')
+            ->with('sites:id,customer_id') // minimera laddning
+            ->get()
+            ->flatMap(fn($customer) => $customer->sites)
+            ->each(fn($site) => dispatch(new GenerateWeeklyPlanJob((int) $site->id))->onQueue('ai'));
     }
 }
