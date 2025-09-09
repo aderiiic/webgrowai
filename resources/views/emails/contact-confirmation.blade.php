@@ -1,23 +1,70 @@
-@component('mail::message')
-    # Tack för din förfrågan!
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="utf-8">
+    <title>Tack för din förfrågan</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="margin:0; padding:0; background-color:#f6f7fb;">
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f6f7fb;">
+    <tr>
+        <td align="center" style="padding:24px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px; background:#ffffff; border-radius:12px; overflow:hidden;">
+                <tr>
+                    <td style="padding:24px; text-align:center; background:linear-gradient(135deg,#4f46e5,#7c3aed); color:#fff;">
+                        <h1 style="margin:0; font-family:Arial,Helvetica,sans-serif; font-size:20px; line-height:1.3;">
+                            Tack för din förfrågan!
+                        </h1>
+                    </td>
+                </tr>
 
-    Hej {{ $name }},
+                <tr>
+                    <td style="padding:24px; font-family:Arial,Helvetica,sans-serif; color:#111827; font-size:14px; line-height:1.6;">
+                        <p style="margin:0 0 12px;">Hej <strong>{{ $name }}</strong>,</p>
 
-    Tack för att du kontaktade oss! Vi har mottagit ditt meddelande och återkommer inom 24 timmar.
+                        <p style="margin:0 0 12px;">
+                            Tack för att du kontaktade oss! Vi har mottagit ditt meddelande och återkommer så snart som möjligt
+                            (normalt inom 24 timmar på vardagar).
+                        </p>
 
-    @if(!empty($subject))
-        **Angående:** {{ $subject }}
-    @endif
+                        @if(!empty($subject))
+                            <p style="margin:0 0 12px;">
+                                <strong>Angående:</strong> {{ $subject }}
+                            </p>
+                        @endif
 
-    ## Ditt meddelande
-    {{ $userMessage }}
+                        <div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin:16px 0;">
+                            <h3 style="margin:0 0 8px; font-size:14px; color:#111827;">Ditt meddelande</h3>
+                            <p style="margin:0; white-space:pre-wrap; color:#374151;">
+                                {{ $userMessage }}
+                            </p>
+                        </div>
 
-    Om du har ytterligare frågor kan du alltid svara på detta mail eller kontakta oss på support@webgrow.se.
+                        <p style="margin:0 0 16px;">
+                            Om du vill lägga till mer information är det bara att svara på detta e‑postmeddelande.
+                        </p>
 
-    @component('mail::button', ['url' => url('/')])
-        Tillbaka till WebGrow AI
-    @endcomponent
+                        <p style="margin:0;">
+                            Vänliga hälsningar,<br>
+                            <strong>{{ config('app.name') }}‑teamet</strong>
+                        </p>
 
-    Vänliga hälsningar,
-    WebGrow AI Team
-@endcomponent
+                        <hr style="border:none; border-top:1px solid #e5e7eb; margin:20px 0;">
+
+                        <p style="margin:0; font-size:12px; color:#6b7280;">
+                            Behöver du snabb hjälp? Mejla oss på <a href="mailto:info@example.com" style="color:#4f46e5;">info@example.com</a>.
+                        </p>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="padding:12px; text-align:center; background:#f9fafb; color:#6b7280; font-family:Arial,Helvetica,sans-serif; font-size:12px;">
+                        © {{ date('Y') }} {{ config('app.name') }}
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>
