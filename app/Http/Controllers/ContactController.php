@@ -42,15 +42,15 @@ class ContactController extends Controller
         unset($viewData['message']);
 
         try {
-            // Admin-notis (Markdown)
-            Mail::markdown('emails.contact', $viewData, function ($m) use ($contactData) {
+            // Admin-notis (vanlig Blade-vy)
+            Mail::send('emails.contact', $viewData, function ($m) use ($contactData) {
                 $m->to(config('mail.admin_email', 'info@webbi.se'))
                     ->subject('Ny kontaktförfrågan från WebGrow AI')
                     ->replyTo($contactData['email'], $contactData['name']);
             });
 
-            // Bekräftelse till avsändaren (Markdown)
-            Mail::markdown('emails.contact-confirmation', $viewData, function ($m) use ($contactData) {
+            // Bekräftelse till avsändaren (vanlig Blade-vy)
+            Mail::send('emails.contact-confirmation', $viewData, function ($m) use ($contactData) {
                 $m->to($contactData['email'], $contactData['name'])
                     ->subject('Tack för din förfrågan - WebGrow AI');
             });
