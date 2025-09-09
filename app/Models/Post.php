@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 class Post extends Model
 {
@@ -27,6 +28,19 @@ class Post extends Model
 
     public function getFeaturedImageUrlAttribute(): ?string
     {
-        return $this->featured_image_id ? route('assets.thumb', $this->featured_image_id) : null;
+        if (!$this->featured_image_id) {
+            return null;
+        }
+
+        $asset = $this->featuredImage;
+        if (!$asset) {
+            return null;
+        }
+
+        // Hämta direkt från S3
+        $disk = Storage::disk($asset->disk);
+        $path = $asset->thumb_path ?: $asset->path;
+
+        return $disk->url($path);
     }
 }

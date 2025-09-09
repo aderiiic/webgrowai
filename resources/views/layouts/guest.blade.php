@@ -171,6 +171,10 @@
                     Nyheter
                     <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-600 transition-all duration-200 group-hover:w-full"></span>
                 </a>
+                <a href="{{ url('/#kontakt') }}" class="text-slate-600 hover:text-indigo-600 font-medium transition-colors duration-200 relative group">
+                    Kontakt
+                    <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-600 transition-all duration-200 group-hover:w-full"></span>
+                </a>
             </nav>
 
             <!-- Desktop CTA Buttons -->
@@ -223,6 +227,9 @@
                 </a>
                 <a href="{{ route('news.index') }}" class="block text-slate-700 font-medium py-2 border-b border-slate-100 hover:text-indigo-600 transition-colors duration-200">
                     Nyheter
+                </a>
+                <a href="{{ url('/#contact') }}" class="block text-slate-700 font-medium py-2 border-b border-slate-100 hover:text-indigo-600 transition-colors duration-200">
+                    Kontakt
                 </a>
 
                 <!-- Mobile CTA buttons -->
