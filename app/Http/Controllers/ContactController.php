@@ -42,15 +42,15 @@ class ContactController extends Controller
         unset($viewData['message']);
 
         try {
-            // Admin-notis
-            Mail::send('emails.contact', $viewData, function ($m) use ($contactData) {
-                $m->to(config('mail.admin_email', 'support@webgrow.se'))
+            // Admin-notis (Markdown)
+            Mail::markdown('emails.contact', $viewData, function ($m) use ($contactData) {
+                $m->to(config('mail.admin_email', 'info@webbi.se'))
                     ->subject('Ny kontaktförfrågan från WebGrow AI')
                     ->replyTo($contactData['email'], $contactData['name']);
             });
 
-            // Bekräftelse till avsändaren
-            Mail::send('emails.contact-confirmation', $viewData, function ($m) use ($contactData) {
+            // Bekräftelse till avsändaren (Markdown)
+            Mail::markdown('emails.contact-confirmation', $viewData, function ($m) use ($contactData) {
                 $m->to($contactData['email'], $contactData['name'])
                     ->subject('Tack för din förfrågan - WebGrow AI');
             });
@@ -74,7 +74,7 @@ class ContactController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Något gick fel vid skickandet. Försök igen eller kontakta oss direkt på support@webgrow.se',
+                'message' => 'Något gick fel vid skickandet. Försök igen eller kontakta oss direkt på info@webbi.se',
             ], 500);
         }
     }
