@@ -1,24 +1,21 @@
-{{-- resources/views/emails/contact.blade.php --}}
 @component('mail::message')
     # Ny kontaktförfrågan från WebGrow AI
 
-    En ny kontaktförfrågan har kommit in från hemsidan.
-
     **Från:** {{ $name }} ({{ $email }})
-    @if($company)
+    @if(!empty($company))
         **Företag:** {{ $company }}
     @endif
-    @if($subject)
+    @if(!empty($subject))
         **Ämne:** {{ $subject }}
     @endif
 
-    ## Meddelande:
-    {{ $message }}
+    ## Meddelande
+    {{ $userMessage }}
 
     ---
 
     Svara direkt på detta mail för att kontakta personen.
 
-    Tack,<br>
-    WebGrow AI System
+    Tack,
+    WebGrow AI
 @endcomponent

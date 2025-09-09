@@ -1542,7 +1542,7 @@
                                 </div>
                                 <div>
                                     <h3 class="text-lg font-semibold text-white mb-1">E-post</h3>
-                                    <a href="mailto:support@webgrow.se" class="text-slate-300 hover:text-indigo-300 transition-colors text-lg">support@webgrow.se</a>
+                                    <a href="mailto:info@webbi.se" class="text-slate-300 hover:text-indigo-300 transition-colors text-lg">info@webbi.se</a>
                                     <p class="text-sm text-slate-400 mt-1">Vi svarar inom 24 timmar</p>
                                 </div>
                             </div>

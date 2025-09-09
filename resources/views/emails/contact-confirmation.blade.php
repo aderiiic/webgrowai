@@ -1,4 +1,3 @@
-{{-- resources/views/emails/contact-confirmation.blade.php --}}
 @component('mail::message')
     # Tack för din förfrågan!
 
@@ -6,19 +5,19 @@
 
     Tack för att du kontaktade oss! Vi har mottagit ditt meddelande och återkommer inom 24 timmar.
 
-    @if($subject)
+    @if(!empty($subject))
         **Angående:** {{ $subject }}
     @endif
 
-    ## Ditt meddelande:
-    {{ $message }}
+    ## Ditt meddelande
+    {{ $userMessage }}
 
-    Om du har ytterligare frågor kan du alltid svara på detta mail eller kontakta oss direkt på support@webgrow.se.
+    Om du har ytterligare frågor kan du alltid svara på detta mail eller kontakta oss på support@webgrow.se.
 
     @component('mail::button', ['url' => url('/')])
         Tillbaka till WebGrow AI
     @endcomponent
 
-    Med vänliga hälsningar,<br>
+    Vänliga hälsningar,
     WebGrow AI Team
 @endcomponent
