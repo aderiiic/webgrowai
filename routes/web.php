@@ -56,6 +56,7 @@ use App\Livewire\SEO\KeywordSuggestionsIndex;
 use App\Livewire\SEO\KeywordSuggestionDetail;
 use App\Livewire\Account\Usage as AccountUsage;
 use App\Livewire\Account\Upgrade as AccountUpgrade;
+use App\Livewire\Planner\Index as PlannerIndex;
 
 use App\Livewire\Admin\Customers\Show as AdminCustomerShow;
 use App\Livewire\Admin\Plans\Index as AdminPlansIndex;
@@ -335,6 +336,8 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
     Route::get('/get-started', function () {
         return view('get-started');
     })->name('get-started');
+
+    Route::get('/planner', PlannerIndex::class)->name('planner.index');
 
 });
 

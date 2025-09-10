@@ -1,3 +1,19 @@
+@php
+    // Säkerställ att användaren bara kan se innehåll för den aktuella sajten
+    /** @var \App\Services\CurrentCustomer $currentCustomer */
+    $currentCustomer = app(\App\Support\CurrentCustomer::class);
+    $currentSite = $currentCustomer->getSite();
+
+    if (!$currentSite) {
+        abort(403, 'Saknar aktuell sajt.');
+    }
+
+    // Om $content har site_id, kontrollera att den matchar den aktuella sajten
+    if (isset($content) && isset($content->site_id) && (int)$content->site_id !== (int)$currentSite->id) {
+        abort(403, 'Otillåten åtkomst.');
+    }
+@endphp
+
 <div>
     <div class="max-w-6xl mx-auto space-y-8">
         <!-- Header -->

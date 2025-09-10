@@ -10,12 +10,14 @@ use App\Services\Social\LinkedInService;
 use App\Support\Usage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class PublishToLinkedInJob implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, InteractsWithQueue;
 
     public function __construct(public int $publicationId)
     {
@@ -31,6 +33,26 @@ class PublishToLinkedInJob implements ShouldQueue
         if (!$pub) {
             Log::warning('[PublishToLinkedInJob] Publication saknas – avbryter', ['pub_id' => $this->publicationId]);
             return;
+        }
+
+        if ($pub->status === 'cancelled') {
+            Log::info('[LI] Avbruten – ingen publicering', ['publication_id' => $pub->id]);
+            return;
+        }
+
+        if ($pub->scheduled_at) {
+            $nowTs = Carbon::now()->getTimestamp();
+            $schedTs = $pub->scheduled_at->getTimestamp();
+            $delay = max(0, $schedTs - $nowTs);
+            if ($delay > 20) {
+                Log::info('[LI] För tidigt – release till schematid', [
+                    'publication_id' => $pub->id,
+                    'delay' => $delay,
+                    'scheduled_at' => $pub->scheduled_at->toIso8601String(),
+                ]);
+                $this->release($delay);
+                return;
+            }
         }
 
         if (!in_array($pub->status, ['queued','processing'], true)) {
