@@ -14,9 +14,15 @@
                 'cancelled'  => ['bg'=>'bg-gray-100','text'=>'text-gray-700','label'=>'Avbruten'],
                 default      => ['bg'=>'bg-gray-50','text'=>'text-gray-700','label'=>ucfirst($selected['status'])],
             };
+            $m = $selected['metrics'] ?? null;
+            $isPublished = $selected['status'] === 'published';
+            $stale = false;
+            if ($isPublished && !empty($selected['metrics_at'])) {
+                try { $stale = \Illuminate\Support\Carbon::parse($selected['metrics_at'])->lt(now()->subMinutes(2)); } catch (\Throwable $e) { $stale = false; }
+            }
         @endphp
 
-        <div class="p-4 space-y-4">
+        <div class="p-4 space-y-4" @if($isPublished && (!$m || $stale)) wire:poll.5s="reloadSelected" @endif>
             <div class="flex items-center justify-between">
                 <span class="text-xs uppercase text-gray-500">Status</span>
                 <span class="inline-flex items-center px-2 py-1 text-xs rounded-full {{ $badge['bg'] }} {{ $badge['text'] }}">{{ $badge['label'] }}</span>
@@ -28,6 +34,10 @@
                     Kanal: {{ ucfirst($selected['target']) }}
                     <span class="mx-1 text-gray-300">•</span>
                     Sajt: {{ $selected['site'] ?: '—' }}
+                    @if(!empty($selected['external_url']))
+                        <span class="mx-1 text-gray-300">•</span>
+                        <a href="{{ $selected['external_url'] }}" target="_blank" class="text-indigo-600 hover:underline">Öppna på plattformen</a>
+                    @endif
                 </div>
             </div>
 
@@ -44,10 +54,28 @@
                 </div>
             </div>
 
-            @if(!empty($selected['external_url']))
-                <div class="text-sm">
-                    <div class="text-xs text-gray-500 mb-1">Extern länk</div>
-                    <a href="{{ $selected['external_url'] }}" target="_blank" class="text-indigo-600 hover:underline break-all">{{ $selected['external_url'] }}</a>
+            @if($selected['status'] === 'published')
+                <div class="p-3 bg-white border rounded-lg">
+                    <div class="flex items-center justify-between">
+                        <h5 class="text-sm font-semibold text-gray-900">Statistik</h5>
+                        <button wire:click="refreshMetrics({{ (int)$selected['id'] }})" class="text-xs px-2 py-1 bg-white border rounded hover:bg-gray-50">
+                            Uppdatera statistik
+                        </button>
+                    </div>
+                    @if($m)
+                        <div class="mt-2 grid grid-cols-2 gap-3 text-sm text-gray-800">
+                            <div>Impressions: <span class="font-semibold">{{ $m['impressions'] ?? '—' }}</span></div>
+                            <div>Reach: <span class="font-semibold">{{ $m['reach'] ?? '—' }}</span></div>
+                            <div>Reaktioner: <span class="font-semibold">{{ $m['reactions'] ?? '—' }}</span></div>
+                            <div>Likes: <span class="font-semibold">{{ $m['likes'] ?? '—' }}</span></div>
+                            <div>Kommentarer: <span class="font-semibold">{{ $m['comments'] ?? '—' }}</span></div>
+                            <div>Delningar: <span class="font-semibold">{{ $m['shares'] ?? '—' }}</span></div>
+                        </div>
+                        <div class="mt-2 text-xs text-gray-500">Senast uppdaterad: {{ $selected['metrics_at'] ?: ($m['updated_at'] ?? '—') }}</div>
+                    @else
+                        <div class="mt-2 text-sm text-gray-500">Ingen statistik hämtad ännu.</div>
+                        <div class="text-xs text-gray-400">Tips: Klicka “Uppdatera statistik” – panelen uppdateras automatiskt.</div>
+                    @endif
                 </div>
             @endif
 
@@ -57,16 +85,11 @@
                 </div>
             @endif
 
-            <!-- Ändra tid / Avbryt -->
             <div class="pt-2 border-t space-y-3">
                 <div>
                     <label class="block text-xs text-gray-600 mb-1">Ny tid</label>
-                    <input type="datetime-local"
-                           wire:model.defer="rescheduleAt"
-                           class="w-full px-3 py-2 border rounded-lg text-sm" />
-                    @error('rescheduleAt')
-                    <p class="text-xs text-rose-600 mt-1">{{ $message }}</p>
-                    @enderror
+                    <input type="datetime-local" wire:model.defer="rescheduleAt" class="w-full px-3 py-2 border rounded-lg text-sm" />
+                    @error('rescheduleAt')<p class="text-xs text-rose-600 mt-1">{{ $message }}</p>@enderror
                 </div>
 
                 <div class="flex items-center gap-2">
@@ -75,18 +98,13 @@
                         $canCancel = $selected && in_array($selected['status'], ['queued','scheduled','processing']);
                     @endphp
 
-                    <button
-                        @if(!$canReschedule) disabled @endif
-                    wire:click="reschedulePublication({{ (int)$selected['id'] }})"
-                        class="px-3 py-2 rounded-lg {{ $canReschedule ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-gray-100 text-gray-400 cursor-not-allowed' }}">
+                    <button @if(!$canReschedule) disabled @endif wire:click="reschedulePublication({{ (int)$selected['id'] }})"
+                            class="px-3 py-2 rounded-lg {{ $canReschedule ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-gray-100 text-gray-400 cursor-not-allowed' }}">
                         Ändra tid
                     </button>
 
-                    <button
-                        @if(!$canCancel) disabled @endif
-                    wire:click="cancelPublication({{ (int)$selected['id'] }})"
-                        onclick="return confirm('Avbryt denna publicering?')"
-                        class="px-3 py-2 rounded-lg {{ $canCancel ? 'bg-rose-600 text-white hover:bg-rose-700' : 'bg-gray-100 text-gray-400 cursor-not-allowed' }}">
+                    <button @if(!$canCancel) disabled @endif wire:click="cancelPublication({{ (int)$selected['id'] }})" onclick="return confirm('Avbryt denna publicering?')"
+                            class="px-3 py-2 rounded-lg {{ $canCancel ? 'bg-rose-600 text-white hover:bg-rose-700' : 'bg-gray-100 text-gray-400 cursor-not-allowed' }}">
                         Avbryt
                     </button>
                 </div>
@@ -96,7 +114,6 @@
                 </p>
             </div>
 
-            <!-- Snabbplanera nytt -->
             <div class="pt-4 border-t space-y-3">
                 <h5 class="text-sm font-semibold text-gray-900">Snabbplanera nytt</h5>
                 <div class="space-y-2">

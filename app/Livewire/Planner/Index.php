@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Planner;
 
+use App\Jobs\RefreshPublicationMetricsJob;
 use App\Models\AiContent;
 use App\Models\ContentPublication;
 use App\Support\CurrentCustomer;
@@ -120,6 +121,11 @@ class Index extends Component
         $pub = ContentPublication::with('content:id,customer_id,site_id')->findOrFail($publicationId);
         abort_unless($pub->content && (int)$pub->content->customer_id === (int)$customer->id, 403);
 
+        $activeSiteId = (int) ($current->getSiteId() ?: 0);
+        if ($activeSiteId > 0) {
+            abort_unless((int)$pub->content->site_id === $activeSiteId, 403);
+        }
+
         if (in_array($pub->status, ['published', 'failed', 'cancelled'], true)) {
             $this->dispatch('notify', type: 'warning', message: 'Kan inte avbryta – status: ' . $pub->status);
             return;
@@ -161,6 +167,11 @@ class Index extends Component
 
         $pub = ContentPublication::with(['content:id,customer_id,site_id'])->findOrFail($publicationId);
         abort_unless($pub->content && (int)$pub->content->customer_id === (int)$customer->id, 403);
+
+        $activeSiteId = (int) ($current->getSiteId() ?: 0);
+        if ($activeSiteId > 0) {
+            abort_unless((int)$pub->content->site_id === $activeSiteId, 403);
+        }
 
         if (in_array($pub->status, ['published', 'failed', 'cancelled'], true)) {
             $this->dispatch('notify', type: 'warning', message: 'Kan inte ändra tid – status: ' . $pub->status);
@@ -270,6 +281,24 @@ class Index extends Component
         session()->flash('success', 'Publiceringen schemalagd.');
     }
 
+    public function refreshMetrics(int $publicationId, CurrentCustomer $current): void
+    {
+        $customer = $current->get();
+        abort_unless($customer, 403);
+
+        $pub = ContentPublication::with('content:id,customer_id,site_id')->findOrFail($publicationId);
+        abort_unless((int)$pub->content?->customer_id === (int)$customer->id, 403);
+
+        // NYTT: säkerställ aktiv site-kontext om en site är vald
+        $activeSiteId = (int) ($current->getSiteId() ?: 0);
+        if ($activeSiteId > 0) {
+            abort_unless((int)$pub->content->site_id === $activeSiteId, 403);
+        }
+
+        dispatch(new RefreshPublicationMetricsJob($pub->id))->onQueue('metrics')->afterCommit();
+        session()->flash('success', 'Uppdatering av statistik har startat.');
+    }
+
     public function render(CurrentCustomer $current): View
     {
         $customer = $current->get();
@@ -323,8 +352,8 @@ class Index extends Component
             ->get();
 
         $this->items = $rows->map(function ($p) {
-            $siteName = optional($p->content?->site)->name;
-            $title = (string) ($p->content?->title ?? '(utan titel)');
+            $siteName  = optional($p->content?->site)->name;
+            $title     = (string) ($p->content?->title ?? '(utan titel)');
             $scheduled = $p->scheduled_at ? Carbon::parse($p->scheduled_at)->toDateTimeString() : null;
 
             $target = $p->target;
@@ -340,6 +369,8 @@ class Index extends Component
                 'scheduled_at'  => $scheduled,
                 'message'       => $p->message,
                 'external_url'  => $p->external_url ?? null,
+                'metrics'       => $p->metrics ?? null,
+                'metrics_at'    => $p->metrics_refreshed_at?->toDateTimeString(),
             ];
         })->values()->all();
 
@@ -357,14 +388,10 @@ class Index extends Component
                 : null;
         }
 
-        // Veckointervall för kalendervy
         $weekStart = Carbon::parse($this->from)->startOfWeek(Carbon::MONDAY);
         $weekDays = [];
-        for ($i = 0; $i < 7; $i++) {
-            $weekDays[] = (clone $weekStart)->addDays($i);
-        }
+        for ($i = 0; $i < 7; $i++) $weekDays[] = (clone $weekStart)->addDays($i);
 
-        // Plocka redo innehåll för snabbplanering (begränsa listan)
         $aiQ = AiContent::query()
             ->select(['id','title','site_id'])
             ->where('customer_id', $customer->id)
@@ -372,27 +399,23 @@ class Index extends Component
             ->latest('id')
             ->limit(50);
 
-        if ($this->siteId) {
-            $aiQ->where('site_id', $this->siteId);
-        }
+        if ($this->siteId) $aiQ->where('site_id', $this->siteId);
 
-        $this->readyContents = $aiQ->get()->map(function ($c) {
-            return [
-                'id'    => (int)$c->id,
-                'title' => (string)($c->title ?: '(utan titel)'),
-                'site'  => (int)$c->site_id,
-            ];
-        })->toArray();
+        $this->readyContents = $aiQ->get()->map(fn($c) => [
+            'id'    => (int)$c->id,
+            'title' => (string)($c->title ?: '(utan titel)'),
+            'site'  => (int)$c->site_id,
+        ])->toArray();
 
         return view('livewire.planner.index', [
-            'items'     => $this->items,
-            'selected'  => $this->selected,
-            'now'       => $now,
-            'to'        => $to,
-            'weekDays'  => $weekDays,
-            'weekStart' => $weekStart,
-            'weekEnd'   => (clone $weekStart)->addDays(6),
-            'readyContents' => $this->readyContents,
+            'items'        => $this->items,
+            'selected'     => $this->selected,
+            'now'          => $now,
+            'to'           => $to,
+            'weekDays'     => $weekDays,
+            'weekStart'    => $weekStart,
+            'weekEnd'      => (clone $weekStart)->addDays(6),
+            'readyContents'=> $this->readyContents,
         ]);
     }
 }

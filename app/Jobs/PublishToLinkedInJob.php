@@ -55,7 +55,7 @@ class PublishToLinkedInJob implements ShouldQueue
             }
         }
 
-        if (!in_array($pub->status, ['queued','processing'], true)) {
+        if (!in_array($pub->status, ['queued','processing','scheduled'], true)) {
             Log::info('[PublishToLinkedInJob] Hoppar över, fel status', [
                 'pub_id' => $this->publicationId,
                 'status' => $pub->status
@@ -152,6 +152,11 @@ class PublishToLinkedInJob implements ShouldQueue
                 'message'     => 'Publicerat till LinkedIn',
                 'payload'     => array_merge($payload, ['image_used' => !empty($assetUrn)]),
             ]);
+
+            dispatch(new \App\Jobs\RefreshPublicationMetricsJob($pub->id))
+                ->onQueue('metrics')
+                ->delay(now()->addSeconds(60))
+                ->afterCommit();
 
             if ($imageAssetId) {
                 ImageAsset::markUsed((int)$imageAssetId, $pub->id);

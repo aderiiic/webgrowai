@@ -88,6 +88,13 @@
                 default => 'M5 3h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z',
             };
         };
+        $fmtNum = function($n) {
+            if (!is_numeric($n)) return null;
+            $n = (float)$n;
+            if ($n >= 1000000) return number_format($n/1000000, 1) . 'M';
+            if ($n >= 1000) return number_format($n/1000, 1) . 'k';
+            return (string)(int)$n;
+        };
     @endphp
 
     @if($view === 'timeline')
@@ -128,6 +135,24 @@
                                                         <span class="text-gray-500">Tid:</span> {{ \Illuminate\Support\Carbon::parse($r['scheduled_at'])->format('Y-m-d H:i') }}
                                                     @endif
                                                 </div>
+
+                                                @if(($r['status'] ?? null) === 'published' && !empty($r['metrics']))
+                                                    @php
+                                                        $mm = $r['metrics'];
+                                                        $reach = $fmtNum($mm['reach'] ?? $mm['impressions'] ?? null);
+                                                        $eng   = $fmtNum($mm['reactions'] ?? $mm['likes'] ?? null);
+                                                    @endphp
+                                                    @if($reach || $eng)
+                                                        <div class="mt-2 flex items-center gap-2 text-[11px] text-gray-600">
+                                                            @if($reach)
+                                                                <span class="inline-flex items-center px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded border border-emerald-100">Reach {{ $reach }}</span>
+                                                            @endif
+                                                            @if($eng)
+                                                                <span class="inline-flex items-center px-1.5 py-0.5 bg-sky-50 text-sky-700 rounded border border-sky-100">Eng {{ $eng }}</span>
+                                                            @endif
+                                                        </div>
+                                                    @endif
+                                                @endif
                                             </div>
                                         </div>
                                         <span class="inline-flex items-center px-2 py-1 text-xs rounded-full {{ $badge['bg'] }} {{ $badge['text'] }}">
@@ -186,6 +211,24 @@
                                                         <span class="mx-1 text-gray-300">•</span>{{ $r['title'] }}
                                                     </div>
                                                     <div class="text-[11px] text-gray-600 truncate">{{ $r['site'] ?: '—' }}</div>
+
+                                                    @if(($r['status'] ?? null) === 'published' && !empty($r['metrics']))
+                                                        @php
+                                                            $mm = $r['metrics'];
+                                                            $reach = $fmtNum($mm['reach'] ?? $mm['impressions'] ?? null);
+                                                            $eng   = $fmtNum($mm['reactions'] ?? $mm['likes'] ?? null);
+                                                        @endphp
+                                                        @if($reach || $eng)
+                                                            <div class="mt-1 flex items-center gap-1.5 text-[10px]">
+                                                                @if($reach)
+                                                                    <span class="inline-flex items-center px-1 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-100">R {{ $reach }}</span>
+                                                                @endif
+                                                                @if($eng)
+                                                                    <span class="inline-flex items-center px-1 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-100">E {{ $eng }}</span>
+                                                                @endif
+                                                            </div>
+                                                        @endif
+                                                    @endif
                                                 </div>
                                                 <span class="ml-auto inline-flex items-center px-1.5 py-0.5 text-[10px] rounded {{ $badge['bg'] }} {{ $badge['text'] }}">
                                                     {{ $badge['label'] }}

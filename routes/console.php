@@ -4,6 +4,7 @@ use App\Jobs\GenerateWeeklyDigestJob;
 use App\Jobs\GenerateWeeklyPlanJob;
 use App\Jobs\RecalculateLeadScoresJob;
 use App\Models\Customer;
+use App\Models\Site;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Bus;
@@ -45,6 +46,10 @@ Schedule::command('weekly:digest friday')->fridays()->at('15:00');
 Schedule::command('suggestions:purge-expired')->dailyAt('03:10');
 
 Schedule::command('social:process-scheduled')->everyMinute()->withoutOverlapping()->onOneServer();
+Schedule::command('metrics:refresh-recent --hours=72 --stale=6')
+    ->hourly()
+    ->withoutOverlapping()
+    ->onOneServer();
 
 //Schedule::job(new \App\Jobs\ProcessScheduledPublicationsJob())->everyMinute();
 Schedule::job(new \App\Jobs\RecalculateLeadScoresJob())->cron('0 */6 * * *')->withoutOverlapping()->onOneServer();

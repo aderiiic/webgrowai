@@ -110,7 +110,7 @@ class PublishToFacebookJob implements ShouldQueue
         }
 
         // Statusgate
-        if (!in_array($pub->status, ['queued', 'processing'], true)) {
+        if (!in_array($pub->status, ['queued', 'processing', 'scheduled'], true)) {
             Log::info('[Facebook] Hoppar över pga status', ['pub_id' => $pub->id, 'status' => $pub->status]);
             return;
         }
@@ -283,6 +283,11 @@ class PublishToFacebookJob implements ShouldQueue
                 'payload'     => $payload,
             ]);
 
+            dispatch(new \App\Jobs\RefreshPublicationMetricsJob($pub->id))
+                ->onQueue('metrics')
+                ->delay(now()->addSeconds(60))
+                ->afterCommit();
+
             // Markera bild använd om tillgänglig
             if (!empty($usedImageAssetId) && method_exists(ImageAsset::class, 'markUsed')) {
                 ImageAsset::markUsed($usedImageAssetId, $pub->id);
@@ -344,6 +349,11 @@ class PublishToFacebookJob implements ShouldQueue
             'message'     => $note,
             'payload'     => $payload,
         ]);
+
+        dispatch(new \App\Jobs\RefreshPublicationMetricsJob($pub->id))
+            ->onQueue('metrics')
+            ->delay(now()->addSeconds(60))
+            ->afterCommit();
 
         Log::info('[Facebook] Schemalagd på Facebook', [
             'pub_id' => $pub->id,
