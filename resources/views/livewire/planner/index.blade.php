@@ -1,4 +1,7 @@
-<div x-data="{ openPanel: @js(!is_null($selected)) }" class="max-w-7xl mx-auto">
+<div x-data="{
+        openPanel: @js(!is_null($selected)),
+        showInsights: JSON.parse(localStorage.getItem('planner_showInsights') ?? 'false')
+    }" class="max-w-7xl mx-auto">
     <div class="mb-6 flex items-center justify-between flex-wrap gap-3">
         <div class="flex items-center gap-3">
             <h1 class="text-3xl font-bold text-gray-900 flex items-center">
@@ -7,6 +10,31 @@
                 </svg>
                 Planera & Publicera
             </h1>
+
+            @php
+                $activeSiteId = (int) ($siteId ?: 0);
+                $insights = null;
+                if ($activeSiteId > 0) {
+                    $weekStart = $weekStart ?? \Illuminate\Support\Carbon::now()->startOfWeek(\Illuminate\Support\Carbon::MONDAY);
+                    $insights = \App\Models\SiteInsight::where('site_id', $activeSiteId)
+                        ->where('week_start', $weekStart->toDateString())
+                        ->first();
+                }
+            @endphp
+
+            @if($insights)
+                <button
+                    @click="showInsights = !showInsights; localStorage.setItem('planner_showInsights', JSON.stringify(showInsights))"
+                    class="inline-flex items-center px-3 py-1.5 text-sm rounded-lg border"
+                    :class="showInsights ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'">
+                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                         :class="showInsights ? 'rotate-180 transition-transform' : 'transition-transform'">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                    <span x-text="showInsights ? 'Dölj insights' : 'Visa insights'"></span>
+                </button>
+            @endif
+
             <div class="inline-flex rounded-lg overflow-hidden border">
                 <button wire:click="setView('timeline')" class="px-3 py-1.5 text-sm {{ $view === 'timeline' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700' }}">Tidslinje</button>
                 <button wire:click="setView('calendar')" class="px-3 py-1.5 text-sm {{ $view === 'calendar' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700' }}">Kalender</button>
@@ -16,6 +44,62 @@
             Till AI Innehåll
         </a>
     </div>
+
+    @if($insights)
+        @php $p = $insights->payload ?? []; @endphp
+        <div class="mb-6 bg-white border rounded-2xl p-4" x-show="showInsights" x-collapse>
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <div class="text-sm text-gray-500">Veckans insights (v. {{ $weekStart->isoWeek() }})</div>
+                    <h3 class="text-lg font-semibold text-gray-900">Rekommendationer för denna vecka</h3>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="text-xs text-gray-500">
+                        Uppdaterad: {{ $insights->generated_at?->diffForHumans() }}
+                    </div>
+                    <button
+                        @click="showInsights = false; localStorage.setItem('planner_showInsights', 'false')"
+                        class="text-xs px-2 py-1 bg-white border rounded hover:bg-gray-50">
+                        Stäng
+                    </button>
+                </div>
+            </div>
+            @if(!empty($p['summary']))
+                <p class="mt-2 text-sm text-gray-800">{{ $p['summary'] }}</p>
+            @endif
+
+            <div class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div class="p-3 bg-gray-50 rounded-lg">
+                    <div class="text-xs text-gray-500 mb-1">Tider att posta</div>
+                    <ul class="space-y-1 text-sm text-gray-900">
+                        @foreach(($p['timeslots'] ?? []) as $t)
+                            <li>• {{ $t['dow'] ?? '' }} {{ $t['time'] ?? '' }} <span class="text-xs text-gray-500">— {{ $t['why'] ?? '' }}</span></li>
+                        @endforeach
+                    </ul>
+                </div>
+                <div class="p-3 bg-gray-50 rounded-lg">
+                    <div class="text-xs text-gray-500 mb-1">Ämnen</div>
+                    <ul class="space-y-1 text-sm text-gray-900">
+                        @foreach(($p['topics'] ?? []) as $t)
+                            <li>• {{ $t['title'] ?? '' }} <span class="text-xs text-gray-500">— {{ $t['why'] ?? '' }}</span></li>
+                        @endforeach
+                    </ul>
+                </div>
+                <div class="p-3 bg-gray-50 rounded-lg">
+                    <div class="text-xs text-gray-500 mb-1">Att göra</div>
+                    <ul class="space-y-1 text-sm text-gray-900">
+                        @foreach(($p['actions'] ?? []) as $t)
+                            <li>• {{ $t['action'] ?? '' }} <span class="text-xs text-gray-500">— {{ $t['why'] ?? '' }}</span></li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+
+            @if(!empty($p['rationale']))
+                <p class="mt-3 text-xs text-gray-500">{{ $p['rationale'] }}</p>
+            @endif
+        </div>
+    @endif
 
     <!-- Filterrad -->
     <div class="mb-4 grid grid-cols-1 md:grid-cols-5 gap-3">

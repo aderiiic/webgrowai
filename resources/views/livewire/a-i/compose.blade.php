@@ -1,5 +1,4 @@
-
-<div>
+<div x-data="{ showInsights: JSON.parse(localStorage.getItem('compose_showInsights') ?? 'false') }">
     <div class="max-w-4xl mx-auto space-y-8">
         <!-- Header -->
         <div class="flex items-center justify-between">
@@ -9,13 +8,87 @@
                 </svg>
                 Skapa text med AI
             </h1>
-            <a href="{{ route('ai.list') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 hover:border-gray-400 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 shadow-sm hover:shadow-md">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                </svg>
-                Tillbaka
-            </a>
+            <div class="flex items-center gap-2">
+                @php
+                    $insights = null;
+                    if (!empty($site_id)) {
+                        $weekStart = \Illuminate\Support\Carbon::now()->startOfWeek(\Illuminate\Support\Carbon::MONDAY);
+                        $insights = \App\Models\SiteInsight::where('site_id', (int)$site_id)
+                            ->where('week_start', $weekStart->toDateString())
+                            ->first();
+                    }
+                @endphp
+                @if($insights)
+                    <button
+                        @click="showInsights = !showInsights; localStorage.setItem('compose_showInsights', JSON.stringify(showInsights))"
+                        class="inline-flex items-center px-3 py-1.5 text-sm rounded-lg border"
+                        :class="showInsights ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                             :class="showInsights ? 'rotate-180 transition-transform' : 'transition-transform'">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                        <span x-text="showInsights ? 'Dölj insights' : 'Visa insights'"></span>
+                    </button>
+                @endif
+
+                <a href="{{ route('ai.list') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 hover:border-gray-400 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 shadow-sm hover:shadow-md">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    Tillbaka
+                </a>
+            </div>
         </div>
+
+        @if($insights)
+            @php $p = $insights->payload ?? []; @endphp
+            <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl border border-indigo-200/50 p-6"
+                 x-show="showInsights" x-collapse>
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-lg font-semibold text-indigo-900">Veckans insights</h3>
+                    <div class="flex items-center gap-2">
+                        <div class="text-xs text-indigo-700">Uppdaterad: {{ $insights->generated_at?->diffForHumans() }}</div>
+                        <button
+                            @click="showInsights = false; localStorage.setItem('compose_showInsights', 'false')"
+                            class="text-xs px-2 py-1 bg-white border rounded hover:bg-gray-50">
+                            Stäng
+                        </button>
+                    </div>
+                </div>
+                @if(!empty($p['summary']))
+                    <p class="text-sm text-indigo-900">{{ $p['summary'] }}</p>
+                @endif
+                <div class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="p-3 bg-white rounded-lg border">
+                        <div class="text-xs text-gray-500 mb-1">Tider att posta</div>
+                        <ul class="space-y-1 text-sm text-gray-900">
+                            @foreach(($p['timeslots'] ?? []) as $t)
+                                <li>• {{ $t['dow'] ?? '' }} {{ $t['time'] ?? '' }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                    <div class="p-3 bg-white rounded-lg border">
+                        <div class="text-xs text-gray-500 mb-1">Ämnen</div>
+                        <ul class="space-y-1 text-sm text-gray-900">
+                            @foreach(($p['topics'] ?? []) as $t)
+                                <li>• {{ $t['title'] ?? '' }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                    <div class="p-3 bg-white rounded-lg border">
+                        <div class="text-xs text-gray-500 mb-1">Att göra</div>
+                        <ul class="space-y-1 text-sm text-gray-900">
+                            @foreach(($p['actions'] ?? []) as $t)
+                                <li>• {{ $t['action'] ?? '' }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+                @if(!empty($p['rationale']))
+                    <p class="mt-3 text-xs text-gray-600">{{ $p['rationale'] }}</p>
+                @endif
+            </div>
+        @endif
 
         <!-- Help banner -->
         <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-200/50 p-6">
