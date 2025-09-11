@@ -8,12 +8,13 @@ use App\Services\Sites\IntegrationManager;
 use App\Support\Usage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 
 class PublishAiContentJob implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, InteractsWithQueue;
 
     public function __construct(
         public int $aiContentId,
@@ -51,6 +52,30 @@ class PublishAiContentJob implements ShouldQueue
                     'provider' => $this->preferredProvider,
                 ],
             ]);
+        }
+
+        $pub->refresh();
+        if ($pub->status === 'cancelled') {
+            Log::info('[Publish] hoppar över – avbruten', ['publication_id' => $pub->id]);
+            return;
+        }
+
+        if ($pub->scheduled_at) {
+            $nowTs = Carbon::now()->getTimestamp();
+            $schedTs = $pub->scheduled_at->getTimestamp();
+            $delay = max(0, $schedTs - $nowTs);
+
+            // Endast requeue om schematid faktiskt är > ~20s i framtiden
+            if ($delay > 20) {
+                Log::info('[Publish] för tidigt – release till schematid', [
+                    'publication_id' => $pub->id,
+                    'delay' => $delay,
+                    'scheduled_at' => $pub->scheduled_at->toIso8601String(),
+                ]);
+                // Skjut upp samma jobb (ingen ny dispatch -> ingen duplikatstorm)
+                $this->release($delay);
+                return;
+            }
         }
 
         $pub->update(['status' => 'processing', 'message' => null]);
@@ -94,7 +119,9 @@ class PublishAiContentJob implements ShouldQueue
             $payload['image_asset_id'] = (int)$pubPayload['image_asset_id'];
         }
 
-        if ($this->status === 'future' && $this->scheduleAtIso) {
+        if ($pub->scheduled_at) {
+            $payload['date'] = $pub->scheduled_at->toIso8601String();
+        } elseif ($this->status === 'future' && $this->scheduleAtIso) {
             $payload['date'] = $this->scheduleAtIso;
         }
 

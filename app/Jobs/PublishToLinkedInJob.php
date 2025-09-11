@@ -10,12 +10,14 @@ use App\Services\Social\LinkedInService;
 use App\Support\Usage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class PublishToLinkedInJob implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, InteractsWithQueue;
 
     public function __construct(public int $publicationId)
     {
@@ -33,7 +35,27 @@ class PublishToLinkedInJob implements ShouldQueue
             return;
         }
 
-        if (!in_array($pub->status, ['queued','processing'], true)) {
+        if ($pub->status === 'cancelled') {
+            Log::info('[LI] Avbruten – ingen publicering', ['publication_id' => $pub->id]);
+            return;
+        }
+
+        if ($pub->scheduled_at) {
+            $nowTs = Carbon::now()->getTimestamp();
+            $schedTs = $pub->scheduled_at->getTimestamp();
+            $delay = max(0, $schedTs - $nowTs);
+            if ($delay > 20) {
+                Log::info('[LI] För tidigt – release till schematid', [
+                    'publication_id' => $pub->id,
+                    'delay' => $delay,
+                    'scheduled_at' => $pub->scheduled_at->toIso8601String(),
+                ]);
+                $this->release($delay);
+                return;
+            }
+        }
+
+        if (!in_array($pub->status, ['queued','processing','scheduled'], true)) {
             Log::info('[PublishToLinkedInJob] Hoppar över, fel status', [
                 'pub_id' => $this->publicationId,
                 'status' => $pub->status
@@ -130,6 +152,11 @@ class PublishToLinkedInJob implements ShouldQueue
                 'message'     => 'Publicerat till LinkedIn',
                 'payload'     => array_merge($payload, ['image_used' => !empty($assetUrn)]),
             ]);
+
+            dispatch(new \App\Jobs\RefreshPublicationMetricsJob($pub->id))
+                ->onQueue('metrics')
+                ->delay(now()->addSeconds(60))
+                ->afterCommit();
 
             if ($imageAssetId) {
                 ImageAsset::markUsed((int)$imageAssetId, $pub->id);

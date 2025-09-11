@@ -2,6 +2,7 @@
 
 namespace App\Support;
 use App\Models\Customer;
+use App\Models\Site;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
