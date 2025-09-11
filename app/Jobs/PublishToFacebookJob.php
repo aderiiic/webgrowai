@@ -58,10 +58,7 @@ class PublishToFacebookJob implements ShouldQueue
     public function middleware(): array
     {
         return [
-            // Låser per publikation så att inte två workers kör samma jobb samtidigt
             new WithoutOverlapping("fb-pub-{$this->publicationId}"),
-            // Namngiven rate limiter (konfigureras i app/Providers/RouteServiceProvider eller RateLimiter)
-            // Skapar mjuk throttle mot Facebook Graph API.
             (new RateLimited('facebook-api'))->dontRelease(),
         ];
     }
@@ -70,7 +67,6 @@ class PublishToFacebookJob implements ShouldQueue
     {
         Log::info('[Facebook] Start', ['pub_id' => $this->publicationId]);
 
-        // Läs med lås för att undvika race mellan flera instanser
         $pub = ContentPublication::with('content')->find($this->publicationId);
         if (!$pub) {
             Log::warning('[Facebook] Publication saknas', ['pub_id' => $this->publicationId]);
@@ -119,21 +115,16 @@ class PublishToFacebookJob implements ShouldQueue
         if ($pub->status === 'queued') {
             $updated = DB::transaction(function () use ($pub) {
                 $fresh = ContentPublication::lockForUpdate()->find($pub->id);
-                if (!$fresh) {
-                    return false;
-                }
-                if ($fresh->status !== 'queued') {
+                if (!$fresh || $fresh->status !== 'queued') {
                     return false;
                 }
                 $fresh->update(['status' => 'processing']);
                 return true;
             });
             if (!$updated) {
-                // Någon annan jobbnod tog den – sluta
                 Log::info('[Facebook] Kunde ej ta processing-lås', ['pub_id' => $pub->id]);
                 return;
             }
-            // Refresh lokalt objekt
             $pub->refresh();
         }
 
@@ -166,9 +157,6 @@ class PublishToFacebookJob implements ShouldQueue
             return;
         }
 
-        // Hantera schemaläggning:
-        // - Om > 15 minuter i framtiden: använd Facebooks scheduled_publish_time
-        // - Om i framtiden men nära: försök att vänta tills tidpunkten
         $scheduledAt = $pub->scheduled_at ? CarbonImmutable::parse($pub->scheduled_at) : null;
         $now = CarbonImmutable::now();
 
@@ -194,7 +182,6 @@ class PublishToFacebookJob implements ShouldQueue
                     $this->markFailed($pub, 'Angiven bild finns inte.');
                     return;
                 }
-                // Säkerställ ägarskap
                 if ((int) $asset->customer_id !== (int) $content->customer_id) {
                     $this->markFailed($pub, 'Otillåten bild för denna kund.');
                     return;
@@ -210,24 +197,27 @@ class PublishToFacebookJob implements ShouldQueue
 
                 $filename = basename($asset->path) ?: (Str::uuid()->toString() . '.jpg');
 
-                // Facebooks photos endpoint saknar stöd för scheduled_publish_time i samma grad som feed-text,
-                // så om det är långt fram – posta text schemalagt istället. Annars: posta direkt som foto.
+                // Långt fram i tiden? Schemalägg textinlägg i stället
                 if ($scheduledAt && $scheduledAt->isFuture()) {
                     $seconds = $now->diffInSeconds($scheduledAt, false);
 
                     if ($seconds > 900) {
-                        // Schemalägg som textinlägg istället (alternativ: ladda upp unpublished photo + dela via post)
                         $resp = $client->schedulePagePost(
                             $integration->page_id,
-                            $message !== '' ? $message : '(Bild)', // fallback caption
+                            $message !== '' ? $message : '(Bild)',
                             $scheduledAt->getTimestamp()
                         );
-                        $this->finalizeScheduled($pub, $payload, $resp, note: 'Schemalagd på Facebook (text, vald bild kunde ej schemaläggas som foto).');
+                        $this->finalizeScheduled(
+                            pub: $pub,
+                            payload: $payload,
+                            resp: $resp,
+                            note: 'Schemalagd på Facebook (text, vald bild kunde ej schemaläggas som foto).',
+                            pageId: $integration->page_id
+                        );
                         return;
                     }
 
                     if ($seconds > 5) {
-                        // Vänta tills nära tidpunkt
                         $this->release($seconds);
                         Log::info('[Facebook] För tidigt – release till schematid', [
                             'pub_id' => $pub->id,
@@ -240,7 +230,6 @@ class PublishToFacebookJob implements ShouldQueue
                 // Publicera som foto nu
                 $resp = $client->createPagePhoto($integration->page_id, $bytes, $filename, $message);
                 $usedImageAssetId = (int) $payload['image_asset_id'];
-                // Berika payload
                 $payload['image_asset_id'] = $usedImageAssetId;
                 $payload['image_bank_path'] = $asset->path;
             } else {
@@ -249,14 +238,18 @@ class PublishToFacebookJob implements ShouldQueue
                     $seconds = $now->diffInSeconds($scheduledAt, false);
 
                     if ($seconds > 900) {
-                        // Schemalägg via Facebook
                         $resp = $client->schedulePagePost($integration->page_id, $message, $scheduledAt->getTimestamp());
-                        $this->finalizeScheduled($pub, $payload, $resp, note: 'Schemalagd på Facebook.');
+                        $this->finalizeScheduled(
+                            pub: $pub,
+                            payload: $payload,
+                            resp: $resp,
+                            note: 'Schemalagd på Facebook.',
+                            pageId: $integration->page_id
+                        );
                         return;
                     }
 
                     if ($seconds > 5) {
-                        // Vänta tills nära tidpunkt
                         $this->release($seconds);
                         Log::info('[Facebook] För tidigt – release till schematid', [
                             'pub_id' => $pub->id,
@@ -275,25 +268,38 @@ class PublishToFacebookJob implements ShouldQueue
                 return;
             }
 
-            // Uppdatera publicering som klar (publicerad)
+            // Bygg external_url
+            $postId = $resp['id'] ?? null;
+            $externalUrl = null;
+            if ($postId) {
+                if (strpos($postId, '_') !== false) {
+                    [, $purePost] = explode('_', $postId, 2);
+                    $externalUrl = "https://www.facebook.com/{$integration->page_id}/posts/{$purePost}";
+                } else {
+                    $externalUrl = "https://www.facebook.com/{$integration->page_id}/posts/{$postId}";
+                }
+            }
+
+            // Uppdatera publiceringen
             $pub->update([
-                'status'      => 'published',
-                'external_id' => $resp['id'],
-                'message'     => !empty($usedImageAssetId) ? 'Publicerat (photo)' : 'Publicerat (text)',
-                'payload'     => $payload,
+                'status'       => 'published',
+                'external_id'  => $postId,
+                'external_url' => $externalUrl,
+                'message'      => !empty($usedImageAssetId) ? 'Publicerat (photo)' : 'Publicerat (text)',
+                'payload'      => $payload,
             ]);
 
+            // Bildanvändning
+            if (!empty($usedImageAssetId) && method_exists(ImageAsset::class, 'markUsed')) {
+                ImageAsset::markUsed($usedImageAssetId, $pub->id);
+            }
+
+            // Metrics + usage
             dispatch(new \App\Jobs\RefreshPublicationMetricsJob($pub->id))
                 ->onQueue('metrics')
                 ->delay(now()->addSeconds(60))
                 ->afterCommit();
 
-            // Markera bild använd om tillgänglig
-            if (!empty($usedImageAssetId) && method_exists(ImageAsset::class, 'markUsed')) {
-                ImageAsset::markUsed($usedImageAssetId, $pub->id);
-            }
-
-            // Usage counters
             $usage->increment($content->customer_id, 'ai.publish.facebook');
             $usage->increment($content->customer_id, 'ai.publish');
 
@@ -302,13 +308,12 @@ class PublishToFacebookJob implements ShouldQueue
                 'fb_id'  => $resp['id'],
             ]);
         } catch (Throwable $e) {
-            // Sätt endast diagnostiskt meddelande; låt retries hantera tillfälliga fel
             $pub->update(['message' => $this->safeError($e)]);
             Log::error('[Facebook] Misslyckades (transient)', [
                 'pub_id' => $pub->id,
                 'error'  => $this->safeError($e),
             ]);
-            throw $e; // behåll retry-beteende
+            throw $e;
         }
     }
 
@@ -334,20 +339,32 @@ class PublishToFacebookJob implements ShouldQueue
     }
 
     /**
-     * Slutbehandlar schemalagda inlägg via Facebook (betraktas som "klar" i vår pipeline).
+     * Slutbehandlar schemalagda inlägg via Facebook.
      */
-    private function finalizeScheduled(ContentPublication $pub, array $payload, array $resp, string $note): void
+    private function finalizeScheduled(ContentPublication $pub, array $payload, array $resp, string $note, ?string $pageId = null): void
     {
         if (empty($resp) || empty($resp['id'])) {
             $this->markFailed($pub, 'Schemaläggning misslyckades – saknar id i svar.');
             return;
         }
 
+        $postId = $resp['id'] ?? null;
+        $externalUrl = null;
+        if ($postId && $pageId) {
+            if (strpos($postId, '_') !== false) {
+                [, $purePost] = explode('_', $postId, 2);
+                $externalUrl = "https://www.facebook.com/{$pageId}/posts/{$purePost}";
+            } else {
+                $externalUrl = "https://www.facebook.com/{$pageId}/posts/{$postId}";
+            }
+        }
+
         $pub->update([
-            'status'      => 'published', // I vår domän betyder "klart/hanterat"; själva FB-publiceringen sker senare
-            'external_id' => $resp['id'],
-            'message'     => $note,
-            'payload'     => $payload,
+            'status'       => 'published', // betraktas som hanterad i vår pipeline
+            'external_id'  => $postId,
+            'external_url' => $externalUrl,
+            'message'      => $note,
+            'payload'      => $payload,
         ]);
 
         dispatch(new \App\Jobs\RefreshPublicationMetricsJob($pub->id))
@@ -362,9 +379,6 @@ class PublishToFacebookJob implements ShouldQueue
         ]);
     }
 
-    /**
-     * Markerar publikation som permanent misslyckad (utan retries).
-     */
     private function markFailed(ContentPublication $pub, string $reason): void
     {
         $pub->update([
@@ -403,8 +417,8 @@ class PublishToFacebookJob implements ShouldQueue
 
         // Normalisera listor, trimma radslut; bevara radbrytningar
         $t = preg_replace('/^\s*[\*\-]\s+/m', '- ', $t);
-        $t = preg_replace('/[ \t]+$/m', '', $t);     // trimma spaces i slutet av rader
-        $t = preg_replace('/\n{3,}/', "\n\n", $t);   // max två radbrytningar i rad
+        $t = preg_replace('/[ \t]+$/m', '', $t);
+        $t = preg_replace('/\n{3,}/', "\n\n", $t);
 
         // Ta bort osynliga tecken (ej radbrytningar)
         $t = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $t);
@@ -412,12 +426,12 @@ class PublishToFacebookJob implements ShouldQueue
 
         $t = trim($t);
 
-        // 1) Samla befintliga hashtags (case-insensitivt) inklusive position för relevans
+        // 1) Samla befintliga hashtags
         $allTags = [];
         if (preg_match_all('/(^|\s)(#[\p{L}\p{N}_-]+)/u', $t, $m, PREG_OFFSET_CAPTURE)) {
             foreach ($m[2] as $match) {
-                $tag = $match[0];         // ex: "#webbsida"
-                $pos = $match[1];         // index i texten
+                $tag = $match[0];
+                $pos = $match[1];
                 $key = mb_strtolower($tag);
                 if (!isset($allTags[$key])) {
                     $allTags[$key] = ['tag' => $tag, 'count' => 0, 'first' => $pos];
@@ -426,31 +440,21 @@ class PublishToFacebookJob implements ShouldQueue
             }
         }
 
-        // 2) Ta bort existerande avslutande hashtag-rad (utan att ta bort föregående newline)
+        // 2) Ta bort avslutande hashtag-rad
         $t = preg_replace('/(?:^|\n)\s*(?:#[\p{L}\p{N}_-]+(?:\s+#[\p{L}\p{N}_-]+)*)\s*$/u', '', $t);
 
-        // 3) Plocka nakna tagg-kluster i slutet av rader (t.ex. "webbsida företag försäljning")
-        //    - Vi samlar upp till ~6 ord i slutet av raden, bara bokstäver/siffror/_/-
-        //    - Vi tar bort dem från raden men bevarar radbrytningar
+        // 3) Plocka nakna tagg-kluster i slutet av rader
         $lines = explode("\n", $t);
         foreach ($lines as &$line) {
             $orig = $line;
-
-            // Hitta kluster i slutet: ett eller flera "ord" separerade med mellanslag
             if (preg_match('/\s((?:[\p{L}\p{N}_-]{2,})(?:\s+[\p{L}\p{N}_-]{2,}){0,7})\s*$/u', $line, $m)) {
                 $cluster = $m[1];
-
-                // Heuristik: ta bara detta som taggkluster om
-                // - föregående tecken före klustret inte är en bokstav/siffra (dvs slutet av meningen eller emoji),
-                // - och klustret inte innehåller tydlig meningsinterpunktion
                 $prefixOk = !preg_match('/[\p{L}\p{N}]$/u', mb_substr($line, 0, -mb_strlen($m[0])));
                 $hasPunct = preg_match('/[.,!?;:]/u', $cluster);
-
                 if ($prefixOk && !$hasPunct) {
                     $tokens = preg_split('/\s+/', trim($cluster));
                     if ($tokens && count($tokens) >= 2) {
                         foreach ($tokens as $w) {
-                            // Skippa om ordet ser ut som en riktig mening (börjar med versal och är långt), annars ta som tagg
                             if (preg_match('/^[\p{L}\p{N}_-]{2,}$/u', $w)) {
                                 $tag = '#' . mb_strtolower($w);
                                 $key = mb_strtolower($tag);
@@ -460,56 +464,48 @@ class PublishToFacebookJob implements ShouldQueue
                                 $allTags[$key]['count']++;
                             }
                         }
-                        // Ta bort klustret från raden (ersätt med ingenting, men bevara resten av raden)
                         $line = rtrim(mb_substr($line, 0, -mb_strlen($m[0])));
                     }
                 }
             }
-
-            // Om inga ändringar, lämna raden som den är
             if ($line === null) {
                 $line = $orig;
             }
         }
         unset($line);
 
-        // 4) Ta bort inline-hashtags men bevara radbrytningar (ersätt "␠#tag" med "␠")
+        // 4) Ta bort inline-hashtags, bevara radbrytningar
         $lines = array_map(function ($line) {
             $line = preg_replace('/(^|[^\S\r\n])#[\p{L}\p{N}_-]+/u', '$1', $line);
-            // Komprimera enbart multipla mellanslag på raden (inte radbrytningar)
             $line = preg_replace('/[ \t]{2,}/', ' ', $line);
             return rtrim($line);
         }, $lines);
 
-        // 5) Se till att numrerade punkter har en tomrad före (för läsbarhet)
-        //    Om en rad börjar med "N. " och föregående rad inte är tom, sätt in tomrad
+        // 5) Tomrad före numrerade punkter
         $normalized = [];
         foreach ($lines as $idx => $line) {
             $isNumbered = preg_match('/^\d+\.\s/', $line);
             if ($isNumbered && !empty($normalized) && trim(end($normalized)) !== '') {
-                $normalized[] = ''; // tom rad
+                $normalized[] = '';
             }
             $normalized[] = $line;
         }
 
-        // Ta bort överflödiga tomrader (max två i rad) och trimma
+        // Slutstäd
         $t = implode("\n", $normalized);
         $t = preg_replace('/\n{3,}/', "\n\n", $t);
         $t = trim($t);
 
-        // 6) Välj de mest relevanta hashtagsen
+        // 6) Välj relevanta hashtags
         $maxTags = 6;
         if (!empty($allTags) && $maxTags > 0) {
-            // Sortera: flest förekomster först, sedan tidigast förekomst
             uasort($allTags, function ($a, $b) {
                 if ($a['count'] === $b['count']) {
                     return $a['first'] <=> $b['first'];
                 }
                 return $b['count'] <=> $a['count'];
             });
-
             $selected = array_slice(array_column($allTags, 'tag'), 0, max(1, $maxTags));
-
             if (!empty($selected)) {
                 $t = rtrim($t) . "\n\n" . implode(' ', $selected);
             }
@@ -533,9 +529,6 @@ class PublishToFacebookJob implements ShouldQueue
         return (string) $t;
     }
 
-    /**
-     * Returnerar ett säkert felmeddelande för logg/UI (inga känsliga data).
-     */
     private function safeError(Throwable $e): string
     {
         $msg = $e->getMessage() ?: 'Okänt fel';

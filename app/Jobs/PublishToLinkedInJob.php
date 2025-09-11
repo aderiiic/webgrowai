@@ -146,11 +146,20 @@ class PublishToLinkedInJob implements ShouldQueue
                 throw new \RuntimeException('LinkedIn API returnerade tomt svar eller saknar ID. Svar: ' . json_encode($resp));
             }
 
+            $liId = $resp['id'] ?? ($resp['ugcPost'] ?? null);
+            $externalUrl = null;
+            if ($liId) {
+                // LinkedIn tillåter direkt URN i URL:en i många fall
+                // Ex: https://www.linkedin.com/feed/update/urn:li:ugcPost:XXXXXXXXXXXX
+                $externalUrl = "https://www.linkedin.com/feed/update/{$liId}";
+            }
+
             $pub->update([
-                'status'      => 'published',
-                'external_id' => $resp['id'] ?? ($resp['ugcPost'] ?? null),
-                'message'     => 'Publicerat till LinkedIn',
-                'payload'     => array_merge($payload, ['image_used' => !empty($assetUrn)]),
+                'status'       => 'published',
+                'external_id'  => $liId,
+                'external_url' => $externalUrl,
+                'message'      => 'Publicerat till LinkedIn',
+                'payload'      => array_merge($payload, ['image_used' => !empty($assetUrn)]),
             ]);
 
             dispatch(new \App\Jobs\RefreshPublicationMetricsJob($pub->id))

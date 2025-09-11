@@ -128,11 +128,30 @@ class PublishToInstagramJob implements ShouldQueue
                 $updatePayload['image_url'] = $publicUrl;
             }
 
+            $mediaId = $resp['id'] ?? $creationId ?? null;
+            $externalUrl = null;
+            try {
+                // Snabb permalink‑hämtning via Graph
+                $accessToken = $integration->access_token;
+                $url = "https://graph.facebook.com/v19.0/{$mediaId}?fields=permalink&access_token=" . urlencode($accessToken);
+                $ctx = stream_context_create(['http' => ['timeout' => 8]]);
+                $json = @file_get_contents($url, false, $ctx);
+                if ($json !== false) {
+                    $data = json_decode($json, true);
+                    if (!empty($data['permalink'])) {
+                        $externalUrl = (string)$data['permalink'];
+                    }
+                }
+            } catch (\Throwable) {
+                // Låt bli – vi fyller ev. senare via metrics-jobbet
+            }
+
             $pub->update([
-                'status'      => 'published',
-                'external_id' => $resp['id'] ?? $creationId,
-                'payload'     => $updatePayload,
-                'message'     => 'OK (image)',
+                'status'       => 'published',
+                'external_id'  => $mediaId,
+                'external_url' => $externalUrl, // kan vara null, kompletteras annars av metrics-jobb
+                'payload'      => $updatePayload,
+                'message'      => 'OK (image)',
             ]);
 
             dispatch(new \App\Jobs\RefreshPublicationMetricsJob($pub->id))
