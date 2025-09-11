@@ -418,4 +418,52 @@ class Index extends Component
             'readyContents'=> $this->readyContents,
         ]);
     }
+
+    public function reloadSelected(): void
+    {
+        if (!$this->selected || empty($this->selected['id'])) {
+            return;
+        }
+
+        $p = \App\Models\ContentPublication::query()
+            ->with([
+                'content:id,title,site_id,customer_id',
+                'content.site:id,name',
+            ])
+            ->find($this->selected['id']);
+
+        if (!$p) {
+            // Posten kan ha raderats – töm panelen säkert
+            $this->selected = null;
+            return;
+        }
+
+        $target = $p->target === 'wordpress' ? 'wp' : (string) $p->target;
+
+        $updated = [
+            'id'            => (int) $p->id,
+            'ai_content_id' => (int) $p->ai_content_id,
+            'title'         => (string) ($p->content?->title ?? '(utan titel)'),
+            'site'          => (string) ($p->content?->site?->name ?? ''),
+            'target'        => $target,
+            'status'        => (string) $p->status,
+            'scheduled_at'  => $p->scheduled_at ? $p->scheduled_at->toDateTimeString() : null,
+            'message'       => $p->message,
+            'external_url'  => $p->external_url ?? null,
+            'metrics'       => $p->metrics ?? null,
+            'metrics_at'    => $p->metrics_refreshed_at?->toDateTimeString(),
+        ];
+
+        // Uppdatera selected
+        $this->selected = $updated;
+
+        // Uppdatera motsvarande rad i items
+        foreach ($this->items as &$row) {
+            if ((int) ($row['id'] ?? 0) === (int) $p->id) {
+                $row = $updated;
+                break;
+            }
+        }
+        unset($row);
+    }
 }
