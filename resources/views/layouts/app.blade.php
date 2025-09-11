@@ -294,6 +294,7 @@
 
         @auth
             @livewire('partials.usage-banner')
+            <livewire:components.news-popup />
         @endauth
 
         <!-- Page Content -->
