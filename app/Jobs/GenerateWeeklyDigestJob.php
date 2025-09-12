@@ -36,35 +36,37 @@ class GenerateWeeklyDigestJob implements ShouldQueue
         $keywordsRawCust = $customer->weekly_keywords ? (array) json_decode($customer->weekly_keywords, true) : [];
         $keywords = collect($keywordsRawSite ?: $keywordsRawCust)->filter()->unique()->values()->all();
 
-        $siteContexts = $customer->sites()->get()
-            ->map(fn($site) => trim($site->aiContextSummary()))
-            ->filter()
-            ->values()
-            ->all();
+        $contextBlock = trim($site->aiContextSummary()) ?: null;
 
-        $contextBlock = implode("\n", array_map(
-            fn($c, $i) => "- Site ".($i+1).": ".$c,
-            $siteContexts,
-            array_keys($siteContexts)
-        )) ?: null;
+        $now         = now();
+        $currentYear = (int) $now->year;
 
         $period = [
-            'week_start' => now()->startOfWeek()->format('Y-m-d'),
-            'week_end'   => now()->endOfWeek()->format('Y-m-d'),
+            'week_start' => $now->copy()->startOfWeek()->format('Y-m-d'),
+            'week_end'   => $now->copy()->endOfWeek()->format('Y-m-d'),
             'prev_week'  => [
-                'start' => now()->subWeek()->startOfWeek()->format('Y-m-d'),
-                'end'   => now()->subWeek()->endOfWeek()->format('Y-m-d'),
+                'start' => $now->copy()->subWeek()->startOfWeek()->format('Y-m-d'),
+                'end'   => $now->copy()->subWeek()->endOfWeek()->format('Y-m-d'),
             ],
         ];
 
         $varsBase = [
-            'brand'    => ['name' => $customer->name, 'voice' => $brandVoice],
-            'audience' => $audience,
-            'goal'     => $goal,
-            'keywords' => $keywords,
-            'context'  => $contextBlock, // <-- nyckeln för precision
-            'run_tag'  => $this->runTag, // "monday" | "friday"
-            'period'   => $period,
+            'brand'         => ['name' => $customer->name, 'voice' => $brandVoice],
+            'audience'      => $audience,
+            'goal'          => $goal,
+            'keywords'      => $keywords,
+            'context'       => $contextBlock,   // enbart aktuell site
+            'run_tag'       => $this->runTag,   // "monday" | "friday"
+            'period'        => $period,
+            'now_iso'       => $now->toIso8601String(),
+            'current_year'  => $currentYear,
+            'allowed_years' => [$currentYear, $currentYear + 1],
+            'timezone'      => config('app.timezone'),
+            'locale'        => $site->locale ?? config('app.locale', 'sv_SE'),
+            'date_guardrails' => [
+                'avoid_past_years_in_titles' => true,
+                'replace_generic_past_years_with' => $currentYear,
+            ],
         ];
 
         $sections = [
@@ -72,6 +74,10 @@ class GenerateWeeklyDigestJob implements ShouldQueue
             'topics'    => $openai->generate(view('prompts.weekly.topics', $varsBase)->render(), ['max_tokens' => 800, 'temperature' => 0.6]),
             'next_week' => $openai->generate(view('prompts.weekly.plan_next_week', $varsBase)->render(), ['max_tokens' => 1000, 'temperature' => 0.55]),
         ];
+
+        foreach ($sections as $k => $text) {
+            $sections[$k] = $this->sanitizeYears($text, $currentYear);
+        }
 
         $runDate = now()->toDateString();
 
@@ -138,5 +144,19 @@ class GenerateWeeklyDigestJob implements ShouldQueue
 
         // Usage logg
         $usage->increment($customer->id, 'ai.weekly_digest');
+    }
+
+    protected function sanitizeYears(?string $text, int $currentYear): ?string
+    {
+        if (!$text) return $text;
+
+        $pattern = '/\b(20[0-2][0-9]|19[9][0-9])\b/'; // fånga 1999–2029; justeras av kontroll nedan
+        return preg_replace_callback($pattern, function ($m) use ($currentYear) {
+            $y = (int) $m[1];
+            if ($y < $currentYear) {
+                return (string) $currentYear;
+            }
+            return (string) $y;
+        }, $text);
     }
 }

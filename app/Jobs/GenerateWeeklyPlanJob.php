@@ -22,15 +22,25 @@ class GenerateWeeklyPlanJob implements ShouldQueue
 
         $template = ContentTemplate::firstOrCreate(
             ['slug' => 'campaign'],
-            ['name' => 'Kampanjidéer', 'provider' => 'openai', 'max_tokens' => 1000, 'temperature' => 0.6, 'visibility' => 'system']
+            [
+                'name'         => 'Kampanjidéer',
+                'provider'     => 'openai',
+                'max_tokens'   => 1000,
+                'temperature'  => 0.6,
+                'visibility'   => 'system',
+            ]
         );
 
-        $audience = $site->weekly_audience ?: ($customer->weekly_audience ?: 'Befintliga och potentiella kunder');
-        $goal     = $site->weekly_goal     ?: ($customer->weekly_goal     ?: 'Fler leads nästa vecka');
-        $voice    = $site->weekly_brand_voice ?: ($customer->weekly_brand_voice ?: 'hjälpsam, tydlig, handlingsinriktad');
+        $voice    = $site->effectiveBrandVoice() ?? 'hjälpsam, tydlig, handlingsinriktad';
+        $audience = $site->effectiveAudience()    ?? 'Befintliga och potentiella kunder';
+        $goal     = $site->effectiveGoal()        ?? 'Fler leads nästa vecka';
+        $keywords = $site->effectiveKeywords();
 
-        // Kontekst: strikt site-fokuserad (vill du ha multi-site-kontekst, bygg en block som i digest-jobbet)
         $contextBlock = trim($site->aiContextSummary()) ?: null;
+
+        $now          = now();
+        $currentYear  = (int) $now->year;
+        $allowedYears = [$currentYear, $currentYear + 1];
 
         $content = AiContent::create([
             'customer_id' => $customer->id,
@@ -40,17 +50,33 @@ class GenerateWeeklyPlanJob implements ShouldQueue
             'tone'        => 'short',
             'status'      => 'queued',
             'inputs'      => [
-                'audience' => $audience,
-                'goal'     => $goal,
-                'brand'    => ['name' => $customer->name, 'voice' => $voice],
-                'context'  => $contextBlock,
+                'brand'          => ['name' => $customer->name, 'voice' => $voice],
+                'audience'       => $audience,
+                'goal'           => $goal,
+                'keywords'       => $keywords,
+                'context'        => $contextBlock,
+
+                // Nytt: tydlig tids- och lokaliseringssignalering
+                'now_iso'        => $now->toIso8601String(),
+                'current_year'   => $currentYear,
+                'allowed_years'  => $allowedYears,
+                'timezone'       => config('app.timezone'),
+                'locale'         => $site->locale ?? config('app.locale', 'sv_SE'),
+
+                // Veckoperiod (förstärker att vi är i aktuell vecka)
                 'period'   => [
-                    'week_start' => now()->startOfWeek()->format('Y-m-d'),
-                    'week_end'   => now()->endOfWeek()->format('Y-m-d'),
+                    'week_start' => $now->startOfWeek()->format('Y-m-d'),
+                    'week_end'   => $now->endOfWeek()->format('Y-m-d'),
                     'prev_week'  => [
-                        'start' => now()->subWeek()->startOfWeek()->format('Y-m-d'),
-                        'end'   => now()->subWeek()->endOfWeek()->format('Y-m-d'),
+                        'start' => $now->copy()->subWeek()->startOfWeek()->format('Y-m-d'),
+                        'end'   => $now->copy()->subWeek()->endOfWeek()->format('Y-m-d'),
                     ],
+                ],
+
+                // Extra policy-hint för modellen att undvika gamla årtal i rubriker
+                'date_guardrails' => [
+                    'avoid_past_years_in_titles' => true,
+                    'replace_generic_past_years_with' => $currentYear,
                 ],
             ],
         ]);

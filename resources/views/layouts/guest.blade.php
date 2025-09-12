@@ -383,7 +383,7 @@
                             <svg class="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                             </svg>
-                            support@webgrow.se
+                            info@webbi.se
                         </div>
                     </li>
                 </ul>
@@ -412,9 +412,6 @@
                 <div class="flex items-center gap-6 text-sm">
                     <a href="#" class="text-slate-400 hover:text-slate-300 transition-colors duration-200">Integritetspolicy</a>
                     <a href="#" class="text-slate-400 hover:text-slate-300 transition-colors duration-200">Användarvillkor</a>
-                    <div class="text-slate-500">
-                        Byggt med ❤️ i Sverige
-                    </div>
                 </div>
             </div>
         </div>
