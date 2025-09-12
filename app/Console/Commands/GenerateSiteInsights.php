@@ -16,7 +16,8 @@ class GenerateSiteInsights extends Command
         $week = $this->option('week'); // YYYY-MM-DD (måndag)
         $siteId = $this->argument('siteId');
 
-        $sites = $siteId ? Site::whereKey($siteId)->get() : Site::query()->pluck('id');
+        //$sites = $siteId ? Site::whereKey($siteId)->get() : Site::query()->pluck('id');
+        $sites = $siteId ? Site::whereKey($siteId)->pluck('id') : Site::query()->pluck('id');
 
         $count = 0;
         foreach ($sites as $sid) {
