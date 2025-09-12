@@ -5,6 +5,7 @@ namespace App\Services\Insights;
 use App\Models\Site;
 use App\Services\AI\AnthropicProvider;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class InsightsGenerator
 {
@@ -30,8 +31,13 @@ class InsightsGenerator
                 $parsed['model'] = $this->claude->name();
                 return $parsed;
             }
-        } catch (\Throwable) {
-            // Ignorera och fall tillbaka
+        } catch (\Throwable $e) {
+            Log::error('Anthropic-fel vid insight-generering', [
+                'site_id' => $site->id,
+                'site_name' => $site->name,
+                'error' => $e->getMessage(),
+                'error_class' => get_class($e)
+            ]);
         }
 
         return $this->fallbackHeuristics($context);

@@ -5,17 +5,17 @@
     }" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
     <!-- Förbättrad header med gradient bakgrund -->
-    <div class="mb-8 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-3xl p-8 text-white shadow-2xl">
-        <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-            <div class="flex items-center gap-4">
-                <div class="w-16 h-16 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center">
-                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div class="mb-6 lg:mb-8 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-2xl lg:rounded-3xl p-6 lg:p-8 text-white shadow-2xl">
+        <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 lg:gap-6">
+            <div class="flex items-center gap-3 lg:gap-4">
+                <div class="w-12 h-12 lg:w-16 lg:h-16 bg-white/20 backdrop-blur rounded-xl lg:rounded-2xl flex items-center justify-center">
+                    <svg class="w-6 h-6 lg:w-8 lg:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2z"/>
                     </svg>
                 </div>
                 <div>
-                    <h1 class="text-4xl font-bold mb-2">Planera & Publicera</h1>
-                    <p class="text-white/80">Hantera dina sociala medier och webbpublikationer</p>
+                    <h1 class="text-2xl lg:text-4xl font-bold mb-1 lg:mb-2">Planera & Publicera</h1>
+                    <p class="text-white/80 text-sm lg:text-base">Hantera dina sociala medier och webbpublikationer</p>
                 </div>
 
                 @php
@@ -32,9 +32,9 @@
                 @if($insights)
                     <button
                         @click="showInsights = !showInsights; localStorage.setItem('planner_showInsights', JSON.stringify(showInsights))"
-                        class="ml-6 inline-flex items-center px-4 py-2 rounded-2xl transition-all duration-200 font-medium"
+                        class="ml-0 lg:ml-6 mt-3 lg:mt-0 inline-flex items-center px-3 lg:px-4 py-2 rounded-xl lg:rounded-2xl transition-all duration-200 text-sm lg:text-base font-medium whitespace-nowrap"
                         :class="showInsights ? 'bg-white text-purple-600 shadow-lg' : 'bg-white/20 text-white hover:bg-white/30'">
-                        <svg class="w-5 h-5 mr-2 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        <svg class="w-4 h-4 lg:w-5 lg:h-5 mr-2 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                              :class="showInsights ? 'rotate-180' : ''">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>
@@ -46,26 +46,27 @@
                 @endif
             </div>
 
-            <div class="flex flex-col sm:flex-row items-stretch gap-4">
-                <div class="flex rounded-2xl overflow-hidden bg-white/20 backdrop-blur border border-white/30">
-                    <button wire:click="setView('timeline')" class="flex items-center gap-2 px-6 py-3 font-medium transition-all duration-200 {{ $view === 'timeline' ? 'bg-white text-indigo-600 shadow-lg' : 'text-white hover:bg-white/20' }}">
+            <div class="flex flex-col sm:flex-row items-stretch gap-3 lg:gap-4 w-full sm:w-auto lg:w-auto">
+                <div class="flex rounded-xl lg:rounded-2xl overflow-hidden bg-white/20 backdrop-blur border border-white/30">
+                    <button wire:click="setView('timeline')" class="flex items-center gap-2 px-4 lg:px-6 py-2 lg:py-3 text-sm lg:text-base font-medium transition-all duration-200 whitespace-nowrap {{ $view === 'timeline' ? 'bg-white text-indigo-600 shadow-lg' : 'text-white hover:bg-white/20' }}">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
                         </svg>
                         Tidslinje
                     </button>
-                    <button wire:click="setView('calendar')" class="flex items-center gap-2 px-6 py-3 font-medium transition-all duration-200 {{ $view === 'calendar' ? 'bg-white text-indigo-600 shadow-lg' : 'text-white hover:bg-white/20' }}">
+                    <button wire:click="setView('calendar')" class="flex items-center gap-2 px-4 lg:px-6 py-2 lg:py-3 text-sm lg:text-base font-medium transition-all duration-200 whitespace-nowrap {{ $view === 'calendar' ? 'bg-white text-indigo-600 shadow-lg' : 'text-white hover:bg-white/20' }}">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2z"/>
                         </svg>
                         Kalender
                     </button>
                 </div>
-                <a href="{{ route('ai.list') }}" class="inline-flex items-center px-6 py-3 bg-white text-indigo-600 rounded-2xl hover:bg-gray-50 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <a href="{{ route('ai.list') }}" class="inline-flex items-center justify-center px-4 lg:px-6 py-2 lg:py-3 bg-white text-indigo-600 rounded-xl lg:rounded-2xl hover:bg-gray-50 text-sm lg:text-base font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 whitespace-nowrap">
+                    <svg class="w-4 h-4 lg:w-5 lg:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
                     </svg>
-                    Till AI Innehåll
+                    <span class="hidden sm:inline">Till AI Innehåll</span>
+                    <span class="sm:hidden">AI</span>
                 </a>
             </div>
         </div>
@@ -73,89 +74,89 @@
 
     @if($insights)
         @php $p = $insights->payload ?? []; @endphp
-        <div class="mb-8 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-3xl overflow-hidden shadow-lg" x-show="showInsights" x-collapse>
-            <div class="p-6">
-                <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6">
+        <div class="mb-6 lg:mb-8 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl lg:rounded-3xl overflow-hidden shadow-lg" x-show="showInsights" x-collapse>
+            <div class="p-4 lg:p-6">
+                <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-4 lg:mb-6">
                     <div>
                         <div class="flex items-center gap-2 text-blue-600 mb-2">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-5 h-5 lg:w-6 lg:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                             </svg>
                             <span class="text-sm font-semibold uppercase tracking-wider">Vecka {{ $weekStart->isoWeek() }}</span>
                         </div>
-                        <h3 class="text-2xl font-bold text-blue-900">Veckans AI-rekommendationer</h3>
+                        <h3 class="text-xl lg:text-2xl font-bold text-blue-900">Veckans AI-rekommendationer</h3>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <div class="flex items-center gap-2 text-sm text-blue-600 bg-blue-100 px-3 py-2 rounded-xl">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                        <div class="flex items-center gap-2 text-xs lg:text-sm text-blue-600 bg-blue-100 px-3 py-2 rounded-xl">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
-                            Uppdaterad: {{ $insights->generated_at?->diffForHumans() }}
+                            <span class="truncate">Uppdaterad: {{ $insights->generated_at?->diffForHumans() }}</span>
                         </div>
                         <button
                             @click="showInsights = false; localStorage.setItem('planner_showInsights', 'false')"
-                            class="flex items-center gap-2 px-4 py-2 bg-white border border-blue-200 text-blue-600 rounded-xl hover:bg-blue-50 transition-all duration-200 font-medium">
+                            class="flex items-center gap-2 px-3 lg:px-4 py-2 bg-white border border-blue-200 text-blue-600 rounded-xl hover:bg-blue-50 transition-all duration-200 text-sm font-medium">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                             </svg>
-                            Stäng
+                            <span class="hidden sm:inline">Stäng</span>
                         </button>
                     </div>
                 </div>
 
                 @if(!empty($p['summary']))
-                    <div class="mb-6 p-4 bg-white rounded-2xl border border-blue-100">
-                        <p class="text-blue-800 leading-relaxed">{{ $p['summary'] }}</p>
+                    <div class="mb-4 lg:mb-6 p-4 bg-white rounded-2xl border border-blue-100">
+                        <p class="text-blue-800 leading-relaxed text-sm lg:text-base">{{ $p['summary'] }}</p>
                     </div>
                 @endif
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-white p-6 rounded-2xl border border-blue-100 shadow-sm">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+                    <div class="bg-white p-4 lg:p-6 rounded-2xl border border-blue-100 shadow-sm">
                         <div class="flex items-center gap-3 mb-4">
-                            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-6 h-6 lg:w-8 lg:h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
-                            <h4 class="font-bold text-blue-900">Optimala tider</h4>
+                            <h4 class="font-bold text-blue-900 text-sm lg:text-base">Optimala tider</h4>
                         </div>
                         <div class="space-y-3">
                             @foreach(($p['timeslots'] ?? []) as $t)
                                 <div class="p-3 bg-blue-50 rounded-xl">
-                                    <div class="font-semibold text-blue-900">{{ $t['dow'] ?? '' }} {{ $t['time'] ?? '' }}</div>
-                                    <div class="text-sm text-blue-700 mt-1">{{ $t['why'] ?? '' }}</div>
+                                    <div class="font-semibold text-blue-900 text-sm lg:text-base">{{ $t['dow'] ?? '' }} {{ $t['time'] ?? '' }}</div>
+                                    <div class="text-xs lg:text-sm text-blue-700 mt-1 break-words">{{ $t['why'] ?? '' }}</div>
                                 </div>
                             @endforeach
                         </div>
                     </div>
 
-                    <div class="bg-white p-6 rounded-2xl border border-blue-100 shadow-sm">
+                    <div class="bg-white p-4 lg:p-6 rounded-2xl border border-blue-100 shadow-sm">
                         <div class="flex items-center gap-3 mb-4">
-                            <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-6 h-6 lg:w-8 lg:h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
                             </svg>
-                            <h4 class="font-bold text-blue-900">Föreslagna ämnen</h4>
+                            <h4 class="font-bold text-blue-900 text-sm lg:text-base">Föreslagna ämnen</h4>
                         </div>
                         <div class="space-y-3">
                             @foreach(($p['topics'] ?? []) as $t)
                                 <div class="p-3 bg-purple-50 rounded-xl">
-                                    <div class="font-semibold text-purple-900">{{ $t['title'] ?? '' }}</div>
-                                    <div class="text-sm text-purple-700 mt-1">{{ $t['why'] ?? '' }}</div>
+                                    <div class="font-semibold text-purple-900 text-sm lg:text-base break-words">{{ $t['title'] ?? '' }}</div>
+                                    <div class="text-xs lg:text-sm text-purple-700 mt-1 break-words">{{ $t['why'] ?? '' }}</div>
                                 </div>
                             @endforeach
                         </div>
                     </div>
 
-                    <div class="bg-white p-6 rounded-2xl border border-blue-100 shadow-sm">
+                    <div class="bg-white p-4 lg:p-6 rounded-2xl border border-blue-100 shadow-sm">
                         <div class="flex items-center gap-3 mb-4">
-                            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-6 h-6 lg:w-8 lg:h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
-                            <h4 class="font-bold text-blue-900">Rekommenderade åtgärder</h4>
+                            <h4 class="font-bold text-blue-900 text-sm lg:text-base">Rekommenderade åtgärder</h4>
                         </div>
                         <div class="space-y-3">
                             @foreach(($p['actions'] ?? []) as $t)
                                 <div class="p-3 bg-green-50 rounded-xl">
-                                    <div class="font-semibold text-green-900">{{ $t['action'] ?? '' }}</div>
-                                    <div class="text-sm text-green-700 mt-1">{{ $t['why'] ?? '' }}</div>
+                                    <div class="font-semibold text-green-900 text-sm lg:text-base break-words">{{ $t['action'] ?? '' }}</div>
+                                    <div class="text-xs lg:text-sm text-green-700 mt-1 break-words">{{ $t['why'] ?? '' }}</div>
                                 </div>
                             @endforeach
                         </div>
@@ -163,14 +164,14 @@
                 </div>
 
                 @if(!empty($p['rationale']))
-                    <div class="mt-6 p-4 bg-indigo-100 rounded-2xl border border-indigo-200">
+                    <div class="mt-4 lg:mt-6 p-4 bg-indigo-100 rounded-2xl border border-indigo-200">
                         <div class="flex items-start gap-3">
-                            <svg class="w-6 h-6 text-indigo-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-5 h-5 lg:w-6 lg:h-6 text-indigo-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
                             <div>
-                                <h5 class="font-semibold text-indigo-900 mb-2">AI-analys</h5>
-                                <p class="text-sm text-indigo-800">{{ $p['rationale'] }}</p>
+                                <h5 class="font-semibold text-indigo-900 mb-2 text-sm lg:text-base">AI-analys</h5>
+                                <p class="text-xs lg:text-sm text-indigo-800 break-words">{{ $p['rationale'] }}</p>
                             </div>
                         </div>
                     </div>
@@ -180,8 +181,8 @@
     @endif
 
     <!-- Förbättrad filterrad -->
-    <div class="mb-6 bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+    <div class="mb-4 lg:mb-6 bg-white p-4 lg:p-6 rounded-2xl shadow-lg border border-gray-100">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4">
             <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -189,7 +190,7 @@
                     </svg>
                     <span>Sajt</span>
                 </label>
-                <select wire:model.live="siteId" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all">
+                <select wire:model.live="siteId" class="w-full px-3 py-2 lg:px-4 lg:py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm lg:text-base">
                     <option value="">Alla sajter</option>
                     @php $sites = auth()->user()?->customer?->sites()->orderBy('name')->get(['id','name']) ?? collect(); @endphp
                     @foreach($sites as $s)
@@ -205,7 +206,7 @@
                     </svg>
                     <span>Kanal</span>
                 </label>
-                <select wire:model.live="channel" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all">
+                <select wire:model.live="channel" class="w-full px-3 py-2 lg:px-4 lg:py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm lg:text-base">
                     <option value="all">Alla kanaler</option>
                     <option value="wp">WordPress</option>
                     <option value="shopify">Shopify</option>
@@ -222,7 +223,7 @@
                     </svg>
                     <span>Status</span>
                 </label>
-                <select wire:model.live="status" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all">
+                <select wire:model.live="status" class="w-full px-3 py-2 lg:px-4 lg:py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm lg:text-base">
                     <option value="upcoming">Kommande (30 dagar)</option>
                     <option value="processing">Pågår</option>
                     <option value="published">Publicerad</option>
@@ -234,37 +235,39 @@
 
             <div class="lg:col-span-2 flex flex-col justify-end">
                 @if($view === 'calendar')
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <button wire:click="prevWeek" class="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-all duration-200 font-medium">
+                    <div class="flex flex-col gap-3">
+                        <!-- Navigationsknappar -->
+                        <div class="flex items-center justify-center gap-2">
+                            <button wire:click="prevWeek" class="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-all duration-200 text-sm font-medium">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                                 </svg>
-                                Föregående
+                                <span class="hidden sm:inline">Föregående</span>
                             </button>
-                            <button wire:click="today" class="flex items-center gap-2 px-4 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-xl transition-all duration-200 font-medium">
+                            <button wire:click="today" class="flex items-center gap-2 px-3 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-xl transition-all duration-200 text-sm font-medium">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2z"/>
                                 </svg>
                                 Idag
                             </button>
-                            <button wire:click="nextWeek" class="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-all duration-200 font-medium">
-                                Nästa
+                            <button wire:click="nextWeek" class="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-all duration-200 text-sm font-medium">
+                                <span class="hidden sm:inline">Nästa</span>
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                 </svg>
                             </button>
                         </div>
-                        <div class="flex items-center gap-2 text-sm font-medium text-gray-600 bg-gray-50 px-3 py-2 rounded-xl">
+                        <!-- Datumspan -->
+                        <div class="flex items-center justify-center gap-2 text-sm font-medium text-gray-600 bg-gray-50 px-3 py-2 rounded-xl">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2z"/>
                             </svg>
-                            {{ $weekStart->translatedFormat('j M') }} – {{ $weekEnd->translatedFormat('j M Y') }}
+                            <span>{{ $weekStart->translatedFormat('j M') }} – {{ $weekEnd->translatedFormat('j M Y') }}</span>
                         </div>
                     </div>
                 @else
                     <div class="flex justify-end">
-                        <div class="flex items-center gap-2 text-sm font-medium text-gray-600 bg-gray-50 px-4 py-2 rounded-xl">
+                        <div class="flex items-center gap-2 text-sm font-medium text-gray-600 bg-gray-50 px-3 py-2 lg:px-4 lg:py-2 rounded-xl">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                             </svg>
@@ -307,8 +310,9 @@
     @endphp
 
     @if($view === 'timeline')
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-2 space-y-6">
+        <!-- Timeline-vy: Behåll sidopanel som den är -->
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8">
+            <div class="xl:col-span-2 space-y-4 lg:space-y-6">
                 @php
                     $grouped = collect($items)->groupBy(function($r) {
                         return $r['scheduled_at'] ? \Illuminate\Support\Str::of($r['scheduled_at'])->limit(10) : 'Utan datum';
@@ -316,36 +320,36 @@
                 @endphp
                 @forelse($grouped as $day => $rows)
                     <div>
-                        <div class="sticky top-4 bg-white/90 backdrop-blur-sm z-10 py-4 mb-4 rounded-2xl border border-gray-200 shadow-sm">
-                            <h3 class="text-lg font-bold text-gray-800 px-6 flex items-center gap-3">
-                                <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="sticky top-4 bg-white/90 backdrop-blur-sm z-10 py-3 lg:py-4 mb-3 lg:mb-4 rounded-2xl border border-gray-200 shadow-sm">
+                            <h3 class="text-base lg:text-lg font-bold text-gray-800 px-4 lg:px-6 flex items-center gap-3">
+                                <svg class="w-5 h-5 lg:w-6 lg:h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2z"/>
                                 </svg>
                                 {{ $day === 'Utan datum' ? 'Utan datum' : \Illuminate\Support\Carbon::parse($day)->translatedFormat('l d M Y') }}
                             </h3>
                         </div>
-                        <div class="space-y-4">
+                        <div class="space-y-3 lg:space-y-4">
                             @foreach($rows as $r)
                                 @php $badge = $statusBadge($r['status']); @endphp
                                 <button
                                     wire:click="select({{ $r['id'] }})"
                                     @click="openPanel = true"
-                                    class="w-full text-left p-6 bg-white border border-gray-200 rounded-2xl hover:shadow-xl hover:border-indigo-300 transform hover:-translate-y-1 transition-all duration-200 group">
-                                    <div class="flex items-start justify-between gap-4">
-                                        <div class="flex items-start gap-4 flex-1 min-w-0">
-                                            <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg">
-                                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    class="w-full text-left p-4 lg:p-6 bg-white border border-gray-200 rounded-2xl hover:shadow-xl hover:border-indigo-300 transform hover:-translate-y-1 transition-all duration-200 group">
+                                    <div class="flex items-start justify-between gap-3 lg:gap-4">
+                                        <div class="flex items-start gap-3 lg:gap-4 flex-1 min-w-0">
+                                            <div class="flex-shrink-0 w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                                                <svg class="w-5 h-5 lg:w-6 lg:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     {!! $targetIcon($r['target']) !!}
                                                 </svg>
                                             </div>
                                             <div class="flex-1 min-w-0">
-                                                <h4 class="font-bold text-gray-900 text-lg mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2">
+                                                <h4 class="font-bold text-gray-900 text-base lg:text-lg mb-2 group-hover:text-indigo-600 transition-colors break-words">
                                                     {{ $r['title'] }}
                                                 </h4>
-                                                <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-3">
+                                                <div class="flex flex-wrap items-center gap-2 lg:gap-4 text-sm text-gray-600 mb-3">
                                                     <div class="flex items-center gap-1.5">
                                                         <span class="w-2 h-2 bg-indigo-500 rounded-full"></span>
-                                                        <span class="font-medium">{{ $r['site'] ?: 'Ingen sajt' }}</span>
+                                                        <span class="font-medium truncate">{{ $r['site'] ?: 'Ingen sajt' }}</span>
                                                     </div>
                                                     <div class="flex items-center gap-1.5">
                                                         <span class="w-2 h-2 bg-purple-500 rounded-full"></span>
@@ -364,7 +368,7 @@
                                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
                                                             </svg>
-                                                            Live
+                                                            <span class="hidden lg:inline">Live</span>
                                                         </a>
                                                     @endif
                                                 </div>
@@ -376,10 +380,10 @@
                                                         $eng   = $fmtNum($mm['reactions'] ?? $mm['likes'] ?? null);
                                                     @endphp
                                                     @if($reach || $eng)
-                                                        <div class="flex items-center gap-3">
+                                                        <div class="flex items-center gap-2 lg:gap-3">
                                                             @if($reach)
-                                                                <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-100 text-emerald-800 rounded-xl text-sm font-semibold">
-                                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <div class="inline-flex items-center gap-2 px-2 lg:px-3 py-1 lg:py-1.5 bg-emerald-100 text-emerald-800 rounded-xl text-xs lg:text-sm font-semibold">
+                                                                    <svg class="w-3 h-3 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                                                     </svg>
@@ -387,8 +391,8 @@
                                                                 </div>
                                                             @endif
                                                             @if($eng)
-                                                                <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100 text-blue-800 rounded-xl text-sm font-semibold">
-                                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <div class="inline-flex items-center gap-2 px-2 lg:px-3 py-1 lg:py-1.5 bg-blue-100 text-blue-800 rounded-xl text-xs lg:text-sm font-semibold">
+                                                                    <svg class="w-3 h-3 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                                                                     </svg>
                                                                     {{ $eng }}
@@ -400,11 +404,11 @@
                                             </div>
                                         </div>
                                         <div class="flex-shrink-0">
-                                            <div class="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-full {{ $badge['bg'] }} {{ $badge['text'] }}">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <div class="inline-flex items-center gap-2 px-3 lg:px-4 py-1.5 lg:py-2 text-xs lg:text-sm font-bold rounded-full {{ $badge['bg'] }} {{ $badge['text'] }}">
+                                                <svg class="w-3 h-3 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     {!! $badge['svg'] !!}
                                                 </svg>
-                                                {{ $badge['label'] }}
+                                                <span class="hidden sm:inline">{{ $badge['label'] }}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -413,135 +417,157 @@
                         </div>
                     </div>
                 @empty
-                    <div class="p-12 text-center bg-white border-2 border-dashed border-gray-300 rounded-3xl">
-                        <svg class="w-20 h-20 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="p-8 lg:p-12 text-center bg-white border-2 border-dashed border-gray-300 rounded-3xl">
+                        <svg class="w-16 h-16 lg:w-20 lg:h-20 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
                         </svg>
-                        <h3 class="text-xl font-semibold text-gray-700 mb-2">Inga publiceringar hittades</h3>
+                        <h3 class="text-lg lg:text-xl font-semibold text-gray-700 mb-2">Inga publiceringar hittades</h3>
                         <p class="text-gray-500">Prova att ändra dina filter eller skapa nytt innehåll.</p>
                     </div>
                 @endforelse
             </div>
 
-            <div x-show="openPanel" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-x-full" x-transition:enter-end="opacity-100 transform translate-x-0" class="lg:col-span-1">
+            <div x-show="openPanel" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-x-full" x-transition:enter-end="opacity-100 transform translate-x-0" class="xl:col-span-1">
                 @include('livewire.planner.partials.detail-panel')
             </div>
         </div>
     @else
-        <!-- Förbättrad kalendervy -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-2">
-                <div class="bg-white border border-gray-200 rounded-3xl overflow-hidden shadow-xl">
-                    <div class="bg-gradient-to-r from-indigo-600 to-purple-600 p-6">
-                        <h3 class="text-white text-xl font-bold mb-2">Veckoöversikt</h3>
-                        <p class="text-indigo-100">{{ $weekStart->translatedFormat('j M') }} – {{ $weekEnd->translatedFormat('j M Y') }}</p>
-                    </div>
-                    <div class="grid grid-cols-7 gap-px bg-gray-200">
-                        @foreach($weekDays as $d)
-                            @php
-                                $rows = collect($items)->filter(fn($r) => $r['scheduled_at'] && \Illuminate\Support\Carbon::parse($r['scheduled_at'])->isSameDay($d))->sortBy('scheduled_at')->values();
-                                $isToday = $d->isToday();
-                            @endphp
-                            <div class="min-h-[200px] {{ $isToday ? 'bg-indigo-50' : 'bg-white' }} p-4">
-                                <div class="flex items-center justify-between mb-3">
-                                    <div>
-                                        <div class="text-xs font-bold uppercase text-gray-500">{{ $d->translatedFormat('D') }}</div>
-                                        <div class="text-lg font-bold {{ $isToday ? 'text-indigo-600' : 'text-gray-900' }}">{{ $d->format('d') }}</div>
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        @if($rows->count() > 0)
-                                            <span class="text-xs px-2 py-1 rounded-full {{ $isToday ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700' }} font-bold">
-                                                {{ $rows->count() }}
-                                            </span>
-                                        @endif
-                                        <button wire:click="startQuickPlan('{{ $d->toDateString() }}')" @click="openPanel=true"
-                                                class="text-xs px-2 py-1 {{ $isToday ? 'text-indigo-600 hover:bg-indigo-100' : 'text-gray-500 hover:bg-gray-100' }} rounded-lg transition-colors font-medium">
-                                            + Lägg till
-                                        </button>
-                                    </div>
+        <!-- Kalendervy: Full bredd kalender + modal för detaljer -->
+        <div class="w-full">
+            <div class="bg-white border border-gray-200 rounded-2xl lg:rounded-3xl overflow-hidden shadow-xl">
+                <div class="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 lg:p-6">
+                    <h3 class="text-white text-lg lg:text-xl font-bold mb-2">Veckoöversikt</h3>
+                    <p class="text-indigo-100 text-sm lg:text-base">{{ $weekStart->translatedFormat('j M') }} – {{ $weekEnd->translatedFormat('j M Y') }}</p>
+                </div>
+                <div class="grid grid-cols-7 gap-px bg-gray-200">
+                    @foreach($weekDays as $d)
+                        @php
+                            $rows = collect($items)->filter(fn($r) => $r['scheduled_at'] && \Illuminate\Support\Carbon::parse($r['scheduled_at'])->isSameDay($d))->sortBy('scheduled_at')->values();
+                            $isToday = $d->isToday();
+                        @endphp
+                        <div class="min-h-[180px] lg:min-h-[240px] {{ $isToday ? 'bg-indigo-50' : 'bg-white' }} p-2 lg:p-4">
+                            <div class="flex items-center justify-between mb-2 lg:mb-3">
+                                <div>
+                                    <div class="text-xs font-bold uppercase text-gray-500">{{ $d->translatedFormat('D') }}</div>
+                                    <div class="text-base lg:text-lg font-bold {{ $isToday ? 'text-indigo-600' : 'text-gray-900' }}">{{ $d->format('d') }}</div>
                                 </div>
-
-                                <div class="space-y-2">
-                                    @forelse($rows->take(3) as $r)
-                                        @php $badge = $statusBadge($r['status']); @endphp
-                                        <button
-                                            wire:click="select({{ $r['id'] }})"
-                                            @click="openPanel = true"
-                                            class="w-full text-left p-3 rounded-xl border-2 border-gray-100 bg-white hover:border-indigo-300 hover:shadow-lg transform hover:scale-105 transition-all duration-200 group">
-                                            <div class="flex items-start gap-2">
-                                                <div class="flex-shrink-0">
-                                                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        {!! $targetIcon($r['target']) !!}
-                                                    </svg>
-                                                </div>
-                                                <div class="flex-1 min-w-0">
-                                                    <div class="text-sm font-bold text-gray-900 truncate group-hover:text-indigo-600 transition-colors">
-                                                        {{ \Illuminate\Support\Carbon::parse($r['scheduled_at'])->format('H:i') }}
-                                                    </div>
-                                                    <div class="text-xs font-medium text-gray-600 truncate mt-0.5">{{ $r['title'] }}</div>
-                                                    <div class="text-xs text-gray-500 truncate">{{ $r['site'] ?: '—' }}</div>
-
-                                                    @if(($r['status'] ?? null) === 'published' && !empty($r['metrics']))
-                                                        @php
-                                                            $mm = $r['metrics'];
-                                                            $reach = $fmtNum($mm['reach'] ?? $mm['impressions'] ?? null);
-                                                            $eng   = $fmtNum($mm['reactions'] ?? $mm['likes'] ?? null);
-                                                        @endphp
-                                                        @if($reach || $eng)
-                                                            <div class="mt-2 flex items-center gap-1 text-xs">
-                                                                @if($reach)
-                                                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-bold">
-                                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                                                        </svg>
-                                                                        {{ $reach }}
-                                                                    </span>
-                                                                @endif
-                                                                @if($eng)
-                                                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 font-bold">
-                                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-                                                                        </svg>
-                                                                        {{ $eng }}
-                                                                    </span>
-                                                                @endif
-                                                            </div>
-                                                        @endif
-                                                    @endif
-                                                </div>
-                                                <div class="flex-shrink-0">
-                                                    <svg class="w-4 h-4 {{ $badge['text'] }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        {!! $badge['svg'] !!}
-                                                    </svg>
-                                                </div>
-                                            </div>
-                                        </button>
-                                    @empty
-                                        <div class="text-center py-4">
-                                            <svg class="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
-                                            </svg>
-                                            <div class="text-xs text-gray-400">Inga poster</div>
-                                        </div>
-                                    @endforelse
-
-                                    @if($rows->count() > 3)
-                                        <div class="text-center pt-2">
-                                            <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full font-medium">
-                                                +{{ $rows->count() - 3 }} till
-                                            </span>
-                                        </div>
+                                <div class="flex items-center gap-1 lg:gap-2">
+                                    @if($rows->count() > 0)
+                                        <span class="text-xs px-1.5 lg:px-2 py-0.5 lg:py-1 rounded-full {{ $isToday ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700' }} font-bold">
+                                            {{ $rows->count() }}
+                                        </span>
                                     @endif
+                                    <button wire:click="startQuickPlan('{{ $d->toDateString() }}')" @click="openPanel=true"
+                                            class="text-xs px-1.5 lg:px-2 py-0.5 lg:py-1 {{ $isToday ? 'text-indigo-600 hover:bg-indigo-100' : 'text-gray-500 hover:bg-gray-100' }} rounded-lg transition-colors font-medium">
+                                        <span class="hidden lg:inline">+ Lägg till</span>
+                                        <span class="lg:hidden">+</span>
+                                    </button>
                                 </div>
                             </div>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
 
-            <div x-show="openPanel" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-x-full" x-transition:enter-end="opacity-100 transform translate-x-0" class="lg:col-span-1">
-                @include('livewire.planner.partials.detail-panel', ['readyContents' => $readyContents])
+                            <div class="space-y-1 lg:space-y-2">
+                                @forelse($rows->take(4) as $r)
+                                    @php $badge = $statusBadge($r['status']); @endphp
+                                    <button
+                                        wire:click="select({{ $r['id'] }})"
+                                        @click="openPanel = true"
+                                        class="w-full text-left p-2 lg:p-3 rounded-lg lg:rounded-xl border-2 border-gray-100 bg-white hover:border-indigo-300 hover:shadow-lg transform hover:scale-105 transition-all duration-200 group">
+                                        <div class="flex items-start gap-1 lg:gap-2">
+                                            <div class="flex-shrink-0">
+                                                <svg class="w-4 h-4 lg:w-5 lg:h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    {!! $targetIcon($r['target']) !!}
+                                                </svg>
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="text-xs lg:text-sm font-bold text-gray-900 truncate group-hover:text-indigo-600 transition-colors">
+                                                    {{ \Illuminate\Support\Carbon::parse($r['scheduled_at'])->format('H:i') }}
+                                                </div>
+                                                <div class="text-xs font-medium text-gray-600 break-words line-clamp-2 mt-0.5">{{ $r['title'] }}</div>
+                                                <div class="text-xs text-gray-500 truncate">{{ $r['site'] ?: '—' }}</div>
+
+                                                @if(($r['status'] ?? null) === 'published' && !empty($r['metrics']))
+                                                    @php
+                                                        $mm = $r['metrics'];
+                                                        $reach = $fmtNum($mm['reach'] ?? $mm['impressions'] ?? null);
+                                                        $eng   = $fmtNum($mm['reactions'] ?? $mm['likes'] ?? null);
+                                                    @endphp
+                                                    @if($reach || $eng)
+                                                        <div class="mt-1 lg:mt-2 flex items-center gap-1 text-xs">
+                                                            @if($reach)
+                                                                <span class="inline-flex items-center gap-1 px-1 lg:px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-bold">
+                                                                    <svg class="w-2.5 h-2.5 lg:w-3 lg:h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                                    </svg>
+                                                                    {{ $reach }}
+                                                                </span>
+                                                            @endif
+                                                            @if($eng)
+                                                                <span class="inline-flex items-center gap-1 px-1 lg:px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 font-bold">
+                                                                    <svg class="w-2.5 h-2.5 lg:w-3 lg:h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                                                                    </svg>
+                                                                    {{ $eng }}
+                                                                </span>
+                                                            @endif
+                                                        </div>
+                                                    @endif
+                                                @endif
+                                            </div>
+                                            <div class="flex-shrink-0">
+                                                <svg class="w-3 h-3 lg:w-4 lg:h-4 {{ $badge['text'] }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    {!! $badge['svg'] !!}
+                                                </svg>
+                                            </div>
+                                        </div>
+                                    </button>
+                                @empty
+                                    <div class="text-center py-2 lg:py-4">
+                                        <svg class="w-6 h-6 lg:w-8 lg:h-8 text-gray-300 mx-auto mb-1 lg:mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                                        </svg>
+                                        <div class="text-xs text-gray-400">Inga poster</div>
+                                    </div>
+                                @endforelse
+
+                                @if($rows->count() > 4)
+                                    <div class="text-center pt-1 lg:pt-2">
+                                        <span class="text-xs text-gray-500 bg-gray-100 px-1.5 lg:px-2 py-0.5 lg:py-1 rounded-full font-medium">
+                                            +{{ $rows->count() - 4 }} till
+                                        </span>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
             </div>
         </div>
     @endif
+
+    <!-- Modal för kalendervy -->
+    <div x-show="openPanel && '{{ $view }}' === 'calendar'"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 overflow-y-auto"
+         style="display: none;">
+        <div class="flex min-h-screen items-center justify-center p-4">
+            <!-- Backdrop -->
+            <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" @click="openPanel = false" wire:click="clearSelection"></div>
+
+            <!-- Modal innehåll -->
+            <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="transform scale-95"
+                 x-transition:enter-end="transform scale-100"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="transform scale-100"
+                 x-transition:leave-end="transform scale-95">
+                @include('livewire.planner.partials.detail-panel', ['readyContents' => $readyContents])
+            </div>
+        </div>
+    </div>
 </div>
