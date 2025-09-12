@@ -1091,10 +1091,10 @@
                             <svg class="w-5 h-5 mr-2 text-orange-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
                             </svg>
-                            Endast för de första 100 kunderna
+                            Early access program
                         </h3>
                         <p class="text-orange-800">
-                            <strong>Early bird-erbjudande:</strong> Upp till 69% rabatt på ordinarie pris! Som tack för att du hjälper oss förbättra produkten.
+                            Genom att vara med tidigare än andra kan du ta del av speciella priser. Anmäl intresse för vårt Early Access program.
                         </p>
                     </div>
                 </div>
