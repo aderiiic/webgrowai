@@ -34,6 +34,8 @@ class Index extends Component
     public string $quickTarget = 'facebook'; // wp|shopify|facebook|instagram|linkedin
     public ?int $quickContentId = null;
 
+    public ?int $quickImageId = 0;
+
     // Till vy
     public array $readyContents = []; // [{id,title,site}]
 
@@ -45,6 +47,96 @@ class Index extends Component
         if (!$this->from) {
             $this->from = Carbon::now()->startOfWeek(Carbon::MONDAY)->toDateString();
         }
+    }
+
+    #[On('media-selected')]
+    public function onMediaSelected(int $id): void
+    {
+        $this->quickImageId = $id;
+        session()->flash('success', 'Bild vald – klicka "Använd bild" för att koppla till den valda publiceringen.');
+    }
+
+    public function applyImageToSelected(CurrentCustomer $current): void
+    {
+        if (!$this->selected || empty($this->selected['id'])) {
+            $this->dispatch('notify', type: 'warning', message: 'Ingen publicering vald.');
+            return;
+        }
+        if (!$this->quickImageId) {
+            $this->dispatch('notify', type: 'warning', message: 'Välj en bild först.');
+            return;
+        }
+
+        $customer = $current->get();
+        abort_unless($customer, 403);
+
+        $pub = ContentPublication::with('content:id,customer_id,site_id')->findOrFail((int)$this->selected['id']);
+        abort_unless($pub->content && (int)$pub->content->customer_id === (int)$customer->id, 403);
+
+        // Begränsa mot aktiv site (om satt)
+        $activeSiteId = (int) ($current->getSiteId() ?: 0);
+        if ($activeSiteId > 0) {
+            abort_unless((int)$pub->content->site_id === $activeSiteId, 403);
+        }
+
+        // Sätt bild i payload
+        $payload = $pub->payload ?? [];
+        $payload['image_asset_id'] = (int)$this->quickImageId;
+
+        $pub->update([
+            'payload' => $payload,
+            'message' => 'Bild kopplad till publicering',
+        ]);
+
+        // Uppdatera selected + items i minnet
+        $this->selected['message'] = 'Bild kopplad till publicering';
+        foreach ($this->items as &$row) {
+            if ((int)$row['id'] === (int)$pub->id) {
+                $row['message'] = $this->selected['message'];
+                break;
+            }
+        }
+        unset($row);
+
+        session()->flash('success', 'Bilden kopplades till publiceringen.');
+    }
+
+    public function removeImageFromSelected(CurrentCustomer $current): void
+    {
+        if (!$this->selected || empty($this->selected['id'])) {
+            $this->dispatch('notify', type: 'warning', message: 'Ingen publicering vald.');
+            return;
+        }
+
+        $customer = $current->get();
+        abort_unless($customer, 403);
+
+        $pub = ContentPublication::with('content:id,customer_id,site_id')->findOrFail((int)$this->selected['id']);
+        abort_unless($pub->content && (int)$pub->content->customer_id === (int)$customer->id, 403);
+
+        $activeSiteId = (int) ($current->getSiteId() ?: 0);
+        if ($activeSiteId > 0) {
+            abort_unless((int)$pub->content->site_id === $activeSiteId, 403);
+        }
+
+        $payload = $pub->payload ?? [];
+        unset($payload['image_asset_id']);
+
+        $pub->update([
+            'payload' => $payload,
+            'message' => 'Bild borttagen från publicering',
+        ]);
+
+        $this->selected['message'] = 'Bild borttagen från publicering';
+        foreach ($this->items as &$row) {
+            if ((int)$row['id'] === (int)$pub->id) {
+                $row['message'] = $this->selected['message'];
+                break;
+            }
+        }
+        unset($row);
+
+        session()->flash('success', 'Bilden togs bort från publiceringen.');
     }
 
     public function select(int $publicationId): void
@@ -247,6 +339,10 @@ class Index extends Component
         } else {
             // Social – text skapas i jobben utifrån content/body_md. Bild hanteras separat.
             $payload['text'] = null;
+        }
+
+        if ($this->quickImageId > 0) {
+            $payload['image_asset_id'] = (int)$this->quickImageId;
         }
 
         $pub = ContentPublication::create([

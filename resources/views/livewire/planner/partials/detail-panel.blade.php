@@ -38,7 +38,7 @@
             <!-- Scrollbar innehåll -->
         <div class="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4 lg:space-y-6" @if($isPublished && (!$m || $stale)) wire:poll.5s="reloadSelected" @endif>
 
-            <!-- Status section med bättre responsivitet -->
+            <!-- Status section -->
             <div class="flex items-center justify-between p-3 lg:p-4 bg-gray-50 rounded-2xl gap-3">
                 <span class="text-sm font-medium text-gray-700 flex-shrink-0">Status</span>
                 <div class="flex items-center gap-2 min-w-0">
@@ -51,7 +51,7 @@
                 </div>
             </div>
 
-            <!-- Titel och metadata med bättre radbrytning -->
+            <!-- Titel och metadata -->
             <div class="space-y-3">
                 <h3 class="text-base lg:text-lg font-bold text-gray-900 leading-tight break-words">{{ $selected['title'] }}</h3>
                 <div class="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-2 lg:gap-3 text-sm text-gray-600">
@@ -69,7 +69,7 @@
                         <span class="truncate">{{ $selected['site'] ?: 'Ingen sajt' }}</span>
                     </div>
                     @if(!empty($selected['external_url']))
-                        <a href="{{ $selected['external_url'] }}" target="_blank" class="flex items-center gap-1.5 text-indigo-600 hover:text-indigo-800 font-medium transition-colors flex-shrink-0">
+                        <a href="{{ $selected['external_url'] }}" target="_blank" class="flex items-center gap-1.5 text-indigo-600 hover:text-indigo-800 font-medium transition-colors flex-shrink-0" onclick="event.stopPropagation()">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
                             </svg>
@@ -80,7 +80,7 @@
                 </div>
             </div>
 
-            <!-- Info cards med förbättrad responsivitet -->
+            <!-- Info cards -->
             <div class="grid grid-cols-1 gap-4">
                 <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-2xl border border-blue-100">
                     <div class="flex items-center gap-2 text-blue-700 mb-2">
@@ -107,8 +107,75 @@
                 </div>
             </div>
 
+            <!-- Bild för publicering -->
+            <div class="bg-gradient-to-br from-orange-50 to-amber-50 p-4 lg:p-6 rounded-2xl border border-orange-200">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 lg:w-8 lg:h-8 bg-orange-600 rounded-lg flex items-center justify-center">
+                            <svg class="w-3 h-3 lg:w-4 lg:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        <h5 class="text-base lg:text-lg font-bold text-orange-800">Bild för publicering</h5>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button x-data @click="$dispatch('media-picker:open')"
+                                class="flex items-center gap-2 px-3 py-2 bg-white border border-orange-200 text-orange-700 rounded-xl hover:bg-orange-50 transition-all duration-200 text-sm font-medium flex-shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            Välj bild
+                        </button>
+                        @if($quickImageId > 0)
+                            <button wire:click="applyImageToSelected"
+                                    class="flex items-center gap-2 px-3 py-2 bg-orange-600 text-white rounded-xl hover:bg-orange-700 transition-all duration-200 text-sm font-semibold">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                Använd bild
+                            </button>
+                        @endif
+                        @if(!empty($selected['id']))
+                            <button wire:click="removeImageFromSelected"
+                                    class="flex items-center gap-2 px-3 py-2 bg-white border border-orange-200 text-orange-700 rounded-xl hover:bg-orange-50 transition-all duration-200 text-sm font-medium">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                                Ta bort koppling
+                            </button>
+                        @endif
+                    </div>
+                </div>
+
+                @if($quickImageId > 0)
+                    <div class="flex items-center gap-3 p-3 bg-white rounded-xl border border-orange-100">
+                        <img class="w-12 h-12 lg:w-16 lg:h-16 rounded-lg object-cover" src="{{ route('assets.thumb', $quickImageId) }}" alt="Vald bild">
+                        <div class="flex-1">
+            <span class="text-sm lg:text-base text-orange-800 font-medium flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Bild vald (ej kopplad än)
+            </span>
+                        </div>
+                        <button class="text-sm text-orange-600 underline hover:no-underline"
+                                wire:click="$set('quickImageId', 0)">
+                            Ta bort val
+                        </button>
+                    </div>
+                @else
+                <div class="text-center py-4">
+                        <svg class="w-12 h-12 lg:h-16 lg:w-16 text-orange-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <div class="text-orange-800 font-medium mb-2">Ingen bild vald</div>
+                        <p class="text-sm text-orange-600">Instagram kräver alltid en bild. Andra plattformar är valfritt.</p>
+                    </div>
+                @endif
+            </div>
+
             @if($selected['status'] === 'published')
-                <!-- Statistik section med kompaktare design -->
+                <!-- Statistik -->
                 <div class="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-4 lg:p-6">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                         <div class="flex items-center gap-2">
@@ -179,7 +246,7 @@
                 </div>
             @endif
 
-            <!-- Hantera publicering section med förbättrade formulär -->
+            <!-- Hantera publicering -->
             <div class="bg-gray-50 p-4 lg:p-6 rounded-2xl space-y-4">
                 <h5 class="text-base lg:text-lg font-bold text-gray-900 flex items-center gap-2">
                     <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -236,7 +303,7 @@
                 </div>
             </div>
 
-            <!-- Snabbplanera section med förbättrad layout -->
+            <!-- Snabbplanera -->
             <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-4 lg:p-6 rounded-2xl space-y-4 border border-green-200">
                 <h5 class="text-base lg:text-lg font-bold text-green-800 flex items-center gap-2">
                     <svg class="w-5 h-5 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -328,4 +395,7 @@
             <p class="text-gray-600">Klicka på en post i listan för att se detaljer och hantera den.</p>
         </div>
     @endif
+
+    <!-- MediaPicker-komponenten (en gång per panel) -->
+    <livewire:media-picker wire:model.live="quickImageId" />
 </div>
