@@ -17,7 +17,7 @@ class Index extends Component
 {
     #[Url] public ?int $siteId = null;
     #[Url] public string $channel = 'all';
-    #[Url] public string $status = 'upcoming';
+    #[Url] public string $status = 'all';
     #[Url] public ?int $open = null;
     #[Url] public ?int $content_id = null;
 

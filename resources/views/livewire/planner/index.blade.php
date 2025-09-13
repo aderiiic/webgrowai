@@ -224,12 +224,12 @@
                     <span>Status</span>
                 </label>
                 <select wire:model.live="status" class="w-full px-3 py-2 lg:px-4 lg:py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm lg:text-base">
+                    <option value="all">Alla</option>
                     <option value="upcoming">Kommande (30 dagar)</option>
                     <option value="processing">Pågår</option>
                     <option value="published">Publicerad</option>
                     <option value="failed">Misslyckad</option>
                     <option value="cancelled">Avbruten</option>
-                    <option value="all">Alla</option>
                 </select>
             </div>
 
