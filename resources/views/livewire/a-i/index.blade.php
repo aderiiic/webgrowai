@@ -26,7 +26,7 @@
                 <svg class="w-8 h-8 mr-3 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
                 </svg>
-                AI Innehåll
+                Innehållsskapare
                 <!-- Help Icon -->
                 <button onclick="toggleAiHelpModal()" class="ml-3 w-6 h-6 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg group">
                     <svg class="w-3.5 h-3.5 text-white group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -45,7 +45,7 @@
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                     </svg>
-                    Nytt innehåll
+                    Skapa text
                 </a>
             </div>
         </div>
@@ -63,7 +63,7 @@
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="text-xl font-bold text-gray-900">Hjälp - AI Innehåll</h3>
+                                <h3 class="text-xl font-bold text-gray-900">Hjälp - Innehållsskapande</h3>
                                 <p class="text-sm text-gray-600">Skapa professionellt innehåll med AI-assistans</p>
                             </div>
                         </div>
@@ -323,6 +323,7 @@
         </div>
 
         <!-- LinkedIn: snabbgenerator av inläggsförslag -->
+        <!--
         <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6">
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center space-x-3">
@@ -351,6 +352,7 @@
 
             <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3" id="li-suggestions"></div>
         </div>
+        -->
 
         <!-- Stats cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -433,6 +435,7 @@
             @forelse($items as $c)
                 @php
                     $statusColors = [
+                        'ready' => ['bg' => 'from-green-50 to-emerald-50', 'border' => 'border-green-200/50', 'text' => 'text-green-800', 'icon' => 'bg-green-500'],
                         'completed' => ['bg' => 'from-green-50 to-emerald-50', 'border' => 'border-green-200/50', 'text' => 'text-green-800', 'icon' => 'bg-green-500'],
                         'processing' => ['bg' => 'from-blue-50 to-indigo-50', 'border' => 'border-blue-200/50', 'text' => 'text-blue-800', 'icon' => 'bg-blue-500'],
                         'draft' => ['bg' => 'from-yellow-50 to-amber-50', 'border' => 'border-yellow-200/50', 'text' => 'text-yellow-800', 'icon' => 'bg-yellow-500'],
@@ -451,12 +454,14 @@
                             </div>
 
                             @if($c->provider)
+                                <!--
                                 <div class="inline-flex items-center px-2 py-1 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200/50 rounded-full">
                                     <svg class="w-3 h-3 mr-1 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
                                     </svg>
                                     <span class="text-xs font-medium text-purple-700">{{ $c->provider }}</span>
                                 </div>
+                                -->
                             @endif
                         </div>
                     </div>

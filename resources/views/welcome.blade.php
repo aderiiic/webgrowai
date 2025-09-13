@@ -251,6 +251,7 @@
             </div>
         </section>
 
+
         <section class="py-24 bg-gradient-to-br from-white via-indigo-50/30 to-purple-50/30 relative overflow-hidden">
             <!-- Bakgrundsdekor -->
             <div class="absolute inset-0">
@@ -279,8 +280,8 @@
                     </p>
                 </div>
 
-                <!-- Huvuddemo med before/after eller process -->
-                <div class="grid lg:grid-cols-2 gap-12 items-center mb-16">
+                <!-- Huvuddemo med laptop-bild -->
+                <div class="grid lg:grid-cols-2 gap-16 items-center mb-16">
                     <!-- Vänster: Process -->
                     <div class="space-y-8">
                         <div class="space-y-6">
@@ -339,180 +340,133 @@
                         </div>
                     </div>
 
-                    <!-- Höger: Visuell demo -->
+                    <!-- Höger: Laptop-bild med floating elements -->
                     <div class="relative">
-                        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden" x-data="{ activeTab: 'produkttext' }">
-                            <!-- Header med tabs -->
-                            <div class="bg-slate-50 px-6 py-4 border-b border-slate-200">
-                                <div class="flex space-x-1">
-                                    <button @click="activeTab = 'produkttext'"
-                                            :class="activeTab === 'produkttext' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-800'"
-                                            class="px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200">
-                                        Produkttext
-                                    </button>
-                                    <button @click="activeTab = 'blogg'"
-                                            :class="activeTab === 'blogg' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-800'"
-                                            class="px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200">
-                                        Blogginlägg
-                                    </button>
-                                    <button @click="activeTab = 'social'"
-                                            :class="activeTab === 'social' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-800'"
-                                            class="px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200">
-                                        Sociala medier
-                                    </button>
+                        <div class="transform hover:scale-105 transition-all duration-500">
+                            <img
+                                src="https://webbiab.s3.eu-north-1.amazonaws.com/webgrowai/laptop-webgrowai-1-nytt.png"
+                                alt="WebGrow AI Dashboard - Smart innehållsgenerering"
+                                class="w-full max-w-lg mx-auto drop-shadow-2xl"
+                            />
+
+                            <!-- AI Processing indicator -->
+                            <div class="absolute -top-6 -left-6 bg-white rounded-xl shadow-xl p-4 border border-emerald-200 animate-pulse">
+                                <div class="flex items-center text-emerald-600 font-medium">
+                                    <div class="w-3 h-3 bg-emerald-500 rounded-full mr-2 animate-pulse"></div>
+                                    <span class="text-sm">AI skriver...</span>
                                 </div>
+                                <div class="text-xs text-slate-500 mt-1">Tandläkarmottagning</div>
                             </div>
 
-                            <!-- Content -->
-                            <div class="p-6">
-                                <!-- Produkttext tab -->
-                                <div x-show="activeTab === 'produkttext'" class="space-y-4">
-                                    <div class="flex items-center justify-between mb-4">
-                                        <h4 class="font-semibold text-slate-800">Professionell tandblekning</h4>
-                                        <div class="flex items-center text-emerald-600 text-sm font-medium">
-                                            <div class="w-2 h-2 bg-emerald-500 rounded-full mr-2"></div>
-                                            AI-genererad
-                                        </div>
-                                    </div>
-                                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 text-sm text-slate-700 leading-relaxed">
-                                        "Få ett strålande leende på bara 60 minuter! Vår professionella tandblekning ger dig
-                                        upp till 8 nyanser vitare tänder - säkert och smärtfritt. Perfekt inför bröllopet,
-                                        jobbintervjun eller när du bara vill känna dig mer självsäker."
-                                    </div>
-                                    <div class="flex items-center justify-between pt-2">
-                                        <span class="text-xs text-slate-500">SEO-optimerad • Säljarfokuserad</span>
-                                        <div class="flex space-x-2">
-                                            <button class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-md text-xs font-medium">
-                                                Godkänn
-                                            </button>
-                                            <button class="px-3 py-1 bg-slate-100 text-slate-700 rounded-md text-xs font-medium">
-                                                Redigera
-                                            </button>
-                                        </div>
-                                    </div>
+                            <!-- Quality check -->
+                            <div class="absolute top-4 -right-6 bg-white rounded-xl shadow-xl p-4 border border-blue-200">
+                                <div class="flex items-center text-blue-600 font-medium">
+                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <span class="text-sm">SEO-optimerat</span>
                                 </div>
-
-                                <!-- Blogg tab -->
-                                <div x-show="activeTab === 'blogg'" class="space-y-4">
-                                    <div class="flex items-center justify-between mb-4">
-                                        <h4 class="font-semibold text-slate-800">5 tips för bättre munhälsa</h4>
-                                        <div class="flex items-center text-emerald-600 text-sm font-medium">
-                                            <div class="w-2 h-2 bg-emerald-500 rounded-full mr-2"></div>
-                                            AI-genererad
-                                        </div>
-                                    </div>
-                                    <div class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 text-sm text-slate-700 leading-relaxed">
-                                        "Många tror att det räcker med att borsta tänderna två gånger om dagen.
-                                        Men vetenskapen visar att det finns enkla knep som kan förbättra din munhälsa markant.
-                                        Som tandläkare i Stockholm har jag sett hur små förändringar gör stor skillnad..."
-                                    </div>
-                                    <div class="flex items-center justify-between pt-2">
-                                        <span class="text-xs text-slate-500">856 ord • Expertton • Lokalt fokus</span>
-                                        <div class="flex space-x-2">
-                                            <button class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-md text-xs font-medium">
-                                                Schemalägg
-                                            </button>
-                                            <button class="px-3 py-1 bg-slate-100 text-slate-700 rounded-md text-xs font-medium">
-                                                Redigera
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Social tab -->
-                                <div x-show="activeTab === 'social'" class="space-y-4">
-                                    <div class="flex items-center justify-between mb-4">
-                                        <h4 class="font-semibold text-slate-800">Facebook-inlägg</h4>
-                                        <div class="flex items-center text-emerald-600 text-sm font-medium">
-                                            <div class="w-2 h-2 bg-emerald-500 rounded-full mr-2"></div>
-                                            AI-genererad
-                                        </div>
-                                    </div>
-                                    <div class="bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg p-4 text-sm text-slate-700 leading-relaxed">
-                                        "☕ Måndag morgon-påminnelse: Det du dricker påverkar dina tänder mer än du tror!
-                                        Kaffe och te kan fläcka, men det finns enkla knep för att skydda ditt leende.
-                                        Kom förbi för en gratis konsultation! 🦷✨ #TandvårdStockholm #MunhälsaTips"
-                                    </div>
-                                    <div class="flex items-center justify-between pt-2">
-                                        <span class="text-xs text-slate-500">Engagerande • Med hashtags • Call-to-action</span>
-                                        <div class="flex space-x-2">
-                                            <button class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-md text-xs font-medium">
-                                                Publicera nu
-                                            </button>
-                                            <button class="px-3 py-1 bg-slate-100 text-slate-700 rounded-md text-xs font-medium">
-                                                Ändra tid
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
+                                <div class="text-xs text-slate-500 mt-1">Branschspecifikt</div>
                             </div>
-                        </div>
 
-                        <!-- Floating stats -->
-                        <div class="absolute -top-4 -left-4 bg-white rounded-lg shadow-lg p-3 border border-emerald-200">
-                            <div class="flex items-center text-emerald-600 text-sm font-medium">
-                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                                +127% engagement
-                            </div>
-                        </div>
-
-                        <div class="absolute -bottom-4 -right-4 bg-white rounded-lg shadow-lg p-3 border border-indigo-200">
-                            <div class="flex items-center text-indigo-600 text-sm font-medium">
-                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-                                </svg>
-                                23 nya leads
+                            <!-- Ready to publish -->
+                            <div class="absolute -bottom-6 right-1/4 bg-white rounded-xl shadow-xl p-4 border border-purple-200 animate-bounce" style="animation-delay: 2s; animation-duration: 3s;">
+                                <div class="flex items-center text-purple-600 font-medium">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
+                                    </svg>
+                                    <span class="text-sm">Redo att publicera</span>
+                                </div>
+                                <div class="text-xs text-slate-500 mt-1">3 inlägg färdiga</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Branschspecifika exempel -->
-                <div class="bg-gradient-to-r from-slate-50 to-indigo-50 rounded-2xl p-8">
-                    <h3 class="text-2xl font-bold text-slate-800 mb-6 text-center">
-                        AI som förstår din bransch
-                    </h3>
-                    <div class="grid md:grid-cols-4 gap-6">
-                        <div class="text-center group">
-                            <div class="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-200">
-                                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                <!-- Results Grid - ersätter floating stats -->
+                <div class="grid md:grid-cols-3 gap-8 mb-16">
+                    <!-- Engagement Results -->
+                    <div class="group bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl p-8 border border-emerald-200/50 hover:shadow-xl transition-all duration-300">
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="w-12 h-12 bg-gradient-to-r from-emerald-500 to-green-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
                                 </svg>
                             </div>
-                            <h4 class="font-semibold text-slate-800 mb-2">Hälsa & Vård</h4>
-                            <p class="text-sm text-slate-600">"Expertis", "trygghet", "evidensbaserat"</p>
+                            <div class="text-3xl font-bold text-emerald-600">+127%</div>
                         </div>
+                        <h3 class="text-lg font-bold text-slate-800 mb-2">Högre engagemang</h3>
+                        <p class="text-slate-600 text-sm">AI-genererat innehåll får mer likes, kommentarer och delningar än traditionellt innehåll</p>
+                    </div>
 
-                        <div class="text-center group">
-                            <div class="w-16 h-16 bg-emerald-100 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-200">
-                                <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <!-- Lead Generation -->
+                    <div class="group bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-8 border border-indigo-200/50 hover:shadow-xl transition-all duration-300">
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"/>
+                                </svg>
+                            </div>
+                            <div class="text-3xl font-bold text-indigo-600">+89%</div>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-800 mb-2">Fler kvalificerade leads</h3>
+                        <p class="text-slate-600 text-sm">Branschspecifika texter attraherar rätt typ av kunder som är redo att köpa</p>
+                    </div>
+
+                    <!-- Time Saved -->
+                    <div class="group bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-8 border border-purple-200/50 hover:shadow-xl transition-all duration-300">
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <div class="text-3xl font-bold text-purple-600">12h/vecka</div>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-800 mb-2">Sparad tid</h3>
+                        <p class="text-slate-600 text-sm">Fokusera på att driva företaget istället för att sitta och skriva texter</p>
+                    </div>
+                </div>
+
+                <!-- Branschspecifika exempel -->
+                <div class="bg-gradient-to-r from-slate-50 to-indigo-50 rounded-2xl p-8 mb-12">
+                    <h3 class="text-2xl font-bold text-slate-800 mb-6 text-center">Fungerar för alla typer av företag</h3>
+                    <div class="grid md:grid-cols-4 gap-6">
+                        <div class="text-center">
+                            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                                 </svg>
                             </div>
-                            <h4 class="font-semibold text-slate-800 mb-2">Bygg & Hantverk</h4>
-                            <p class="text-sm text-slate-600">"Kvalitet", "hållbarhet", "ROT-avdrag"</p>
+                            <h4 class="font-semibold text-slate-800 mb-1">Tjänsteföretag</h4>
+                            <p class="text-sm text-slate-600">Konsulter, jurister, revisorer, fastighetsmäklare</p>
                         </div>
-
-                        <div class="text-center group">
-                            <div class="w-16 h-16 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-200">
-                                <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="text-center">
+                            <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                                </svg>
+                            </div>
+                            <h4 class="font-semibold text-slate-800 mb-1">Hälsa & Vård</h4>
+                            <p class="text-sm text-slate-600">Tandläkare, kliniker, vårdcentraler, privata mottagningar</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+                                </svg>
+                            </div>
+                            <h4 class="font-semibold text-slate-800 mb-1">Hantverk & Bygg</h4>
+                            <p class="text-sm text-slate-600">Byggfirmor, elektriker, VVS, målare, snickare</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l-1 12H6L5 9z"/>
                                 </svg>
                             </div>
-                            <h4 class="font-semibold text-slate-800 mb-2">E-handel</h4>
-                            <p class="text-sm text-slate-600">"Snabb leverans", "nöjd-kund-garanti"</p>
-                        </div>
-
-                        <div class="text-center group">
-                            <div class="w-16 h-16 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-200">
-                                <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m8 6V8a2 2 0 00-2-2H6a2 2 0 00-2 2v6l10 4 10-4z"/>
-                                </svg>
-                            </div>
-                            <h4 class="font-semibold text-slate-800 mb-2">Tjänster</h4>
-                            <p class="text-sm text-slate-600">"Personlig service", "lång erfarenhet"</p>
+                            <h4 class="font-semibold text-slate-800 mb-1">E-handel & Butik</h4>
+                            <p class="text-sm text-slate-600">Webshoppar, lokala butiker, produktförsäljning</p>
                         </div>
                     </div>
                 </div>
@@ -602,49 +556,6 @@
                                 <span class="w-2 h-2 bg-emerald-500 rounded-full mr-2"></span>
                                 Personlig support
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Industry Examples -->
-                <div class="bg-gradient-to-r from-slate-50 to-indigo-50 rounded-2xl p-8 mb-12">
-                    <h3 class="text-2xl font-bold text-slate-800 mb-6 text-center">Fungerar för alla typer av företag</h3>
-                    <div class="grid md:grid-cols-4 gap-6">
-                        <div class="text-center">
-                            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-                                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                                </svg>
-                            </div>
-                            <h4 class="font-semibold text-slate-800 mb-1">Tjänsteföretag</h4>
-                            <p class="text-sm text-slate-600">Konsulter, jurister, revisorer, fastighetsmäklare</p>
-                        </div>
-                        <div class="text-center">
-                            <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-                                <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                                </svg>
-                            </div>
-                            <h4 class="font-semibold text-slate-800 mb-1">Hälsa & Vård</h4>
-                            <p class="text-sm text-slate-600">Tandläkare, kliniker, vårdcentraler, privata mottagningar</p>
-                        </div>
-                        <div class="text-center">
-                            <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-                                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
-                                </svg>
-                            </div>
-                            <h4 class="font-semibold text-slate-800 mb-1">Hantverk & Bygg</h4>
-                            <p class="text-sm text-slate-600">Byggfirmor, elektriker, VVS, målare, snickare</p>
-                        </div>
-                        <div class="text-center">
-                            <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-                                <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l-1 12H6L5 9z"/>
-                                </svg>
-                            </div>
-                            <h4 class="font-semibold text-slate-800 mb-1">E-handel & Butik</h4>
-                            <p class="text-sm text-slate-600">Webshoppar, lokala butiker, produktförsäljning</p>
                         </div>
                     </div>
                 </div>
@@ -756,62 +667,296 @@
         </section>
 
         <!-- Features -->
-        <section id="features" class="py-20 bg-white">
-            <div class="max-w-7xl mx-auto px-4">
-                <div class="text-center mb-16">
-                    <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-4">
-                        Allt du behöver – utan extra jobb
+        <!-- Differentiering & Fördelar -->
+        <section id="features" class="py-32 bg-gradient-to-br from-slate-50 via-indigo-50/20 to-purple-50/30 relative overflow-hidden">
+            <!-- Subtila dekorativa element -->
+            <div class="absolute inset-0">
+                <div class="absolute top-40 right-20 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl"></div>
+                <div class="absolute bottom-20 left-20 w-80 h-80 bg-purple-500/3 rounded-full blur-3xl"></div>
+            </div>
+
+            <!-- Minimal grid pattern -->
+            <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23f1f5f9" fill-opacity="0.3"%3E%3Ccircle cx="7" cy="7" r="1"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-30"></div>
+
+            <div class="relative max-w-7xl mx-auto px-4">
+                <!-- Header -->
+                <div class="text-center mb-20">
+                    <div class="inline-flex items-center px-6 py-3 bg-white/60 backdrop-blur-sm rounded-full border border-indigo-200/50 mb-8">
+                        <svg class="w-5 h-5 text-indigo-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span class="text-indigo-800 font-semibold">Varför välja WebGrow AI</span>
+                    </div>
+                    <h2 class="text-4xl md:text-6xl font-bold leading-tight mb-8">
+                        <span class="text-slate-800">Skillnaden som</span><br>
+                        <span class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                    gör skillnad
+                </span>
                     </h2>
-                    <p class="text-xl text-slate-600 max-w-3xl mx-auto">
-                        Vi skriver, optimerar och publicerar. Du godkänner.
+                    <p class="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
+                        Medan andra verktyg bara genererar text, bygger WebGrow AI ett komplett system
+                        för att växa ditt företag online.
                     </p>
                 </div>
-                <div class="grid md:grid-cols-3 gap-8">
-                    <!-- Nyckelordsoptimering -->
-                    <div class="group p-8 bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl border border-emerald-200/50 hover:shadow-xl transition-all duration-300">
-                        <div class="w-12 h-12 bg-gradient-to-r from-emerald-500 to-green-500 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                            </svg>
+
+                <!-- Huvudförmåner Grid -->
+                <div class="grid lg:grid-cols-2 gap-16 items-center mb-24">
+                    <!-- Vänster: Bild -->
+                    <div class="relative">
+                        <div class="relative z-10 transform hover:scale-105 transition-all duration-700">
+                            <img
+                                src="https://webbiab.s3.eu-north-1.amazonaws.com/webgrowai/laptop-webgrowai-2-nytt.png"
+                                alt="WebGrow AI Dashboard - Smart innehållsgenerering"
+                                class="w-full max-w-lg mx-auto drop-shadow-2xl"
+                            />
+
+                            <!-- Floating insight card -->
+                            <div class="absolute -top-6 -right-6 bg-white rounded-xl shadow-xl p-4 border border-emerald-200 animate-bounce" style="animation-delay: 1s; animation-duration: 3s;">
+                                <div class="flex items-center text-emerald-600 font-semibold text-sm">
+                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                    +127% ROI
+                                </div>
+                                <p class="text-xs text-slate-500 mt-1">Genomsnitt hos kunder</p>
+                            </div>
+
+                            <!-- Performance indicator -->
+                            <div class="absolute -bottom-6 -left-6 bg-white rounded-xl shadow-xl p-4 border border-blue-200">
+                                <div class="flex items-center text-blue-600 font-semibold text-sm">
+                                    <div class="w-3 h-3 bg-blue-500 rounded-full mr-2 animate-pulse"></div>
+                                    Real-time analys
+                                </div>
+                                <p class="text-xs text-slate-500 mt-1">Kontinuerlig optimering</p>
+                            </div>
                         </div>
-                        <h3 class="text-xl font-bold text-slate-800 mb-3">Syns bättre på Google</h3>
-                        <p class="text-slate-600 leading-relaxed">
-                            Vi analyserar din konkurrens och visar exakt vilka ord du ska satsa på.
-                            Du får färdiga förslag som du enkelt kan applicera på din webbplats.
-                        </p>
+
+                        <!-- Bakgrundsdekor -->
+                        <div class="absolute inset-0 bg-gradient-to-r from-indigo-100/30 to-purple-100/30 rounded-3xl -z-10 blur-3xl transform scale-110"></div>
                     </div>
 
-                    <!-- CRO-insikter -->
-                    <div class="group p-8 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-200/50 hover:shadow-xl transition-all duration-300">
-                        <div class="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                            </svg>
+                    <!-- Höger: Innehåll -->
+                    <div class="space-y-8">
+                        <div>
+                            <h3 class="text-3xl font-bold text-slate-800 mb-4">
+                                Inte bara AI-text –
+                                <span class="text-indigo-600">intelligent tillväxt</span>
+                            </h3>
+                            <p class="text-lg text-slate-600 leading-relaxed">
+                                WebGrow AI går längre än traditionella innehållsverktyg. Vi analyserar vad som fungerar,
+                                optimerar kontinuerligt och ger dig konkreta insikter för att växa ditt företag.
+                            </p>
                         </div>
-                        <h3 class="text-xl font-bold text-slate-800 mb-3">Gör fler besökare till kunder</h3>
-                        <p class="text-slate-600 leading-relaxed">
-                            Vi föreslår bättre rubriker, knappar och formulär. Uppdatera din webbsida och öka chansen till
-                            ökad försäljning.
-                        </p>
+
+                        <!-- Förmåner lista -->
+                        <div class="space-y-6">
+                            <div class="flex items-start group">
+                                <div class="w-12 h-12 bg-gradient-to-r from-emerald-500 to-green-500 rounded-xl flex items-center justify-center mr-4 mt-1 group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
+                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 class="text-xl font-bold text-slate-800 mb-2">Mäter och optimerar automatiskt</h4>
+                                    <p class="text-slate-600 leading-relaxed">
+                                        Andra verktyg skriver bara text. Vi mäter hur väl ditt innehåll presterar och
+                                        förbättrar det kontinuerligt baserat på riktiga resultat.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start group">
+                                <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center mr-4 mt-1 group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
+                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 class="text-xl font-bold text-slate-800 mb-2">Branschspecifik svenska AI</h4>
+                                    <p class="text-slate-600 leading-relaxed">
+                                        Tränad på svenska affärstexter och anpassad för svenska marknaden.
+                                        Förstår skillnaden mellan olika branscher och målgrupper.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start group">
+                                <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mr-4 mt-1 group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
+                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 class="text-xl font-bold text-slate-800 mb-2">Komplett innehållsstrategi</h4>
+                                    <p class="text-slate-600 leading-relaxed">
+                                        Inte bara enstaka texter – vi skapar en sammanhängande strategi som bygger
+                                        ditt varumärke och driver försäljning över tid.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Jämförelse sektion -->
+                <div class="bg-white/70 backdrop-blur-sm rounded-3xl p-8 md:p-12 border border-indigo-200/50 mb-24">
+                    <div class="text-center mb-12">
+                        <h3 class="text-3xl font-bold text-slate-800 mb-4">WebGrow AI vs andra lösningar</h3>
+                        <p class="text-lg text-slate-600">Se skillnaden i praktiken</p>
                     </div>
 
-                    <!-- AI-publicering -->
-                    <div class="group p-8 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border border-purple-200/50 hover:shadow-xl transition-all duration-300">
-                        <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
-                            </svg>
+                    <div class="grid md:grid-cols-3 gap-8">
+                        <!-- Traditionella verktyg -->
+                        <div class="text-center p-6 bg-slate-50 rounded-2xl border border-slate-200">
+                            <div class="w-16 h-16 bg-slate-400 rounded-xl flex items-center justify-center mx-auto mb-6">
+                                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                            </div>
+                            <h4 class="font-bold text-slate-800 mb-3">Traditionella AI-verktyg</h4>
+                            <ul class="space-y-2 text-sm text-slate-600">
+                                <li>• Genererar bara text</li>
+                                <li>• Ingen branschkunskap</li>
+                                <li>• Manuell publicering</li>
+                                <li>• Ingen uppföljning</li>
+                                <li>• Engelska fokus</li>
+                            </ul>
                         </div>
-                        <h3 class="text-xl font-bold text-slate-800 mb-3">WebGrow skriver och publicerar åt dig</h3>
-                        <p class="text-slate-600 leading-relaxed">
-                            Blogginlägg, produkttexter och sociala inlägg – skrivna och schemalagda automatiskt.
-                        </p>
+
+                        <!-- Anställda -->
+                        <div class="text-center p-6 bg-orange-50 rounded-2xl border border-orange-200">
+                            <div class="w-16 h-16 bg-orange-400 rounded-xl flex items-center justify-center mx-auto mb-6">
+                                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                </svg>
+                            </div>
+                            <h4 class="font-bold text-slate-800 mb-3">Anställd/Byrå</h4>
+                            <ul class="space-y-2 text-sm text-slate-600">
+                                <li>• Dyrt (25 000+ kr/mån)</li>
+                                <li>• Lång ledtid</li>
+                                <li>• Begränsad kapacitet</li>
+                                <li>• Risk för personalomsättning</li>
+                                <li>• Svårt att skala</li>
+                            </ul>
+                        </div>
+
+                        <!-- WebGrow AI -->
+                        <div class="text-center p-6 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-300 relative">
+                            <!-- "Vinnare" badge -->
+                            <div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                                <div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-1 rounded-full text-xs font-bold shadow-lg">
+                                    BÄSTA VALET
+                                </div>
+                            </div>
+
+                            <div class="w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center mx-auto mb-6 mt-4">
+                                <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <h4 class="font-bold text-slate-800 mb-3">WebGrow AI</h4>
+                            <ul class="space-y-2 text-sm text-indigo-700 font-medium">
+                                <li>✓ Komplett innehållsstrategi</li>
+                                <li>✓ Svensk branschexpertis</li>
+                                <li>✓ Automatisk publicering</li>
+                                <li>✓ Mäter och optimerar</li>
+                                <li>✓ Kostnadseffektivt</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resultat showcase -->
+                <div class="grid lg:grid-cols-2 gap-16 items-center">
+                    <!-- Höger: Bild -->
+                    <div class="lg:order-2 relative">
+                        <div class="relative z-10 transform hover:scale-105 transition-all duration-700">
+                            <img
+                                src="https://webbiab.s3.eu-north-1.amazonaws.com/webgrowai/laptop-webgrowai-3-nytt.png"
+                                alt="WebGrow AI Dashboard - Smart innehållsgenerering"
+                                class="w-full max-w-lg mx-auto drop-shadow-2xl"
+                            />
+
+                            <!-- Growth indicator -->
+                            <div class="absolute -top-6 -left-6 bg-white rounded-xl shadow-xl p-4 border border-purple-200 animate-pulse">
+                                <div class="flex items-center text-purple-600 font-semibold text-sm">
+                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                    +340% Trafik
+                                </div>
+                                <p class="text-xs text-slate-500 mt-1">Genomsnittlig ökning</p>
+                            </div>
+
+                            <!-- Time saved indicator -->
+                            <div class="absolute -bottom-6 -right-6 bg-white rounded-xl shadow-xl p-4 border border-emerald-200">
+                                <div class="flex items-center text-emerald-600 font-semibold text-sm">
+                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                                    </svg>
+                                    12h/vecka sparade
+                                </div>
+                                <p class="text-xs text-slate-500 mt-1">Mer tid för företaget</p>
+                            </div>
+                        </div>
+
+                        <!-- Bakgrundsdekor -->
+                        <div class="absolute inset-0 bg-gradient-to-l from-purple-100/30 to-pink-100/30 rounded-3xl -z-10 blur-3xl transform scale-110"></div>
+                    </div>
+
+                    <!-- Vänster: Innehåll -->
+                    <div class="lg:order-1 space-y-8">
+                        <div>
+                            <h3 class="text-3xl font-bold text-slate-800 mb-4">
+                                Resultat som
+                                <span class="text-purple-600">talar för sig själva</span>
+                            </h3>
+                            <p class="text-lg text-slate-600 leading-relaxed">
+                                WebGrow AI levererar mätbara resultat från dag ett. Våra kunder ser genomsnittligt
+                                en ökning på över 340% i organisk trafik inom de första 6 månaderna.
+                            </p>
+                        </div>
+
+                        <!-- Resultat metrics -->
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div class="bg-gradient-to-br from-emerald-50 to-green-50 p-6 rounded-2xl border border-emerald-200/50">
+                                <div class="text-3xl font-bold text-emerald-600 mb-2">89%</div>
+                                <h4 class="font-semibold text-slate-800 mb-1">Fler kvalificerade leads</h4>
+                                <p class="text-sm text-slate-600">Bättre innehåll = rätt kunder</p>
+                            </div>
+
+                            <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-2xl border border-blue-200/50">
+                                <div class="text-3xl font-bold text-blue-600 mb-2">67%</div>
+                                <h4 class="font-semibold text-slate-800 mb-1">Högre konvertering</h4>
+                                <p class="text-sm text-slate-600">Optimerat för försäljning</p>
+                            </div>
+
+                            <div class="bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-2xl border border-purple-200/50">
+                                <div class="text-3xl font-bold text-purple-600 mb-2">12h</div>
+                                <h4 class="font-semibold text-slate-800 mb-1">Sparad tid per vecka</h4>
+                                <p class="text-sm text-slate-600">Fokusera på att driva företaget</p>
+                            </div>
+
+                            <div class="bg-gradient-to-br from-orange-50 to-red-50 p-6 rounded-2xl border border-orange-200/50">
+                                <div class="text-3xl font-bold text-orange-600 mb-2">ROI</div>
+                                <h4 class="font-semibold text-slate-800 mb-1">427% genomsnittlig ROI</h4>
+                                <p class="text-sm text-slate-600">Lönsam investering från start</p>
+                            </div>
+                        </div>
+
+                        <!-- CTA -->
+                        <div class="pt-6">
+                            <button @click="demoOpen=true" class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:from-purple-700 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 shadow-lg">
+                                Se dina möjliga resultat
+                                <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
-
-        <!-- Pricing -->
 
         <!-- Pricing -->
         <section id="pricing" class="py-20 bg-gradient-to-br from-slate-50 to-indigo-50">
@@ -984,7 +1129,7 @@
                                         <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path>
                                     </svg>
                                     <div>
-                                        <span class="font-bold">Gratis professionell hemsida!</span>
+                                        <span class="font-bold"><a href="{{ route('free-website') }}" class="hover:text-yellow-900">Gratis professionell hemsida</a>!</span>
                                         <p class="text-xs text-yellow-700">Värde 15 000-25 000 kr (endast vid årlig betalning)</p>
                                     </div>
                                 </li>
@@ -1323,153 +1468,6 @@
                         <!-- Fade effects -->
                         <div class="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-white via-white/80 to-transparent pointer-events-none"></div>
                         <div class="absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-white via-white/80 to-transparent pointer-events-none"></div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="py-32 bg-slate-900 relative overflow-hidden">
-            <!-- Subtle background elements -->
-            <div class="absolute inset-0">
-                <div class="absolute top-40 right-20 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl"></div>
-                <div class="absolute bottom-20 left-20 w-80 h-80 bg-indigo-500/3 rounded-full blur-3xl"></div>
-            </div>
-
-            <!-- Minimal grid pattern -->
-            <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.02"%3E%3Ccircle cx="7" cy="7" r="1"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-40"></div>
-
-            <div class="relative max-w-7xl mx-auto px-4">
-                <div class="grid lg:grid-cols-2 gap-20 items-center">
-                    <div class="space-y-12">
-                        <!-- Clean badge -->
-                        <div class="inline-flex items-center px-6 py-2 rounded-full bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm">
-                            <div class="w-2 h-2 bg-indigo-400 rounded-full mr-3 animate-pulse"></div>
-                            <span class="text-slate-300 font-medium">Begränsat erbjudande</span>
-                        </div>
-
-                        <div class="space-y-8">
-                            <h2 class="text-5xl md:text-6xl font-bold leading-tight text-white">
-                                Gratis webbsida med
-                                <span class="text-indigo-400">Growth årsplan</span>
-                            </h2>
-
-                            <p class="text-xl text-slate-400 leading-relaxed max-w-xl">
-                                Prenumerera på Growth årsplan och få en professionell webbsida byggd av vårt team. Designad för konvertering och SEO-optimerad från start.
-                            </p>
-                        </div>
-
-                        <!-- Clean features list -->
-                        <div class="space-y-6">
-                            <div class="flex items-start">
-                                <div class="w-6 h-6 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center mr-4 mt-1 flex-shrink-0">
-                                    <svg class="w-3 h-3 text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h4 class="text-white font-semibold mb-1">Standard WordPress-mall</h4>
-                                    <p class="text-slate-500 text-sm">Professionell mall anpassad till ditt varumärke och innehåll</p>
-                                </div>
-                            </div>
-
-                            <div class="flex items-start">
-                                <div class="w-6 h-6 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center mr-4 mt-1 flex-shrink-0">
-                                    <svg class="w-3 h-3 text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h4 class="text-white font-semibold mb-1">Upp till 8 sidor</h4>
-                                    <p class="text-slate-500 text-sm">Hem, Om, Tjänster, Kontakt + 4 valfria sidor</p>
-                                </div>
-                            </div>
-
-                            <div class="flex items-start">
-                                <div class="w-6 h-6 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center mr-4 mt-1 flex-shrink-0">
-                                    <svg class="w-3 h-3 text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h4 class="text-white font-semibold mb-1">SEO-optimerad från start</h4>
-                                    <p class="text-slate-500 text-sm">Teknisk SEO och prestandaoptimering inkluderat</p>
-                                </div>
-                            </div>
-
-                            <div class="flex items-start">
-                                <div class="w-6 h-6 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center mr-4 mt-1 flex-shrink-0">
-                                    <svg class="w-3 h-3 text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h4 class="text-white font-semibold mb-1">WebGrow AI integrerat</h4>
-                                    <p class="text-slate-500 text-sm">Fungerar direkt utan extra konfiguration</p>
-                                </div>
-                            </div>
-
-                            <!-- Begränsningar -->
-                            <div class="bg-slate-800/20 rounded-lg p-4 border border-slate-700/30">
-                                <h5 class="text-slate-300 font-medium mb-2 text-sm">Vad som ingår:</h5>
-                                <ul class="text-xs text-slate-400 space-y-1">
-                                    <li>• Standard WordPress-installation på vårt webbhotell</li>
-                                    <li>• Professionell mall från vårt urval</li>
-                                    <li>• Grundläggande anpassning (färger, logotyp, text)</li>
-                                    <li>• Max 8 sidor (startsida + 7 undersidor)</li>
-                                    <li>• Standardfunktioner (kontaktformulär, Google Maps)</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Minimal premium form -->
-                    <div class="relative">
-                        <div class="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700/50" x-data="{ email: '' }">
-                            <div class="text-center mb-8">
-                                <h3 class="text-2xl font-bold text-white mb-3">Intresserad? Hör av dig</h3>
-                                <p class="text-slate-400">Vi kontaktar dig inom 24h med mer information</p>
-                            </div>
-
-                            <form class="space-y-6" @submit.prevent="console.log('Form submitted:', email)">
-                                <div>
-                                    <label for="free-website-email" class="block text-sm font-medium text-slate-300 mb-3">
-                                        Din e-postadress
-                                    </label>
-                                    <input
-                                        type="email"
-                                        id="free-website-email"
-                                        x-model="email"
-                                        class="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
-                                        placeholder="din@epost.se"
-                                        required>
-                                </div>
-
-                                <button
-                                    type="submit"
-                                    class="w-full px-6 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.99] shadow-lg"
-                                    data-lead-cta="free_website_signup">
-                                    Få mer information
-                                </button>
-
-                                <p class="text-xs text-slate-500 text-center">
-                                    Begränsat antal platser. Vi kontaktar dig inom 24h med mer information om programmet och nästa steg.
-                                </p>
-                            </form>
-                        </div>
-
-                        <!-- Minimal value proposition -->
-                        <div class="bg-slate-800/30 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50 mt-4">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-slate-500 text-sm mb-1">Normalt värde</p>
-                                    <p class="text-slate-300 text-2xl font-bold">15 000 - 25 000 kr</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="text-indigo-400 text-sm font-medium mb-1">För dig</p>
-                                    <p class="text-white text-2xl font-bold">Helt gratis</p>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>

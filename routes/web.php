@@ -493,7 +493,7 @@ Route::post('/webhooks/shopify/shop/redact', [ShopifyWebhookController::class, '
 
 Route::get('/gratis-hemsida', function () {
     return view('free-website');
-});
+})->name('free-website');;
 
 Route::middleware('auth')->group(function () {
     // Sidan som ber användaren verifiera sin e‑post

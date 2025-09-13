@@ -6,7 +6,7 @@
                 <svg class="w-8 h-8 mr-3 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                 </svg>
-                Skapa text med AI
+                Skapa text
             </h1>
             <div class="flex items-center gap-2">
                 @php
@@ -101,7 +101,7 @@
                 <div>
                     <h2 class="text-lg font-semibold text-blue-900 mb-2">Skapa professionell text på sekunder!</h2>
                     <p class="text-blue-800 text-sm leading-relaxed">
-                        Fyll i informationen nedan så skapar vår AI en färdig text åt dig. Perfekt för blogginlägg, sociala medier eller marknadsföring.
+                        Fyll i informationen nedan så skapar WebGrow en färdig text åt dig. Perfekt för blogginlägg, sociala medier eller marknadsföring.
                         <strong>Tips:</strong> Ju mer detaljer du ger, desto bättre blir resultatet!
                     </p>
                 </div>

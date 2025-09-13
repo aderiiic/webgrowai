@@ -27,6 +27,7 @@
             <div class="flex items-center space-x-3">
                 @php
                     $statusColors = [
+                        'ready' => ['bg' => 'from-green-50 to-emerald-50', 'border' => 'border-green-200/50', 'text' => 'text-green-800', 'label' => 'Klar'],
                         'completed' => ['bg' => 'from-green-50 to-emerald-50', 'border' => 'border-green-200/50', 'text' => 'text-green-800', 'label' => 'Klar'],
                         'processing' => ['bg' => 'from-blue-50 to-indigo-50', 'border' => 'border-blue-200/50', 'text' => 'text-blue-800', 'label' => 'Skapas'],
                         'draft' => ['bg' => 'from-yellow-50 to-amber-50', 'border' => 'border-yellow-200/50', 'text' => 'text-yellow-800', 'label' => 'Utkast'],
@@ -38,8 +39,10 @@
                 <div class="inline-flex items-center px-3 py-1.5 bg-gradient-to-r {{ $colors['bg'] }} {{ $colors['border'] }} border rounded-xl">
                     <span class="text-sm font-medium {{ $colors['text'] }} uppercase">{{ $colors['label'] }}</span>
                     @if($content->provider)
+                        <!--
                         <span class="mx-2 text-gray-400">•</span>
                         <span class="text-sm font-medium {{ $colors['text'] }}">{{ $content->provider }}</span>
+                        -->
                     @endif
                 </div>
 
@@ -193,7 +196,8 @@
                             </svg>
                             <div>
                                 <h2 class="text-xl font-bold text-gray-900">Din text</h2>
-                                <p class="text-sm text-gray-600">{{ $content->provider ? "Skapad med {$content->provider}" : 'AI-genererad text' }}</p>
+                                <!-- <p class="text-sm text-gray-600">{{ $content->provider ? "Skapad med {$content->provider}" : 'AI-genererad text' }}</p>-->
+                                <p class="text-sm text-gray-600">Skapad med WebGrow</p>
                             </div>
                         </div>
 
