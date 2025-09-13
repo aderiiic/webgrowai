@@ -10,6 +10,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Support\Carbon;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
@@ -33,7 +34,6 @@ class Index extends Component
     public ?string $quickScheduleAt = null; // 'Y-m-d\TH:i'
     public string $quickTarget = 'facebook'; // wp|shopify|facebook|instagram|linkedin
     public ?int $quickContentId = null;
-
     public ?int $quickImageId = 0;
 
     // Till vy
@@ -47,6 +47,83 @@ class Index extends Component
         if (!$this->from) {
             $this->from = Carbon::now()->startOfWeek(Carbon::MONDAY)->toDateString();
         }
+    }
+
+    /**
+     * Centraliserad metod för att uppdatera både items och selected konsistent
+     */
+    private function updateItemAndSelected(int $publicationId, array $updates): void
+    {
+        // Uppdatera i items
+        foreach ($this->items as $index => $row) {
+            if ((int) ($row['id'] ?? 0) === $publicationId) {
+                $this->items[$index] = array_merge($row, $updates);
+                break;
+            }
+        }
+
+        // Uppdatera selected om det matchar
+        if ($this->selected && (int) ($this->selected['id'] ?? 0) === $publicationId) {
+            $this->selected = array_merge($this->selected, $updates);
+        }
+    }
+
+    /**
+     * Säkerställer att selected finns i items och har uppdaterad data
+     */
+    private function syncSelectedWithItems(): void
+    {
+        if (!$this->selected || empty($this->selected['id'])) {
+            return;
+        }
+
+        $selectedId = (int) $this->selected['id'];
+
+        // Hitta motsvarande rad i items
+        foreach ($this->items as $item) {
+            if ((int) ($item['id'] ?? 0) === $selectedId) {
+                $this->selected = $item; // Synka med items-data
+                return;
+            }
+        }
+
+        // Om selected inte finns i items längre, rensa selection
+        $this->clearSelection();
+    }
+
+    /**
+     * Säker selection som bara väljer items som finns i listan
+     */
+    public function select(int $publicationId): void
+    {
+        foreach ($this->items as $row) {
+            if ((int)($row['id'] ?? 0) === $publicationId) {
+                $this->selected = $row;
+                $this->rescheduleAt = $row['scheduled_at']
+                    ? Carbon::parse($row['scheduled_at'])->format('Y-m-d\TH:i')
+                    : null;
+
+                // Förifyll snabbplaneringens datum med det valda inläggets dag kl 09:00
+                $base = $row['scheduled_at']
+                    ? Carbon::parse($row['scheduled_at'])->startOfHour()
+                    : Carbon::now()->startOfHour();
+                $this->quickScheduleAt = $base->format('Y-m-d\TH:i');
+                return;
+            }
+        }
+
+        // Om inte hittat, rensa selection
+        $this->clearSelection();
+    }
+
+    public function clearSelection(): void
+    {
+        $this->selected = null;
+        $this->rescheduleAt = null;
+        $this->quickScheduleAt = null;
+        $this->quickTarget = 'facebook';
+        $this->quickContentId = null;
+        $this->open = null;
     }
 
     #[On('media-selected')]
@@ -88,15 +165,13 @@ class Index extends Component
             'message' => 'Bild kopplad till publicering',
         ]);
 
-        // Uppdatera selected + items i minnet
-        $this->selected['message'] = 'Bild kopplad till publicering';
-        foreach ($this->items as &$row) {
-            if ((int)$row['id'] === (int)$pub->id) {
-                $row['message'] = $this->selected['message'];
-                break;
-            }
-        }
-        unset($row);
+        // Använd centraliserad uppdatering
+        $this->updateItemAndSelected((int)$pub->id, [
+            'payload' => $payload,
+            'message' => 'Bild kopplad till publicering'
+        ]);
+
+        $this->quickImageId = 0;
 
         session()->flash('success', 'Bilden kopplades till publiceringen.');
     }
@@ -127,45 +202,13 @@ class Index extends Component
             'message' => 'Bild borttagen från publicering',
         ]);
 
-        $this->selected['message'] = 'Bild borttagen från publicering';
-        foreach ($this->items as &$row) {
-            if ((int)$row['id'] === (int)$pub->id) {
-                $row['message'] = $this->selected['message'];
-                break;
-            }
-        }
-        unset($row);
+        // Använd centraliserad uppdatering
+        $this->updateItemAndSelected((int)$pub->id, [
+            'payload' => $payload,
+            'message' => 'Bild borttagen från publicering'
+        ]);
 
         session()->flash('success', 'Bilden togs bort från publiceringen.');
-    }
-
-    public function select(int $publicationId): void
-    {
-        foreach ($this->items as $row) {
-            if ((int)($row['id'] ?? 0) === $publicationId) {
-                $this->selected = $row;
-                $this->rescheduleAt = $row['scheduled_at']
-                    ? Carbon::parse($row['scheduled_at'])->format('Y-m-d\TH:i')
-                    : null;
-                // Förifyll snabbplaneringens datum med det valda inläggets dag kl 09:00
-                $base = $row['scheduled_at']
-                    ? Carbon::parse($row['scheduled_at'])->startOfHour()
-                    : Carbon::now()->startOfHour();
-                $this->quickScheduleAt = $base->format('Y-m-d\TH:i');
-                return;
-            }
-        }
-        $this->selected = null;
-        $this->rescheduleAt = null;
-    }
-
-    public function clearSelection(): void
-    {
-        $this->selected = null;
-        $this->rescheduleAt = null;
-        $this->quickScheduleAt = null;
-        $this->quickTarget = 'facebook';
-        $this->quickContentId = null;
     }
 
     public function setView(string $mode): void
@@ -193,15 +236,13 @@ class Index extends Component
     // Öppna snabbplanering för vald dag (sätter default 09:00 den dagen)
     public function startQuickPlan(string $dateYmd): void
     {
+        $this->clearSelection();
+
         try {
             $dt = Carbon::parse($dateYmd)->setTime(9, 0, 0);
             $this->quickScheduleAt = $dt->format('Y-m-d\TH:i');
         } catch (\Throwable) {
             $this->quickScheduleAt = null;
-        }
-        // För panel och snabb åtkomst
-        if (!$this->selected && !empty($this->items)) {
-            $this->selected = $this->items[0];
         }
     }
 
@@ -229,19 +270,11 @@ class Index extends Component
             'message'      => 'Avbruten av användare',
         ]);
 
-        foreach ($this->items as &$row) {
-            if ($row['id'] === (int)$publicationId) {
-                $row['status'] = 'cancelled';
-                $row['message'] = 'Avbruten av användare';
-                break;
-            }
-        }
-        unset($row);
-
-        if ($this->selected && (int)$this->selected['id'] === (int)$publicationId) {
-            $this->selected['status'] = 'cancelled';
-            $this->selected['message'] = 'Avbruten av användare';
-        }
+        // Använd centraliserad uppdatering
+        $this->updateItemAndSelected($publicationId, [
+            'status' => 'cancelled',
+            'message' => 'Avbruten av användare',
+        ]);
 
         session()->flash('success', 'Publiceringen avbruten.');
     }
@@ -282,21 +315,12 @@ class Index extends Component
             'message'      => 'Tid uppdaterad till ' . $newAt->format('Y-m-d H:i'),
         ]);
 
-        foreach ($this->items as &$row) {
-            if ($row['id'] === (int)$publicationId) {
-                $row['scheduled_at'] = $newAt->toDateTimeString();
-                $row['status'] = $newStatus;
-                $row['message'] = 'Tid uppdaterad till ' . $newAt->format('Y-m-d H:i');
-                break;
-            }
-        }
-        unset($row);
-
-        if ($this->selected && (int)$this->selected['id'] === (int)$publicationId) {
-            $this->selected['scheduled_at'] = $newAt->toDateTimeString();
-            $this->selected['status'] = $newStatus;
-            $this->selected['message'] = 'Tid uppdaterad till ' . $newAt->format('Y-m-d H:i');
-        }
+        // Använd centraliserad uppdatering
+        $this->updateItemAndSelected($publicationId, [
+            'scheduled_at' => $newAt->toDateTimeString(),
+            'status' => $newStatus,
+            'message' => 'Tid uppdaterad till ' . $newAt->format('Y-m-d H:i'),
+        ]);
 
         session()->flash('success', 'Publiceringen har fått ny tid.');
     }
@@ -318,6 +342,7 @@ class Index extends Component
         abort_unless($customer, 403);
 
         $content = AiContent::query()
+            ->with('site:id,name') // Lägg till site-relation för att undvika N+1
             ->where('id', (int)$this->quickContentId)
             ->where('customer_id', $customer->id)
             ->firstOrFail();
@@ -354,8 +379,8 @@ class Index extends Component
             'payload'       => $payload,
         ]);
 
-        // Uppdatera listan i UI
-        $this->items[] = [
+        // Skapa den nya raden med korrekt struktur
+        $newItem = [
             'id'            => (int)$pub->id,
             'ai_content_id' => (int)$content->id,
             'title'         => (string)($content->title ?? '(utan titel)'),
@@ -365,13 +390,18 @@ class Index extends Component
             'scheduled_at'  => $scheduledAt->toDateTimeString(),
             'message'       => (string)$pub->message,
             'external_url'  => null,
+            'metrics'       => null,
+            'metrics_at'    => null,
         ];
 
-        $this->selected = end($this->items) ?: $this->selected;
+        // Lägg till i början av listan för att visa senaste först
+        array_unshift($this->items, $newItem);
+
+        // Sätt som selected direkt med den nya raden
+        $this->selected = $newItem;
         $this->rescheduleAt = $scheduledAt->format('Y-m-d\TH:i');
 
-        // Töm form (valfritt behålla kanal)
-        // $this->quickTarget = 'facebook';
+        // Töm form
         $this->quickContentId = null;
 
         session()->flash('success', 'Publiceringen schemalagd.');
@@ -393,6 +423,46 @@ class Index extends Component
 
         dispatch(new RefreshPublicationMetricsJob($pub->id))->onQueue('metrics')->afterCommit();
         session()->flash('success', 'Uppdatering av statistik har startat.');
+    }
+
+    public function reloadSelected(): void
+    {
+        if (!$this->selected || empty($this->selected['id'])) {
+            return;
+        }
+
+        $p = ContentPublication::query()
+            ->with([
+                'content:id,title,site_id,customer_id',
+                'content.site:id,name',
+            ])
+            ->find($this->selected['id']);
+
+        if (!$p) {
+            // Posten kan ha raderats – rensa selection
+            $this->clearSelection();
+            return;
+        }
+
+        $target = $p->target === 'wordpress' ? 'wp' : (string) $p->target;
+
+        $updated = [
+            'id'            => (int) $p->id,
+            'ai_content_id' => (int) $p->ai_content_id,
+            'title'         => (string) ($p->content?->title ?? '(utan titel)'),
+            'site'          => (string) ($p->content?->site?->name ?? ''),
+            'target'        => $target,
+            'status'        => (string) $p->status,
+            'scheduled_at'  => $p->scheduled_at ? $p->scheduled_at->toDateTimeString() : null,
+            'message'       => $p->message,
+            'external_url'  => $p->external_url ?? null,
+            'metrics'       => $p->metrics ?? null,
+            'metrics_at'    => $p->metrics_refreshed_at?->toDateTimeString(),
+            'payload'       => $p->payload ?? [],
+        ];
+
+        // Använd centraliserad uppdatering
+        $this->updateItemAndSelected((int) $p->id, $updated);
     }
 
     public function render(CurrentCustomer $current): View
@@ -467,26 +537,28 @@ class Index extends Component
                 'external_url'  => $p->external_url ?? null,
                 'metrics'       => $p->metrics ?? null,
                 'metrics_at'    => $p->metrics_refreshed_at?->toDateTimeString(),
+                'payload'       => $p->payload ?? [],
             ];
         })->values()->all();
 
+        // Hantera URL-baserad selection
         if ($this->selected === null && $this->open) {
             $this->select((int)$this->open);
         } elseif ($this->selected === null && $this->content_id && !empty($this->items)) {
             $first = collect($this->items)->firstWhere('ai_content_id', (int)$this->content_id);
-            if ($first) $this->selected = $first;
+            if ($first) {
+                $this->selected = $first;
+            }
         }
 
-        if ($this->selected === null && !empty($this->items)) {
-            $this->selected = $this->items[0];
-            $this->rescheduleAt = $this->selected['scheduled_at']
-                ? Carbon::parse($this->selected['scheduled_at'])->format('Y-m-d\TH:i')
-                : null;
-        }
+        // Säkerställ att selected är synkad med items
+        $this->syncSelectedWithItems();
 
         $weekStart = Carbon::parse($this->from)->startOfWeek(Carbon::MONDAY);
         $weekDays = [];
-        for ($i = 0; $i < 7; $i++) $weekDays[] = (clone $weekStart)->addDays($i);
+        for ($i = 0; $i < 7; $i++) {
+            $weekDays[] = (clone $weekStart)->addDays($i);
+        }
 
         $aiQ = AiContent::query()
             ->select(['id','title','site_id'])
@@ -495,7 +567,9 @@ class Index extends Component
             ->latest('id')
             ->limit(50);
 
-        if ($this->siteId) $aiQ->where('site_id', $this->siteId);
+        if ($this->siteId) {
+            $aiQ->where('site_id', $this->siteId);
+        }
 
         $this->readyContents = $aiQ->get()->map(fn($c) => [
             'id'    => (int)$c->id,
@@ -513,53 +587,5 @@ class Index extends Component
             'weekEnd'      => (clone $weekStart)->addDays(6),
             'readyContents'=> $this->readyContents,
         ]);
-    }
-
-    public function reloadSelected(): void
-    {
-        if (!$this->selected || empty($this->selected['id'])) {
-            return;
-        }
-
-        $p = \App\Models\ContentPublication::query()
-            ->with([
-                'content:id,title,site_id,customer_id',
-                'content.site:id,name',
-            ])
-            ->find($this->selected['id']);
-
-        if (!$p) {
-            // Posten kan ha raderats – töm panelen säkert
-            $this->selected = null;
-            return;
-        }
-
-        $target = $p->target === 'wordpress' ? 'wp' : (string) $p->target;
-
-        $updated = [
-            'id'            => (int) $p->id,
-            'ai_content_id' => (int) $p->ai_content_id,
-            'title'         => (string) ($p->content?->title ?? '(utan titel)'),
-            'site'          => (string) ($p->content?->site?->name ?? ''),
-            'target'        => $target,
-            'status'        => (string) $p->status,
-            'scheduled_at'  => $p->scheduled_at ? $p->scheduled_at->toDateTimeString() : null,
-            'message'       => $p->message,
-            'external_url'  => $p->external_url ?? null,
-            'metrics'       => $p->metrics ?? null,
-            'metrics_at'    => $p->metrics_refreshed_at?->toDateTimeString(),
-        ];
-
-        // Uppdatera selected
-        $this->selected = $updated;
-
-        // Uppdatera motsvarande rad i items
-        foreach ($this->items as &$row) {
-            if ((int) ($row['id'] ?? 0) === (int) $p->id) {
-                $row = $updated;
-                break;
-            }
-        }
-        unset($row);
     }
 }

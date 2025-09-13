@@ -17,8 +17,18 @@
         </button>
     </div>
 
-    @if($selected)
-        @php
+    @php
+        // Hjälpvariabler för läsbara villkor
+        $hasSelection = !empty($selected);
+        $status = $hasSelection ? ($selected['status'] ?? null) : null;
+        $isPublished = $status === 'published';
+        $isSchedulable = in_array($status, ['queued','scheduled','processing'], true);
+
+        $badge = null;
+        $m = null;
+        $stale = false;
+
+        if ($hasSelection) {
             $badge = match($selected['status']) {
                 'published'  => ['bg'=>'bg-emerald-100','text'=>'text-emerald-800','svg'=>'<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>','label'=>'Publicerad'],
                 'processing' => ['bg'=>'bg-amber-100','text'=>'text-amber-800','svg'=>'<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>','label'=>'Pågår'],
@@ -28,17 +38,18 @@
                 default      => ['bg'=>'bg-gray-100','text'=>'text-gray-800','svg'=>'<circle cx="12" cy="12" r="3"/>','label'=>ucfirst($selected['status'])],
             };
             $m = $selected['metrics'] ?? null;
-            $isPublished = $selected['status'] === 'published';
-            $stale = false;
+
             if ($isPublished && !empty($selected['metrics_at'])) {
                 try { $stale = \Illuminate\Support\Carbon::parse($selected['metrics_at'])->lt(now()->subMinutes(2)); } catch (\Throwable $e) { $stale = false; }
             }
-        @endphp
+        }
+    @endphp
 
-            <!-- Scrollbar innehåll -->
+    @if($hasSelection)
+        <!-- Scrollbart innehåll -->
         <div class="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4 lg:space-y-6" @if($isPublished && (!$m || $stale)) wire:poll.5s="reloadSelected" @endif>
 
-            <!-- Status section -->
+            <!-- Status -->
             <div class="flex items-center justify-between p-3 lg:p-4 bg-gray-50 rounded-2xl gap-3">
                 <span class="text-sm font-medium text-gray-700 flex-shrink-0">Status</span>
                 <div class="flex items-center gap-2 min-w-0">
@@ -80,7 +91,7 @@
                 </div>
             </div>
 
-            <!-- Info cards -->
+            <!-- Planerad tid -->
             <div class="grid grid-cols-1 gap-4">
                 <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-2xl border border-blue-100">
                     <div class="flex items-center gap-2 text-blue-700 mb-2">
@@ -94,88 +105,156 @@
                     </div>
                 </div>
 
-                <div class="bg-gradient-to-br from-purple-50 to-pink-50 p-4 rounded-2xl border border-purple-100">
-                    <div class="flex items-center gap-2 text-purple-700 mb-2">
-                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-                        </svg>
-                        <span class="text-xs font-semibold uppercase tracking-wider">AI-innehåll</span>
-                    </div>
-                    <a href="{{ route('ai.detail', $selected['ai_content_id']) }}" class="font-bold text-purple-700 hover:text-purple-900 text-base lg:text-lg transition-colors">
-                        Öppna →
-                    </a>
-                </div>
-            </div>
-
-            <!-- Bild för publicering -->
-            <div class="bg-gradient-to-br from-orange-50 to-amber-50 p-4 lg:p-6 rounded-2xl border border-orange-200">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-2">
-                        <div class="w-6 h-6 lg:w-8 lg:h-8 bg-orange-600 rounded-lg flex items-center justify-center">
-                            <svg class="w-3 h-3 lg:w-4 lg:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
-                        </div>
-                        <h5 class="text-base lg:text-lg font-bold text-orange-800">Bild för publicering</h5>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button x-data @click="$dispatch('media-picker:open')"
-                                class="flex items-center gap-2 px-3 py-2 bg-white border border-orange-200 text-orange-700 rounded-xl hover:bg-orange-50 transition-all duration-200 text-sm font-medium flex-shrink-0">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
-                            Välj bild
-                        </button>
-                        @if($quickImageId > 0)
-                            <button wire:click="applyImageToSelected"
-                                    class="flex items-center gap-2 px-3 py-2 bg-orange-600 text-white rounded-xl hover:bg-orange-700 transition-all duration-200 text-sm font-semibold">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                </svg>
-                                Använd bild
-                            </button>
-                        @endif
-                        @if(!empty($selected['id']))
-                            <button wire:click="removeImageFromSelected"
-                                    class="flex items-center gap-2 px-3 py-2 bg-white border border-orange-200 text-orange-700 rounded-xl hover:bg-orange-50 transition-all duration-200 text-sm font-medium">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                </svg>
-                                Ta bort koppling
-                            </button>
-                        @endif
-                    </div>
-                </div>
-
-                @if($quickImageId > 0)
-                    <div class="flex items-center gap-3 p-3 bg-white rounded-xl border border-orange-100">
-                        <img class="w-12 h-12 lg:w-16 lg:h-16 rounded-lg object-cover" src="{{ route('assets.thumb', $quickImageId) }}" alt="Vald bild">
-                        <div class="flex-1">
-            <span class="text-sm lg:text-base text-orange-800 font-medium flex items-center">
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                Bild vald (ej kopplad än)
-            </span>
-                        </div>
-                        <button class="text-sm text-orange-600 underline hover:no-underline"
-                                wire:click="$set('quickImageId', 0)">
-                            Ta bort val
-                        </button>
-                    </div>
-                @else
-                <div class="text-center py-4">
-                        <svg class="w-12 h-12 lg:h-16 lg:w-16 text-orange-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                        </svg>
-                        <div class="text-orange-800 font-medium mb-2">Ingen bild vald</div>
-                        <p class="text-sm text-orange-600">Instagram kräver alltid en bild. Andra plattformar är valfritt.</p>
-                    </div>
+                @if(!$isPublished && !empty($selected['ai_content_id']))
+                    <!-- Dölj AI-kort för att undvika brus om inte efterfrågat -->
+                    <div class="hidden"></div>
                 @endif
             </div>
 
-            @if($selected['status'] === 'published')
-                <!-- Statistik -->
+            @if(!$isPublished && $isSchedulable)
+                @php
+                    $linkedImageId = (int)($selected['payload']['image_asset_id'] ?? 0);
+                    $pendingImageId = (int)($quickImageId ?? 0);
+                @endphp
+                    <!-- BILD + PUBLICERINGSÅTGÄRDER (Endast för schemalagda/köade/pågående) -->
+                <div class="bg-gradient-to-br from-orange-50 to-amber-50 p-4 lg:p-6 rounded-2xl border border-orange-200">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 lg:w-8 lg:h-8 bg-orange-600 rounded-lg flex items-center justify-center">
+                                <svg class="w-3 h-3 lg:w-4 lg:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                            <h5 class="text-base lg:text-lg font-bold text-orange-800">Bild för publicering</h5>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button x-data @click="$dispatch('media-picker:open')"
+                                    class="flex items-center gap-2 px-3 py-2 bg-white border border-orange-200 text-orange-700 rounded-xl hover:bg-orange-50 transition-all duration-200 text-sm font-medium flex-shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                                Välj bild
+                            </button>
+                            @if($pendingImageId > 0)
+                                <button wire:click="applyImageToSelected"
+                                        class="flex items-center gap-2 px-3 py-2 bg-orange-600 text-white rounded-xl hover:bg-orange-700 transition-all duration-200 text-sm font-semibold">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                    Använd bild
+                                </button>
+                                <button wire:click="$set('quickImageId', 0)"
+                                        class="flex items-center gap-2 px-3 py-2 bg-white border border-orange-200 text-orange-700 rounded-xl hover:bg-orange-50 transition-all duration-200 text-sm">
+                                    Rensa val
+                                </button>
+                            @endif
+
+                            @if($linkedImageId > 0 && !empty($selected['id']))
+                                <button wire:click="removeImageFromSelected"
+                                        class="flex items-center gap-2 px-3 py-2 bg-white border border-orange-200 text-orange-700 rounded-xl hover:bg-orange-50 transition-all duration-200 text-sm">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                    Ta bort koppling
+                                </button>
+                            @endif
+                        </div>
+                    </div>
+
+                    @if($pendingImageId > 0)
+                        <div class="flex items-center gap-3 p-3 bg-white rounded-xl border border-orange-100">
+                            <img class="w-12 h-12 lg:w-16 lg:h-16 rounded-lg object-cover" src="{{ route('assets.thumb', $pendingImageId) }}" alt="Vald bild">
+                            <div class="flex-1">
+                                <span class="text-sm lg:text-base text-orange-800 font-medium flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    Bild vald (ej kopplad än) – klicka “Använd bild”
+                                </span>
+                            </div>
+                        </div>
+                        {{-- 2) Annars visa kopplad bild om den finns --}}
+                    @elseif($linkedImageId > 0)
+                        <div class="flex items-center gap-3 p-3 bg-white rounded-xl border border-orange-100">
+                            <img class="w-12 h-12 lg:w-16 lg:h-16 rounded-lg object-cover" src="{{ route('assets.thumb', $linkedImageId) }}" alt="Kopplad bild">
+                            <div class="flex-1">
+                                <span class="text-sm lg:text-base text-orange-800 font-medium">Kopplad bild</span>
+                                <p class="text-xs text-orange-600">Du kan välja ny bild för att byta, eller ta bort kopplingen.</p>
+                            </div>
+                        </div>
+
+                        {{-- 3) Ingen bild vald eller kopplad --}}
+                    @else
+                        <div class="text-center py-4">
+                            <svg class="w-12 h-12 lg:h-16 lg:w-16 text-orange-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            <div class="text-orange-800 font-medium mb-2">Ingen bild vald</div>
+                            <p class="text-sm text-orange-600">Instagram kräver alltid en bild. Andra plattformar är valfritt.</p>
+                        </div>
+                    @endif
+                </div>
+
+                <!-- Hantera publicering (Endast för schemalagda/köade/pågående) -->
+                <div class="bg-gray-50 p-4 lg:p-6 rounded-2xl space-y-4">
+                    <h5 class="text-base lg:text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        Hantera publicering
+                    </h5>
+
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Ny tid</label>
+                            <input type="datetime-local" wire:model.defer="rescheduleAt" class="w-full px-3 py-2 lg:px-4 lg:py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" />
+                            @error('rescheduleAt')
+                            <p class="text-xs text-red-600 mt-1 flex items-center gap-1">
+                                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                                </svg>
+                                <span class="break-words">{{ $message }}</span>
+                            </p>
+                            @enderror
+                        </div>
+
+                        @php
+                            $canReschedule = $isSchedulable;
+                            $canCancel = $isSchedulable;
+                        @endphp
+
+                        <div class="flex flex-col gap-3">
+                            <button @if(!$canReschedule) disabled @endif wire:click="reschedulePublication({{ (int)$selected['id'] }})"
+                                    class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-200 {{ $canReschedule ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5' : 'bg-gray-200 text-gray-500 cursor-not-allowed' }}">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                Ändra tid
+                            </button>
+
+                            <button @if(!$canCancel) disabled @endif wire:click="cancelPublication({{ (int)$selected['id'] }})" onclick="return confirm('Avbryt denna publicering?')"
+                                    class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-200 {{ $canCancel ? 'bg-red-600 text-white hover:bg-red-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5' : 'bg-gray-200 text-gray-500 cursor-not-allowed' }}">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                                Avbryt
+                            </button>
+                        </div>
+
+                        <div class="bg-blue-50 border-l-4 border-blue-400 p-3 rounded-r-xl">
+                            <p class="text-xs text-blue-700 flex items-start gap-2">
+                                <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <span class="break-words">Ändringar av tid respekteras av köade jobb. Om en process redan körs kan publiceringen hinna gå ut.</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            @if($isPublished)
+                <!-- Statistik (Endast för publicerad) -->
                 <div class="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-4 lg:p-6">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                         <div class="flex items-center gap-2">
@@ -245,154 +324,100 @@
                     </div>
                 </div>
             @endif
-
-            <!-- Hantera publicering -->
-            <div class="bg-gray-50 p-4 lg:p-6 rounded-2xl space-y-4">
-                <h5 class="text-base lg:text-lg font-bold text-gray-900 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
-                    Hantera publicering
-                </h5>
-
-                <div class="space-y-3">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Ny tid</label>
-                        <input type="datetime-local" wire:model.defer="rescheduleAt" class="w-full px-3 py-2 lg:px-4 lg:py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" />
-                        @error('rescheduleAt')
-                        <p class="text-xs text-red-600 mt-1 flex items-center gap-1">
-                            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-                            </svg>
-                            <span class="break-words">{{ $message }}</span>
-                        </p>
-                        @enderror
-                    </div>
-
-                    <div class="flex flex-col gap-3">
-                        @php
-                            $canReschedule = $selected && in_array($selected['status'], ['queued','scheduled','processing']);
-                            $canCancel = $selected && in_array($selected['status'], ['queued','scheduled','processing']);
-                        @endphp
-
-                        <button @if(!$canReschedule) disabled @endif wire:click="reschedulePublication({{ (int)$selected['id'] }})"
-                                class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-200 {{ $canReschedule ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5' : 'bg-gray-200 text-gray-500 cursor-not-allowed' }}">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            Ändra tid
-                        </button>
-
-                        <button @if(!$canCancel) disabled @endif wire:click="cancelPublication({{ (int)$selected['id'] }})" onclick="return confirm('Avbryt denna publicering?')"
-                                class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-200 {{ $canCancel ? 'bg-red-600 text-white hover:bg-red-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5' : 'bg-gray-200 text-gray-500 cursor-not-allowed' }}">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                            Avbryt
-                        </button>
-                    </div>
-
-                    <div class="bg-blue-50 border-l-4 border-blue-400 p-3 rounded-r-xl">
-                        <p class="text-xs text-blue-700 flex items-start gap-2">
-                            <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            <span class="break-words">Ändringar av tid respekteras av köade jobb. Om en process redan körs kan publiceringen hinna gå ut.</span>
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Snabbplanera -->
-            <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-4 lg:p-6 rounded-2xl space-y-4 border border-green-200">
-                <h5 class="text-base lg:text-lg font-bold text-green-800 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                    </svg>
-                    Snabbplanera nytt
-                </h5>
-
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-green-700 mb-2">Innehåll</label>
-                        <select wire:model.defer="quickContentId" class="w-full px-3 py-2 lg:px-4 lg:py-3 border border-green-300 rounded-xl text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white">
-                            <option value="">Välj färdigt innehåll…</option>
-                            @foreach(($readyContents ?? []) as $rc)
-                                <option value="{{ $rc['id'] }}" class="break-words">#{{ $rc['id'] }} — {{ \Illuminate\Support\Str::limit($rc['title'], 40) }}</option>
-                            @endforeach
-                        </select>
-                        @error('quickContentId')
-                        <p class="text-xs text-red-600 mt-1 flex items-center gap-1">
-                            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-                            </svg>
-                            <span class="break-words">{{ $message }}</span>
-                        </p>
-                        @enderror
-                    </div>
-
-                    <div class="grid grid-cols-1 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-green-700 mb-2">Kanal</label>
-                            <select wire:model.defer="quickTarget" class="w-full px-3 py-2 lg:px-4 lg:py-3 border border-green-300 rounded-xl text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white">
-                                <option value="facebook">Facebook</option>
-                                <option value="instagram">Instagram</option>
-                                <option value="linkedin">LinkedIn</option>
-                                <option value="wp">WordPress</option>
-                                <option value="shopify">Shopify</option>
-                            </select>
-                            @error('quickTarget')
-                            <p class="text-xs text-red-600 mt-1 flex items-center gap-1">
-                                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-                                </svg>
-                                <span class="break-words">{{ $message }}</span>
-                            </p>
-                            @enderror
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-green-700 mb-2">Tid</label>
-                            <input type="datetime-local" wire:model.defer="quickScheduleAt" class="w-full px-3 py-2 lg:px-4 lg:py-3 border border-green-300 rounded-xl text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white" />
-                            @error('quickScheduleAt')
-                            <p class="text-xs text-red-600 mt-1 flex items-center gap-1">
-                                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-                                </svg>
-                                <span class="break-words">{{ $message }}</span>
-                            </p>
-                            @enderror
-                        </div>
-                    </div>
-
-                    <div class="flex justify-end">
-                        <button wire:click="createQuickPublication" class="flex items-center gap-2 px-4 lg:px-6 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                            </svg>
-                            <span class="hidden sm:inline">Skapa schemalagd</span>
-                            <span class="sm:hidden">Skapa</span>
-                        </button>
-                    </div>
-
-                    <div class="bg-emerald-100 p-3 rounded-xl border border-emerald-200">
-                        <p class="text-xs text-emerald-700 flex items-start gap-2">
-                            <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            <span class="break-words">Använd AI-texten som grund. Bilder och finjustering kan läggas till i detaljsidan.</span>
-                        </p>
-                    </div>
-                </div>
-            </div>
         </div>
     @else
-        <div class="p-8 lg:p-12 text-center">
-            <svg class="w-16 h-16 lg:w-20 lg:h-20 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
-            <h3 class="text-lg font-semibold text-gray-900 mb-2">Välj en post</h3>
-            <p class="text-gray-600">Klicka på en post i listan för att se detaljer och hantera den.</p>
+        <!-- Förenklad SKAPA/SCHEMALÄGG vy (ingen vald post) -->
+        <div class="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4">
+            <h5 class="text-base lg:text-lg font-bold text-gray-900 flex items-center gap-2">
+                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Skapa/schemalägg publicering
+            </h5>
+
+            <!-- Innehåll -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Inlägg</label>
+                <select wire:model.defer="quickContentId" class="w-full px-3 py-2 lg:px-4 lg:py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white">
+                    <option value="">Välj färdigt innehåll…</option>
+                    @foreach(($readyContents ?? []) as $rc)
+                        <option value="{{ $rc['id'] }}" class="break-words">#{{ $rc['id'] }} — {{ \Illuminate\Support\Str::limit($rc['title'], 40) }}</option>
+                    @endforeach
+                </select>
+                @error('quickContentId')
+                <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <!-- Bild -->
+            <div class="bg-orange-50 border border-orange-200 rounded-2xl p-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium text-orange-800">Bild</span>
+                    <div class="flex items-center gap-2">
+                        <button x-data @click="$dispatch('media-picker:open')"
+                                class="px-3 py-2 bg-white border border-orange-200 text-orange-700 rounded-xl hover:bg-orange-50 text-sm font-medium">
+                            Välj bild
+                        </button>
+                        @if($quickImageId > 0)
+                            <button wire:click="$set('quickImageId', 0)" class="px-3 py-2 bg-white border border-orange-200 text-orange-700 rounded-xl hover:bg-orange-50 text-sm">
+                                Rensa
+                            </button>
+                        @endif
+                    </div>
+                </div>
+                @if($quickImageId > 0)
+                    <div class="mt-3 flex items-center gap-3 p-3 bg-white rounded-xl border border-orange-100">
+                        <img class="w-12 h-12 rounded-lg object-cover" src="{{ route('assets.thumb', $quickImageId) }}" alt="Vald bild">
+                        <div class="text-sm text-orange-800">Bild vald (kopplas vid skapande)</div>
+                    </div>
+                @else
+                    <p class="mt-2 text-xs text-orange-700">Instagram kräver alltid en bild.</p>
+                @endif
+            </div>
+
+            <!-- Tid -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Dag & tid</label>
+                <div class="flex flex-col sm:flex-row gap-2 sm:items-center">
+                    <input type="datetime-local" wire:model.defer="quickScheduleAt" class="w-full sm:max-w-xs px-3 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                    <button type="button"
+                            class="px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl"
+                            x-data @click="$el.previousElementSibling.value = new Date().toISOString().slice(0,16); $el.previousElementSibling.dispatchEvent(new Event('input'))">
+                        Fyll i nu
+                    </button>
+                </div>
+                @error('quickScheduleAt')
+                <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <!-- Avancerat: Kanal (dold som standard för att hålla det enkelt) -->
+            <details class="bg-gray-50 rounded-2xl border border-gray-200 p-3">
+                <summary class="cursor-pointer text-sm font-medium text-gray-700">Avancerade inställningar</summary>
+                <div class="mt-3">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Kanal</label>
+                    <select wire:model.defer="quickTarget" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white">
+                        <option value="facebook">Facebook</option>
+                        <option value="instagram">Instagram</option>
+                        <option value="linkedin">LinkedIn</option>
+                        <option value="wp">WordPress</option>
+                        <option value="shopify">Shopify</option>
+                    </select>
+                    @error('quickTarget')
+                    <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+            </details>
+
+            <!-- Skapa -->
+            <div class="flex justify-end">
+                <button wire:click="createQuickPublication" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 lg:px-6 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Publicera/Schemalägg
+                </button>
+            </div>
         </div>
     @endif
 
