@@ -28,4 +28,25 @@ class Usage
             ]);
         }
     }
+
+    public function countThisMonth(int $customerId, string $key, ?string $period = null): int
+    {
+        $period = $period ?: now()->format('Y-m');
+
+        try {
+            return (int) DB::table('usage_metrics')
+                ->where('customer_id', $customerId)
+                ->where('period', $period)
+                ->where('metric_key', $key)
+                ->sum('used_value');
+        } catch (\Throwable $e) {
+            Log::error('[Usage] countThisMonth failed', [
+                'customer_id' => $customerId,
+                'period'      => $period,
+                'metric_key'  => $key,
+                'error'       => $e->getMessage(),
+            ]);
+            return 0;
+        }
+    }
 }

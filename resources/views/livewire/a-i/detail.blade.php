@@ -351,6 +351,26 @@
                     Välj bild från bibliotek
                 </button>
 
+                <button type="button"
+                        class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 flex items-center"
+                        wire:click="openGenModal">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    Generera bild till texten
+                </button>
+
+                @if($genQueued)
+                    <div class="inline-flex items-center gap-2 px-3 py-2 bg-blue-50 text-blue-800 border border-blue-200 rounded-xl">
+                        <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Bilden genereras – biblioteket uppdateras automatiskt.
+                    </div>
+                @endif
+
+
                 @if($selectedImageAssetId)
                     <div class="flex items-center gap-3 p-2 bg-emerald-50 rounded-lg border border-emerald-200">
                         <img class="w-12 h-12 rounded-lg object-cover" src="{{ route('assets.thumb', $selectedImageAssetId) }}" alt="Vald bild">
@@ -528,6 +548,60 @@
 
         <livewire:media-picker wire:model.live="selectedImageAssetId" />
     </div>
+
+    <div x-data="{ genShow: @entangle('genShow') }" x-show="genShow" x-transition class="fixed inset-0 z-50" style="display:none;">
+        <div class="absolute inset-0 bg-black/50" wire:click="$set('genShow', false)"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+                <div class="px-5 py-4 border-b">
+                    <h3 class="text-lg font-bold text-gray-900">Generera bild till texten</h3>
+                </div>
+
+                <div class="p-5 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Format</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <label class="flex items-center gap-2 px-3 py-2 border rounded-lg cursor-pointer hover:bg-gray-50">
+                                <input type="radio" class="text-indigo-600" wire:model="genFormat" value="square">
+                                <span class="text-sm">Kvadrat</span>
+                            </label>
+                            <label class="flex items-center gap-2 px-3 py-2 border rounded-lg cursor-pointer hover:bg-gray-50">
+                                <input type="radio" class="text-indigo-600" wire:model="genFormat" value="portrait">
+                                <span class="text-sm">Porträtt</span>
+                            </label>
+                            <label class="flex items-center gap-2 px-3 py-2 border rounded-lg cursor-pointer hover:bg-gray-50">
+                                <input type="radio" class="text-indigo-600" wire:model="genFormat" value="landscape">
+                                <span class="text-sm">Landskap</span>
+                            </label>
+                        </div>
+                        @error('genFormat') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm">
+                        Är du säker? Du har {{ $genRemaining ?? '—' }} genereringar kvar. Efter denna har du {{ $genAfter ?? '—' }} kvar.
+                    </div>
+
+                    @if($genError)
+                        <div class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                            {{ $genError }}
+                        </div>
+                    @endif
+                </div>
+
+                <div class="px-5 py-4 border-t flex items-center justify-end gap-2">
+                    <button class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+                            wire:click="$set('genShow', false)" @disabled($genBusy)>Avbryt</button>
+                    <button class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                            wire:click="confirmGenerateImageForContent"
+                            wire:loading.attr="disabled"
+                            wire:target="confirmGenerateImageForContent">
+                        <span wire:loading.remove wire:target="confirmGenerateImageForContent">Ja, generera bild</span>
+                        <span wire:loading wire:target="confirmGenerateImageForContent">Köar...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @push('scripts')
@@ -546,5 +620,25 @@
             });
             observer.observe(document.body, { childList: true, subtree: true });
         })();
+
+        document.addEventListener('livewire:initialized', () => {
+            let timer = null, polls = 0, maxPolls = 10;
+
+            window.Livewire.on('ai-image-queued', () => {
+                if (timer) { clearInterval(timer); timer = null; }
+                polls = 0;
+                timer = setInterval(() => {
+                    polls++;
+                    // Låt backend uppdatera ev. lista i bakgrunden (om komponenten exponerar en metod)
+                    if (@this.loadMediaLibrary) { @this.call('loadMediaLibrary'); }
+                    // När vi polllat ett tag, sluta
+                    if (polls >= maxPolls) {
+                        clearInterval(timer); timer = null;
+                    }
+                }, 6000);
+                // Fallback stop efter 60s
+                setTimeout(() => { if (timer) { clearInterval(timer); timer = null; } }, 60000);
+            });
+        });
     </script>
 @endpush

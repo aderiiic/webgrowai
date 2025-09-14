@@ -25,6 +25,14 @@ class Detail extends Component
     public AiContent $content;
     public $sites;
 
+    public bool $genShow = false;
+    public string $genFormat = 'square'; // square|portrait|landscape
+    public bool $genBusy = false;
+    public bool $genQueued = false;
+    public ?int $genRemaining = null;
+    public ?int $genAfter = null;
+    public string $genError = '';
+
     public ?int $publishSiteId = null;
     public string $publishStatus = 'draft';
     public ?string $publishAt = null;
@@ -444,5 +452,100 @@ class Detail extends Component
     public function lockAfterPublication()
     {
         $this->content->update(['is_locked' => true]);
+    }
+
+    public function openGenModal(\App\Services\Billing\PlanService $plans, \App\Support\Usage $usage): void
+    {
+        $this->genError = '';
+        $customer = app(\App\Support\CurrentCustomer::class)->get();
+        if (!$customer) { $this->genError = 'Ingen kund hittades.'; $this->genShow = true; return; }
+
+        $quota = $plans->getQuota($customer, 'ai.images.quota_month');
+        $used  = $usage->countThisMonth((int)$customer->id, 'ai.images');
+
+        if ($quota === 0) {
+            $this->genError = 'Din plan tillåter inte bildgenerering.';
+        } elseif (!is_null($quota) && $used >= $quota) {
+            $this->genError = 'Månadskvoten för bildgenerering är slut.';
+        }
+
+        $this->genRemaining = is_null($quota) ? null : max(0, $quota - $used);
+        $this->genAfter     = is_null($quota) ? null : max(0, $quota - $used - 1);
+        $this->genShow = true;
+    }
+
+// Bekräfta och köa jobb
+    public function confirmGenerateImageForContent(
+        \App\Support\CurrentCustomer $current,
+        \App\Services\Billing\PlanService $plans,
+        \App\Support\Usage $usage
+    ): void {
+        $this->validate([
+            'genFormat' => 'required|in:square,portrait,landscape',
+        ]);
+
+        $customer = $current->get();
+        $site     = $current->getSite();
+        if (!$customer || !$site) {
+            $this->genError = 'Ingen aktiv kund/sajt vald.';
+            return;
+        }
+
+        // Kvotkontroll igen precis innan kö
+        $quota = $plans->getQuota($customer, 'ai.images.quota_month');
+        $used  = $usage->countThisMonth((int)$customer->id, 'ai.images');
+        if ($quota === 0) { $this->genError = 'Din plan tillåter inte bildgenerering.'; return; }
+        if (!is_null($quota) && $used >= $quota) { $this->genError = 'Månadskvoten är slut.'; return; }
+
+        // Bygg enkel prompt från texten
+        $title = (string) ($this->content->title ?? 'Inlägg');
+        $md    = (string) ($this->content->body_md ?? '');
+        $summary = \Illuminate\Support\Str::limit(strip_tags($md), 600);
+
+        $prompt = trim("
+Skapa en professionell social bild som stödjer följande text (rubrik och sammanfattning):
+
+Rubrik: {$title}
+Sammanfattning: {$summary}
+
+Krav:
+- Ren, säljbar och varumärkesmässig komposition.
+- Ingen inbäddad text i bilden (systemet lägger overlay själv vid behov).
+- Hög kontrast mellan motiv och bakgrund. Undvik vattenstämplar och artefakter.
+");
+
+        // Mappa format → plattform/storlek
+        $platform = match ($this->genFormat) {
+            'portrait'  => 'facebook_story',   // 1080x1920
+            'landscape' => 'blog',             // 1200x628
+            default     => 'facebook_square',  // 1080x1080
+        };
+
+        // Köa jobb
+        $this->genBusy = true;
+        $this->genQueued = true;
+
+        dispatch(new \App\Jobs\GenerateAiImageJob(
+            customerId: (int) $customer->id,
+            siteId: (int) $site->id,
+            prompt: $prompt,
+            platform: $platform
+        ))->afterCommit()->onQueue('ai');
+
+        // Stäng modal och trigga polling i UI
+        $this->genShow = false;
+        $this->dispatch('ai-image-queued');
+
+        // Visa uppdaterad prognos i UI
+        $this->genRemaining = is_null($quota) ? null : max(0, $quota - $used - 1);
+        $this->genAfter = is_null($quota) ? null : max(0, $quota - $used - 1);
+
+        $this->genBusy = false;
+    }
+
+    public function loadMediaLibrary(): void
+    {
+        // $this->dispatch('media-picker:refresh');
+        // Lämnas tom så länge – bara för att undvika fel i JS-anropet.
     }
 }
