@@ -45,33 +45,97 @@
     @endif
 
     <!-- Formulär + Status -->
-    <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6">
+    <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6" x-data="{ bg: @entangle('background_mode') }">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="lg:col-span-2 space-y-4">
-                <!-- fält (oförändrade) -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Typ av bild</label>
-                    <select wire:model="image_type" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
-                        <option>Produktbild</option>
-                        <option>Facebook-bild</option>
-                        <option>LinkedIn-bild</option>
-                        <option>Bloggbild</option>
-                        <option>Instagrambild</option>
-                    </select>
-                    @error('image_type') <div class="text-sm text-red-600 mt-1">{{ $message }}</div> @enderror
+            <div class="lg:col-span-2 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Typ av bild</label>
+                        <select wire:model="image_type" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+                            <option>Produktbild</option>
+                            <option>Facebook-bild</option>
+                            <option>LinkedIn-bild</option>
+                            <option>Bloggbild</option>
+                            <option>Instagrambild</option>
+                            <option>Kampanjbild</option>
+                        </select>
+                        @error('image_type') <div class="text-sm text-red-600 mt-1">{{ $message }}</div> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Kampanj</label>
+                        <select wire:model="campaign_type" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+                            <option value="none">Ingen</option>
+                            <option value="launch">Lansering</option>
+                            <option value="sale">Rea/erbjudande</option>
+                            <option value="seasonal">Säsong</option>
+                            <option value="ugc">UGC-känsla</option>
+                            <option value="editorial">Premium editorial</option>
+                            <option value="hero">Hero banner</option>
+                        </select>
+                        @error('campaign_type') <div class="text-sm text-red-600 mt-1">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Mål med bilden</label>
+                        <select wire:model="goal" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+                            <option value="attention">Fånga uppmärksamhet</option>
+                            <option value="sell">Sälja</option>
+                            <option value="educate">Utbilda</option>
+                            <option value="announce">Annonsera nyhet</option>
+                            <option value="retarget">Retarget</option>
+                        </select>
+                        @error('goal') <div class="text-sm text-red-600 mt-1">{{ $message }}</div> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Produktkategori (valfritt)</label>
+                        <input wire:model="product_category" type="text" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" placeholder="Ex: skor, smink, kläder">
+                        @error('product_category') <div class="text-sm text-red-600 mt-1">{{ $message }}</div> @enderror
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Bakgrund</label>
-                        <select wire:model="background" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
-                            <option>vit</option>
-                            <option>annan färg</option>
-                            <option>natur</option>
-                            <option>anpassad till titel</option>
+                        <select wire:model="background_mode" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+                            <option value="white">Helt vit</option>
+                            <option value="black">Helt svart</option>
+                            <option value="gray">Neutral grå</option>
+                            <option value="solid">Solid varumärkesfärg</option>
+                            <option value="brand">Branding-anpassad</option>
+                            <option value="custom_hex">Egen hex-färg</option>
+                            <option value="gradient">Mjuk gradient</option>
+                            <option value="pattern">Diskret mönster</option>
+                            <option value="marble">Marmor</option>
+                            <option value="concrete">Betong</option>
+                            <option value="wood">Träyta</option>
+                            <option value="studio">Studio seamless</option>
+                            <option value="lifestyle_in">Lifestyle – inomhus</option>
+                            <option value="lifestyle_out">Lifestyle – utomhus</option>
                         </select>
-                        @error('background') <div class="text-sm text-red-600 mt-1">{{ $message }}</div> @enderror
+                        @error('background_mode') <div class="text-sm text-red-600 mt-1">{{ $message }}</div> @enderror
+                        <div class="mt-2 flex items-center gap-3">
+                            <input id="strict_background" type="checkbox" wire:model="strict_background" class="rounded text-indigo-600">
+                            <label for="strict_background" class="text-sm text-gray-700">Strikt bakgrund (ingen textur eller mönster)</label>
+                        </div>
                     </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Färg (om egen hex)</label>
+                        <input
+                            x-bind:disabled="bg !== 'custom_hex'"
+                            x-bind:class="bg === 'custom_hex' ? 'bg-white border-gray-300 text-gray-900' : 'bg-gray-100 border-gray-200 text-gray-500 cursor-not-allowed'"
+                            wire:model="background_hex"
+                            type="text"
+                            placeholder="#RRGGBB"
+                            class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
+                        >
+                        @error('background_hex') <div class="text-sm text-red-600 mt-1">{{ $message }}</div> @enderror
+                        <p class="text-xs text-gray-500 mt-1" x-show="bg !== 'custom_hex'">Välj “Egen hex-färg” ovan för att aktivera fältet.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Stil/effekt</label>
                         <select wire:model="style" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
@@ -81,14 +145,28 @@
                             <option>clean</option>
                             <option>minimal</option>
                             <option>branding-anpassad</option>
+                            <option>vintage</option>
+                            <option>filmig</option>
+                            <option>high-contrast</option>
                         </select>
                         @error('style') <div class="text-sm text-red-600 mt-1">{{ $message }}</div> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Plattform/format</label>
+                        <select wire:model="platform" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+                            <option value="facebook_square">Facebook 1080x1080</option>
+                            <option value="facebook_story">Facebook/IG Story 1080x1920</option>
+                            <option value="instagram">Instagram 1080x1350</option>
+                            <option value="linkedin">LinkedIn 1080x1080</option>
+                            <option value="blog">Blogg 1200x628</option>
+                        </select>
+                        @error('platform') <div class="text-sm text-red-600 mt-1">{{ $message }}</div> @enderror
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Titel/tema (valfritt)</label>
-                    <input wire:model="title" type="text" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" placeholder="Ex: Citronsoda – Sommarkampanj">
+                    <input wire:model="title" type="text" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" placeholder="Ex: Sommarens sneaker drop">
                     @error('title') <div class="text-sm text-red-600 mt-1">{{ $message }}</div> @enderror
                 </div>
 
@@ -103,42 +181,62 @@
                             @error('overlay_text') <div class="text-sm text-red-600 mt-1">{{ $message }}</div> @enderror
                         </div>
                         <div>
-                            <p class="text-xs text-gray-600">Texten placeras läsbart och anpassas till motivet.</p>
+                            <select wire:model="overlay_position" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+                                <option value="auto">Placering: Auto</option>
+                                <option value="safe-top">Säker topp</option>
+                                <option value="safe-bottom">Säker botten</option>
+                                <option value="top">Topp</option>
+                                <option value="bottom">Botten</option>
+                                <option value="left">Vänster</option>
+                                <option value="right">Höger</option>
+                                <option value="center">Center</option>
+                            </select>
                         </div>
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Plattform/format</label>
-                    <select wire:model="platform" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
-                        <option value="facebook_square">Facebook 1080x1080</option>
-                        <option value="facebook_story">Facebook/IG Story 1080x1920</option>
-                        <option value="instagram">Instagram 1080x1350</option>
-                        <option value="linkedin">LinkedIn 1080x1080</option>
-                        <option value="blog">Blogg 1200x628</option>
-                    </select>
-                    @error('platform') <div class="text-sm text-red-600 mt-1">{{ $message }}</div> @enderror
+                <div class="p-4 bg-indigo-50 border border-indigo-200 rounded-xl space-y-3">
+                    <div class="flex items-center gap-2">
+                        <input id="from_post_enabled" type="checkbox" wire:model="from_post_enabled" x-model="fromPost" class="rounded text-indigo-600">
+                        <label for="from_post_enabled" class="text-sm font-medium text-gray-800">Skapa bild utifrån ett skapat inlägg</label>
+                    </div>
+
+                    <div x-show="$wire.from_post_enabled" x-transition>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Välj inlägg</label>
+                        <select wire:model="from_post_id" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+                            <option value="">Välj inlägg...</option>
+                            @foreach($availablePosts as $p)
+                                <option value="{{ $p['id'] }}">{{ $p['title'] }}</option>
+                            @endforeach
+                        </select>
+                        @error('from_post_id') <div class="text-sm text-red-600 mt-1">{{ $message }}</div> @enderror
+                    </div>
+
+                    <p class="text-xs text-indigo-800">Bilden anpassas till inläggets ämne/ton och mål.</p>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Genererad prompt (förhandsvisning)</label>
-                    <pre class="text-xs bg-slate-900 text-slate-100 rounded-lg p-3 overflow-auto max-h-48">{{ $finalPrompt ?: 'Prompten visas här efter Generera.' }}</pre>
+                    <pre class="text-xs bg-slate-900 text-slate-100 rounded-lg p-3 overflow-auto max-h-56 whitespace-pre-wrap">{{ $finalPrompt ?: 'Prompten visas här efter Generera.' }}</pre>
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <button wire:click="submit" wire:loading.attr="disabled"
-                            class="inline-flex items-center px-5 py-2.5 rounded-xl text-white font-semibold transition-all bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl disabled:opacity-50">
-                        <span wire:loading.remove>
+                    <button wire:click="submit"
+                            wire:loading.attr="disabled"
+                            wire:target="submit"
+                            @disabled(!$aiEnabled || ($quota !== null && $used >= $quota))
+                            class="inline-flex items-center px-5 py-2.5 rounded-xl text-white font-semibold transition-all bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span wire:loading.remove wire:target="submit">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h2m-1 0v14m-7-7h14"/>
                             </svg>
                         </span>
-                        <span wire:loading>
+                                            <span wire:loading wire:target="submit">
                             <svg class="animate-spin w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                             </svg>
                         </span>
-                        <span>Generera bild</span>
+                        <span>{{ $busy ? 'Genererar...' : 'Generera bild' }}</span>
                     </button>
                     <p class="text-sm text-gray-500">Bilden sparas automatiskt i ditt bibliotek.</p>
                 </div>
@@ -150,7 +248,7 @@
                 @endif
             </div>
 
-            <!-- Info -->
+            <!-- Info-kort (oförändrat) -->
             <div class="lg:col-span-1">
                 <div class="bg-gradient-to-b from-slate-50 to-white border border-slate-200 rounded-2xl p-4">
                     <h3 class="text-sm font-semibold text-gray-800 mb-2">Status</h3>
@@ -244,16 +342,34 @@
         </script>
     @endif
 
-    {{-- Pollning efter köad generering – slutar efter 60s --}}
     <script>
         document.addEventListener('livewire:initialized', () => {
             let timer = null;
+            let pollCount = 0;
+            const maxPolls = 10; // Begränsa antal polls
+
             window.Livewire.on('ai-image-queued', () => {
                 if (timer) clearInterval(timer);
+                pollCount = 0;
+
                 timer = setInterval(() => {
+                    pollCount++;
                 @this.call('loadList');
+
+                    // Stoppa efter max antal polls
+                    if (pollCount >= maxPolls) {
+                        clearInterval(timer);
+                        timer = null;
+                    }
                 }, 6000);
-                setTimeout(() => { if (timer) { clearInterval(timer); timer = null; } }, 60000);
+
+                // Fallback timeout
+                setTimeout(() => {
+                    if (timer) {
+                        clearInterval(timer);
+                        timer = null;
+                    }
+                }, 60000);
             });
         });
     </script>
