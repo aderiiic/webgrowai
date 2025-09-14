@@ -57,6 +57,7 @@ use App\Livewire\SEO\KeywordSuggestionDetail;
 use App\Livewire\Account\Usage as AccountUsage;
 use App\Livewire\Account\Upgrade as AccountUpgrade;
 use App\Livewire\Planner\Index as PlannerIndex;
+use App\Livewire\AI\Images\Generator as AiImageGenerator;
 
 use App\Livewire\Admin\Customers\Show as AdminCustomerShow;
 use App\Livewire\Admin\Plans\Index as AdminPlansIndex;
@@ -339,6 +340,7 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
 
     Route::get('/planner', PlannerIndex::class)->name('planner.index');
 
+    Route::get('/ai/images', AiImageGenerator::class)->name('ai.images');
 });
 
 Route::middleware(['auth','verified','can:admin'])->prefix('admin')->name('admin.')->group(function () {
