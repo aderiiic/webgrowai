@@ -178,22 +178,23 @@ class Generator extends Component
                 ->where('customer_id', (int) $customer->id)
                 ->first();
         }
-        $this->finalPrompt = $this->buildPrompt($site, $post);
 
-        // Queue:a jobbet
+        $this->finalPrompt = $this->buildPrompt($site, $post, true);
+        $aiPrompt = $this->buildPrompt($site, $post, false);
+
         $this->busy = true;
         $this->queued = true;
-        dispatch(new GenerateAiImageJob(
+
+        dispatch(new \App\Jobs\GenerateAiImageJob(
             customerId: (int) $customer->id,
             siteId: $site->id,
-            prompt: $this->finalPrompt,
+            prompt: $aiPrompt, // <-- textfri prompt skickas till DALL·E
             platform: $this->platform,
             logoUrl: $this->logo_url ?: null,
-            overlayEnabled: $this->overlay_enabled,
+            overlayEnabled: true, // tvinga overlay om text finns
             overlayText: $this->overlay_text ?: null,
             overlayPosition: $this->overlay_position,
             textLanguage: $this->text_language ?: 'svenska'
-
         ))->afterCommit()->onQueue('ai');
 
         // UI-feedback
@@ -315,7 +316,7 @@ class Generator extends Component
         }
     }
 
-    private function buildPrompt(Site $site, ?AiContent $post = null): string
+    private function buildPrompt(Site $site, ?AiContent $post = null, bool $allowOverlayInImage = false): string
     {
         // 1) Motivscenarier
         $motifHints = [
@@ -396,9 +397,13 @@ class Generator extends Component
         $styleText = empty($styleParts) ? 'modern, kommersiell stil' : implode(', ', $styleParts);
 
         // 6) Overlay-text
-        $overlay = $this->overlay_enabled && $this->overlay_text !== ''
-            ? 'Lägg in en overlay-text: "' . $this->overlay_text . '". Placering: ' . $this->overlay_position . '. Hög läsbarhet, korrekt kontrast, korrekt språk och stavning. Ingen annan text får förekomma. Hela texten ska skrivas ut och det ska vara på svenska!'
-            : 'Placera ingen text i bilden överhuvudtaget.';
+        if ($allowOverlayInImage && $this->overlay_enabled && $this->overlay_text !== '') {
+            $overlay = 'Lägg in en text-overlay: "' . $this->overlay_text . '". Placering: ' . $this->overlay_position .
+                '. Hög läsbarhet, korrekt kontrast, korrekt språk och stavning. Ingen annan text får förekomma.';
+        } else {
+            $overlay = 'Modellen får under inga omständigheter generera ord, bokstäver eller etiketter i bilden. ' .
+                'Bilden ska vara helt textfri. All text läggs efteråt i systemets kod.';
+        }
 
         // 7) Titel/tema + kategori
         $title = $this->title !== '' ? "Titel/tema: {$this->title}." : "Ingen explicit titel.";

@@ -379,40 +379,63 @@ class GenerateAiImageJob implements ShouldQueue
             }
 
             // 2) Overlay-text (oförändrad)
-            if ($this->overlayEnabled && !empty($this->overlayText)) {
+            if (!empty($this->overlayText)) {
+                $text = (string) $this->overlayText;
+                $text = mb_convert_encoding($text, 'UTF-8', mb_detect_encoding($text) ?: 'UTF-8');
+
+                // FONT: lägg en TTF i storage/app/fonts/NotoSans-Regular.ttf
+                $fontFile = storage_path('app/fonts/NotoSans-Regular.ttf');
+                if (!file_exists($fontFile)) {
+                    $fontFile = null; // fallback
+                }
+
                 $padX = (int) max(16, round($img->width() * 0.02));
                 $padY = (int) max(10, round($img->height() * 0.015));
                 $fontSize = max(28, (int) round(min($img->width(), $img->height()) * 0.035));
-                $text = $this->overlayText;
 
-                $approxChars = max(8, min(60, mb_strlen($text)));
-                $boxWidth = min($img->width() - $padX*2, (int) round($fontSize * ($approxChars * 0.6)));
-                $boxHeight = $fontSize + $padY*2;
+                $maxCharsPerLine = max(20, (int) round($img->width() / ($fontSize * 0.6)));
+                $wrapped = wordwrap($text, $maxCharsPerLine, "\n");
 
-                $x = $padX; $y = $img->height() - $boxHeight - $padY;
-                switch ($this->overlayPosition) {
-                    case 'top': case 'safe-top':        $x = $padX; $y = $padY; break;
-                    case 'bottom': case 'safe-bottom':  $x = $padX; $y = $img->height() - $boxHeight - $padY; break;
-                    case 'left':                        $x = $padX; $y = (int) round(($img->height() - $boxHeight)/2); break;
-                    case 'right':                       $x = $img->width() - $boxWidth - $padX; $y = (int) round(($img->height() - $boxHeight)/2); break;
-                    case 'center':                      $x = (int) round(($img->width() - $boxWidth)/2); $y = (int) round(($img->height() - $boxHeight)/2); break;
+                $lines = substr_count($wrapped, "\n") + 1;
+                $boxHeight = $fontSize * $lines + $padY * 2;
+                $approxCharWidth = (int) round($fontSize * 0.6);
+                $boxWidth = min(
+                    $img->width() - $padX * 2,
+                    (int) round($approxCharWidth * min($maxCharsPerLine, max(8, mb_strlen($text))))
+                );
+
+                $x = $padX;
+                $y = $img->height() - $boxHeight - $padY;
+                if (in_array($this->overlayPosition, ['top', 'safe-top'])) {
+                    $y = $padY;
+                } elseif ($this->overlayPosition === 'center') {
+                    $x = (int) round(($img->width() - $boxWidth) / 2);
+                    $y = (int) round(($img->height() - $boxHeight) / 2);
+                } elseif ($this->overlayPosition === 'right') {
+                    $x = $img->width() - $boxWidth - $padX;
+                    $y = (int) round(($img->height() - $boxHeight) / 2);
                 }
 
-                // Platta
+                // bakgrundsplatta
                 $img->rectangle($x, $y, $x + $boxWidth, $y + $boxHeight, function ($draw) {
-                    $draw->background('rgba(0,0,0,0.6)');
-                    $draw->border(width: 0, color: 'rgba(0,0,0,0)');
+                    $draw->background('rgba(0,0,0,0.88)'); // täcker ev. AI-text under
                     if (method_exists($draw, 'radius')) {
-                        $draw->radius(10);
+                        $draw->radius(12);
                     }
                 });
 
-                // Text
-                $img->text($text, $x + $padX, $y + (int) round($boxHeight/2), function ($font) use ($fontSize) {
+                // text
+                $img->text($wrapped, $x + $padX, $y + (int) round($boxHeight / 2), function ($font) use ($fontSize, $fontFile) {
+                    if ($fontFile) {
+                        $font->file($fontFile);
+                    }
                     $font->size($fontSize);
                     $font->color('#FFFFFF');
                     $font->align('left');
                     $font->valign('middle');
+                    if (method_exists($font, 'lineSpacing')) {
+                        $font->lineSpacing(1.1);
+                    }
                 });
             }
 
