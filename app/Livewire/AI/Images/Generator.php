@@ -41,6 +41,12 @@ class Generator extends Component
     public ?int $from_post_id = null;
     public array $availablePosts = []; // [{id,title}]
 
+    public string $product_item = '';            // "flaska", "diskmaskin", "bok", ...
+    public string $logo_url = '';               // https://... .png (transparent)
+    public bool $label_text_enabled = false;    // om text ska finnas på produkten/etiketten
+    public string $label_text = '';             // frivillig etikett-text
+    public string $text_language = 'svenska';
+
     // UI state
     public bool $busy = false;
     public bool $queued = false;
@@ -113,6 +119,24 @@ class Generator extends Component
             'from_post_id'      => 'nullable|required_if:from_post_enabled,true|integer|exists:ai_contents,id',
         ]);
 
+        if ($this->image_type === 'Produktbild') {
+            $this->validate([
+                'product_item'        => 'nullable|string|max:120',
+                'logo_url'            => 'nullable|url|max:500',
+                'label_text_enabled'  => 'boolean',
+                'label_text'          => 'nullable|required_if:label_text_enabled,true|string|max:120',
+                'text_language'       => 'required|string|in:svenska,engelska,norska,danska,finska,tyska,franska,spanska,italienska',
+            ]);
+            // Enkel PNG-hint (mjuk validering) – bara varning i UI via prompt; här kan vi lättrensa space
+            $this->logo_url = trim($this->logo_url);
+        } else {
+            // För andra bildtyper validerar vi logotyp-URL separat
+            $this->validate([
+                'logo_url' => 'nullable|url|max:500',
+            ]);
+            $this->logo_url = trim($this->logo_url);
+        }
+
         if ($this->background_mode === 'custom_hex' && empty($this->background_hex)) {
             $this->addError('background_hex', 'Ange en färgkod i formatet #RRGGBB.');
             return;
@@ -163,7 +187,13 @@ class Generator extends Component
             customerId: (int) $customer->id,
             siteId: $site->id,
             prompt: $this->finalPrompt,
-            platform: $this->platform
+            platform: $this->platform,
+            logoUrl: $this->logo_url ?: null,
+            overlayEnabled: $this->overlay_enabled,
+            overlayText: $this->overlay_text ?: null,
+            overlayPosition: $this->overlay_position,
+            textLanguage: $this->text_language ?: 'svenska'
+
         ))->afterCommit()->onQueue('ai');
 
         // UI-feedback
@@ -245,6 +275,17 @@ class Generator extends Component
         return view('livewire.a-i.images.generator');
     }
 
+    public function updatedImageType(string $value): void
+    {
+        // Rensa produktspecifika fält när bildtyp ändras från Produktbild
+        if ($value !== 'Produktbild') {
+            $this->product_item = '';
+            $this->label_text_enabled = false;
+            $this->label_text = '';
+            $this->text_language = 'svenska';
+        }
+    }
+
     public function updatedBackgroundMode(string $value): void
     {
         if ($value !== 'custom_hex') {
@@ -259,76 +300,91 @@ class Generator extends Component
         }
     }
 
+    public function updatedLabelTextEnabled(bool $value): void
+    {
+        if ($value === false) {
+            $this->label_text = '';
+        }
+    }
+
+    public function updatedOverlayEnabled(bool $value): void
+    {
+        if ($value === false) {
+            $this->overlay_text = '';
+            $this->overlay_position = 'auto';
+        }
+    }
+
     private function buildPrompt(Site $site, ?AiContent $post = null): string
     {
         // 1) Motivscenarier
         $motifHints = [
-            'Produktbild'    => 'Packshot/e‑handel: produkt i centrum, säljdrivande, tydligt formspråk',
-            'Facebook-bild'  => 'Social-first layout, stark hook i kompositionen, hög läsbarhet',
-            'LinkedIn-bild'  => 'Professionell tonalitet, förtroendeingivande, ren layout',
-            'Bloggbild'      => 'Illustrativ header/hero som stödjer ämnet, modern estetik',
-            'Instagrambild'  => 'Estetiskt stark, trendsäker, fungerar i kvadrat/porträtt',
-            'Kampanjbild'    => 'Kampanjfokus med tydlig visuell idé som driver CTA',
+            'Produktbild'    => 'Packshot/e-handel: produkten i centrum, säljinriktat, rent formspråk.',
+            'Facebook-bild'  => 'Social-first layout, tydlig hook, hög läsbarhet.',
+            'LinkedIn-bild'  => 'Professionell, förtroendeingivande, ren layout.',
+            'Bloggbild'      => 'Hero/header som stödjer ämnet, modern estetik.',
+            'Instagrambild'  => 'Estetiskt stark, trendsäker, porträtt-optimerad.',
+            'Kampanjbild'    => 'Kampanjfokus: tydlig visuell idé som driver CTA.',
         ];
         $motif = $motifHints[$this->image_type] ?? $this->image_type;
 
         // 2) Kampanjtyp
         $campaignMap = [
-            'none'     => 'Ingen särskild kampanj. Fokusera på varumärkesrikt bildspråk.',
-            'launch'   => 'Lanseringskänsla: nyhet, innovation, premium presentation.',
-            'sale'     => 'Rea/erbjudande: kraftfull komposition som drar ögat mot produkten.',
-            'seasonal' => 'Säsongstema: färger/rekvisita som subtilt speglar säsongen.',
-            'ugc'      => 'UGC-känsla: verklig, naturlig, autentisk men välbalanserad.',
-            'editorial'=> 'Premium editorial: sofistikerad, magasinkänsla, smakfullt ljus.',
-            'hero'     => 'Hero banner: stark central komposition, tydlig fokuspunkt.',
+            'none'      => 'Ingen specifik kampanj: varumärkesdrivet bildspråk.',
+            'launch'    => 'Lanseringskänsla: nyhet, innovation, premium.',
+            'sale'      => 'Rea/erbjudande: kraftfull komposition, fokus på produkten.',
+            'seasonal'  => 'Säsongstema: färger/rekvisita som subtilt speglar säsongen.',
+            'ugc'       => 'UGC-känsla: autentisk, verklig, men estetiskt balanserad.',
+            'editorial' => 'Premium editorial: magasinkänsla, sofistikerat ljus.',
+            'hero'      => 'Hero banner: stark komposition med central fokuspunkt.',
         ];
         $campaignHint = $campaignMap[$this->campaign_type] ?? $campaignMap['none'];
 
         // 3) Mål
         $goalMap = [
-            'attention' => 'Mål: Fånga uppmärksamhet direkt i flödet.',
-            'sell'      => 'Mål: Sälja – tydlig produktfördel och köplust.',
-            'educate'   => 'Mål: Informera/utbilda om produktens nytta.',
-            'announce'  => 'Mål: Annonsera nyhet/lansering.',
-            'retarget'  => 'Mål: Retarget – igenkänning och konverteringsdriv.',
+            'attention' => 'Mål: fånga uppmärksamhet direkt i flödet.',
+            'sell'      => 'Mål: driva försäljning – tydliga produktfördelar och köplust.',
+            'educate'   => 'Mål: informera/utbilda om nyttan.',
+            'announce'  => 'Mål: annonsera en nyhet/lansering.',
+            'retarget'  => 'Mål: retargeting – igenkänning och konverteringsdriv.',
         ];
         $goalHint = $goalMap[$this->goal] ?? $goalMap['attention'];
 
-        // 4) Bakgrundslägen och hårda regler
-        $bgMode = $this->background_mode;
+        // 4) Bakgrund
         $hex = ltrim($this->background_hex, '#');
         $hex = strlen($hex) === 6 ? '#' . strtoupper($hex) : '';
         $bgHints = [
-            'white'         => 'Absolut ren vit bakgrund (RGB 255,255,255) utan mönster, bandning, texturer eller gradient – perfekt packshot.',
-            'black'         => 'Djup svart bakgrund (RGB 0,0,0), ren och utan mönster.',
-            'gray'          => 'Neutral grå bakgrund (t.ex. #F2F2F2) utan mönster, subtil studioskugga är OK.',
-            'solid'         => 'Solid färgbakgrund som harmoniserar med varumärket, ingen textur.',
-            'brand'         => 'Bakgrund anpassad till varumärkets färger och bildspråk.',
-            'gradient'      => 'Mycket mjuk gradient (brusfri, inga bandningsartefakter).',
-            'pattern'       => 'Stilrent, svagt mönster (diskret, ej distraherande).',
-            'marble'        => 'Ljust marmorbord/top för lyxig känsla, subtil ådring.',
-            'concrete'      => 'Ljus betongyta med mycket svag textur.',
-            'wood'          => 'Neutral träyta, ljus och ren.',
-            'studio'        => 'Studio “seamless paper backdrop”, mjuk övergång, proffsigt ljus.',
-            'lifestyle_in'  => 'Lifestyle inomhus: modern miljö, naturligt ljus, harmonisk rekvisita.',
-            'lifestyle_out' => 'Lifestyle utomhus: naturligt ljus, miljö som stödjer produkten.',
-            'custom_hex'    => $hex ? "Solid bakgrund i exakt färg {$hex} (ingen textur, ingen gradient)." : "Solid bakgrund i angiven färg (ingen textur, ingen gradient).",
+            'white'         => 'Helt ren vit bakgrund (#FFFFFF). Ingen textur, gradient eller vinjettering.',
+            'black'         => 'Djup svart bakgrund (#000000), helt utan mönster.',
+            'gray'          => 'Neutral grå bakgrund (t.ex. #F2F2F2), subtil studioskugga tillåten.',
+            'solid'         => 'Solid färgbakgrund som harmoniserar med varumärket.',
+            'brand'         => 'Bakgrund i varumärkets färger/bildspråk.',
+            'gradient'      => 'Mycket mjuk gradient utan bandning.',
+            'pattern'       => 'Diskret mönster, minimalistiskt och icke-distraherande.',
+            'marble'        => 'Ljus marmoryta, subtil och elegant.',
+            'concrete'      => 'Ljus betongyta, svagt texturerad.',
+            'wood'          => 'Neutral ljus träyta.',
+            'studio'        => 'Studio backdrop, mjuk övergång, professionellt ljus.',
+            'lifestyle_in'  => 'Inomhus lifestyle-miljö, modern, naturligt ljus.',
+            'lifestyle_out' => 'Utomhus lifestyle-miljö, naturligt ljus.',
+            'custom_hex'    => $hex ? "Solid bakgrund i exakt färg {$hex}, helt utan textur/gradient." : "Solid bakgrund i angiven färg, helt utan textur/gradient.",
         ];
-        $bgHint = $bgHints[$bgMode] ?? $bgHints['white'];
+        $bgHint = $bgHints[$this->background_mode] ?? $bgHints['white'];
 
-        // Hårda regler för strikt bakgrund
-        $strictBg = $this->strict_background ? "Bakgrunden SKA vara exakt som angivet ovan. Inga mönster, inga gradienter, inga artefakter, ingen vinjettering. Om 'vit' – säkerställ helt ren #FFFFFF utan textur." : "Bakgrunden ska följa riktlinjen ovan.";
+        $strictBg = $this->strict_background
+            ? "ABSOLUT krav: bakgrunden ska exakt följa ovanstående. Inga mönster, gradienter, vinjettering eller artefakter. Texten ska vara på svenska!"
+            : "Bakgrunden ska följa riktlinjen ovan.";
 
         // 5) Stil
         $styleMap = [
             'icy'               => 'kylig, krispig ton, svagt blåskimmer, hög klarhet',
             'blur'              => 'svag bakgrundsblur för djupkänsla',
-            'clean'             => 'minimalistisk, ren, luftigt negativt utrymme',
-            'minimal'           => 'få element, elegant, fokus på motivet',
-            'branding-anpassad' => 'färger och bildspråk som matchar varumärkesrösten',
-            'vintage'           => 'svagt vintage/filmisk ton utan att tappa premiumkänslan',
+            'clean'             => 'minimalistisk, ren, med luftigt negativt utrymme',
+            'minimal'           => 'få element, elegant, fokus på huvudmotiv',
+            'branding-anpassad' => 'harmoniserar med varumärkets färger och formspråk',
+            'vintage'           => 'diskret vintage/filmisk ton utan tappad premiumkänsla',
             'filmig'            => 'cinematisk ljussättning och kontrast',
-            'high-contrast'     => 'hög kontrast, skarpa kanter, tydlig separation',
+            'high-contrast'     => 'hög kontrast, tydlig separation',
         ];
         $styleParts = [];
         if ($this->style !== '') {
@@ -337,19 +393,19 @@ class Generator extends Component
                 $styleParts[] = $styleMap[$s] ?? $s;
             }
         }
-        $styleText = empty($styleParts) ? 'modern, kommersiell' : implode(', ', $styleParts);
+        $styleText = empty($styleParts) ? 'modern, kommersiell stil' : implode(', ', $styleParts);
 
-        // 6) Overlay
+        // 6) Overlay-text
         $overlay = $this->overlay_enabled && $this->overlay_text !== ''
-            ? "Lägg in en diskret text-overlay: “{$this->overlay_text}”. Placering: {$this->overlay_position}. Hög läsbarhet, korrekt kontrast, utanför kritiska fokuszoner."
-            : "Ingen text-overlay.";
+            ? 'Lägg in en overlay-text: "' . $this->overlay_text . '". Placering: ' . $this->overlay_position . '. Hög läsbarhet, korrekt kontrast, korrekt språk och stavning. Ingen annan text får förekomma. Hela texten ska skrivas ut och det ska vara på svenska!'
+            : 'Placera ingen text i bilden överhuvudtaget.';
 
-        // 7) Titel/tema + produktkategori
+        // 7) Titel/tema + kategori
         $title = $this->title !== '' ? "Titel/tema: {$this->title}." : "Ingen explicit titel.";
         $category = $this->product_category ? "Produktkategori: {$this->product_category}." : '';
 
         // 8) Kontext (Site + ev. inlägg)
-        $siteContext = "Ta hänsyn till sajtens kontext: {$site->aiContextSummary()}. Varumärkesröst: " . ($site->effectiveBrandVoice() ?: '-') .
+        $siteContext = "Varumärkesröst: " . ($site->effectiveBrandVoice() ?: '-') .
             ". Målgrupp: " . ($site->effectiveAudience() ?: '-') .
             ". Mål: " . ($site->effectiveGoal() ?: '-') .
             ". Nyckelord: " . implode(', ', $site->effectiveKeywords() ?: []);
@@ -357,32 +413,73 @@ class Generator extends Component
         $postContext = '';
         if ($post) {
             $body = trim((string) ($post->body_md ?? ''));
-            // Extrahera en kort sammanfattning ~300 tecken
             $summary = Str::limit(strip_tags($body), 300);
-            $postContext = "Anpassa bilden till inlägget “{$post->title}”. Innehålls-sammanfattning: {$summary}";
+            $postContext = "Anpassa till inlägget \"{$post->title}\". Sammanfattning: {$summary}";
         }
 
-        // 9) Plattformstext
+        // 9) Plattform
         $pfText = match ($this->platform) {
             'facebook_square' => 'Facebook 1080x1080',
             'facebook_story'  => 'Facebook/Instagram Story 1080x1920',
             'instagram'       => 'Instagram 1080x1350',
             'linkedin'        => 'LinkedIn 1080x1080',
             'blog'            => 'Blogg 1200x628 (1.91:1)',
-            default           => $this->platform,
+            default           => $this->platform
         };
 
-        // 10) Produktdetalj för läsk/flaska t.ex.
+        // 10) Produktdetaljer
         $productExtras = (stripos($this->image_type, 'produkt') !== false || stripos($this->product_category, 'dryck') !== false)
-            ? "Om en dryck eller flaska förekommer: realistiska vattendroppar på ytan, ser fräsch och läskande ut."
+            ? "Om dryck/flaska förekommer: realistiska vattendroppar, fräsch och läskande känsla."
             : "";
 
-        // 11) Negativa instruktioner (kvalitet/brand safety)
-        $negatives = "Undvik vattenstämplar, störande mönster (om inte uttryckligen valt), överdrivna filter, felstavningar i text, pixlighet, bandningsartefakter och onaturliga skuggor.";
+        // 11) Negativa instruktioner
+        $negatives = "Förbjudet: extra text, nonsensord, pseudo-typografi, vattenstämplar, bandningar, artefakter, felaktiga skuggor, pixlighet eller överdrivna filter.";
+        if ($this->image_type === 'Produktbild') {
+            if ($this->label_text_enabled) {
+                $negatives .= " Endast exakt etiketttext enligt angivelse. Ingen annan text på produkten.";
+            } else {
+                $negatives .= " Ingen text på produkten eller etiketten överhuvudtaget.";
+            }
+        }
 
-        // 12) Slutlig prompt
+        // 12) Logotyp
+        $logoInstr = '';
+        $logo = trim($this->logo_url);
+        if ($logo !== '') {
+            $logoInstr = "Integrera logotyp (transparent PNG): {$logo}. Placera naturligt, inte som watermark. På produktbilder: på etiketten. Annars diskret i kompositionen.";
+        }
+
+        // 13) Produktblock
+        $productBlock = '';
+        if ($this->image_type === 'Produktbild') {
+            $item = trim($this->product_item) !== '' ? $this->product_item : 'produkt (specificera form tydligt)';
+            $langMap = [
+                'svenska'   => 'svenska',
+                'engelska'  => 'engelska',
+                'norska'    => 'norska',
+                'danska'    => 'danska',
+                'finska'    => 'finska',
+                'tyska'     => 'tyska',
+                'franska'   => 'franska',
+                'spanska'   => 'spanska',
+                'italienska'=> 'italienska',
+            ];
+            $lang = $langMap[$this->text_language] ?? 'svenska';
+            $labelInstr = $this->label_text_enabled
+                ? 'Etiketttext: "' . $this->label_text . '". Måste vara korrekt och på ' . $lang . '.'
+                : 'Om etiketttext används: kort, säljande text på ' . $lang . ', med hög läsbarhet.';
+
+            $productBlock = "
+Produktbildsspecifik:
+- Produkttyp: {$item}.
+- {$labelInstr}
+- All text (overlay, etikett, logotyp) ska vara på {$lang}.
+- Säkerställ korrekt logotypåtergivning och realistisk yta/kurvatur.";
+        }
+
+        // Slutlig prompt
         return trim("
-Skapa en professionell och säljbar bild med följande specifikationer:
+Skapa en professionell och säljbar bild med följande krav:
 
 Motivscenario:
 - {$motif}
@@ -397,24 +494,26 @@ Bakgrund:
 Stil/effekt:
 - {$styleText}
 
-Text-overlay:
+Text & overlay:
 - {$overlay}
 
 Titel/tema:
 - {$title}
-
+" . ($logoInstr ? "\nLogotyp:\n- {$logoInstr}\n" : "") . "
 Kontext:
 - {$siteContext}
 " . ($postContext ? "- {$postContext}\n" : "") . "
 
-Plattformsformat:
-- {$pfText}. Håll huvudmotiv och overlay inom säkra beskärningszoner för formatet.
+Plattform:
+- {$pfText}. Anpassa kompositionen så att motiv och overlay ligger inom säkra beskärningszoner.
 
-Kvalitet och utförande:
-- Fotorealistisk/kommersiell kvalitet, premium ljussättning.
-- Tydlig separation mellan motiv och bakgrund, hög kontrast där det behövs.
+Kvalitet & utförande:
+- Fotorealistisk, kommersiell premiumkvalitet.
+- Professionell ljussättning och tydlig separation mellan motiv och bakgrund.
 - {$productExtras}
-- {$negatives}
-        ");
+
+{$negatives}
+{$productBlock}
+    ");
     }
 }

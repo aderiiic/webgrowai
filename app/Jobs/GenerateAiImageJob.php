@@ -28,7 +28,12 @@ class GenerateAiImageJob implements ShouldQueue
         public int $customerId,
         public int $siteId,
         public string $prompt,
-        public string $platform = 'facebook_square'
+        public string $platform = 'facebook_square',
+        public ?string $logoUrl = null,
+        public bool $overlayEnabled = false,
+        public ?string $overlayText = null,
+        public string $overlayPosition = 'auto',
+        public string $textLanguage = 'svenska'
     ) {
         $this->onQueue('ai');
         $this->afterCommit();
@@ -143,6 +148,8 @@ class GenerateAiImageJob implements ShouldQueue
             if (!$binary) {
                 throw new \Exception('Kunde inte dekoda base64-bilddata');
             }
+
+            $binary = $this->applyCompositing($binary);
 
             $imageAsset = $this->storeImage($binary, $size);
 
@@ -307,5 +314,112 @@ class GenerateAiImageJob implements ShouldQueue
     {
         // Sluta försöka efter 1 timme
         return now()->addHour();
+    }
+
+    private function applyCompositing(string $binary): string
+    {
+        try {
+            $manager = \Intervention\Image\ImageManager::gd();
+            $img = $manager->read($binary);
+
+            // 1) Logotyp med bättre kontrast och storlek
+            if ($this->logoUrl) {
+                try {
+                    $resp = \Illuminate\Support\Facades\Http::timeout(10)->get($this->logoUrl);
+                    if ($resp->successful() && strlen((string)$resp->body()) > 64) {
+                        $logo = $manager->read((string)$resp->body());
+
+                        // Skala loggan mer (produktbilder behöver större logga)
+                        $scaleFactor = 0.24; // tidigare ~0.18
+                        $targetWidth = (int) max(72, round($img->width() * $scaleFactor));
+                        $logo = $logo->scale(width: $targetWidth);
+
+                        // Mät hörnens ljushet för att hitta bäst kontrast
+                        $sample = function(int $x, int $y) use ($img) {
+                            $c = $img->pickColor($x, $y, 'hex'); // ex: #RRGGBB
+                            $r = hexdec(substr($c,1,2));
+                            $g = hexdec(substr($c,3,2));
+                            $b = hexdec(substr($c,5,2));
+                            return (0.2126*$r + 0.7152*$g + 0.0722*$b); // luminans
+                        };
+                        $pad = (int) max(16, round($img->width() * 0.02));
+                        $corners = [
+                            'top-left'     => $sample($pad, $pad),
+                            'top-right'    => $sample($img->width()-$pad-1, $pad),
+                            'bottom-left'  => $sample($pad, $img->height()-$pad-1),
+                            'bottom-right' => $sample($img->width()-$pad-1, $img->height()-$pad-1),
+                        ];
+                        // Välj mörkaste hörnet (bäst kontrast för ljus logga)
+                        asort($corners);
+                        $bestCorner = array_key_first($corners);
+
+                        // Rita en mjuk bakgrundsplatta bakom loggan för kontrast
+                        $bgW = $logo->width() + $pad*2;
+                        $bgH = $logo->height() + $pad*2;
+                        $x = $pad; $y = $pad;
+                        if ($bestCorner === 'top-right')    { $x = $img->width() - $bgW - $pad; $y = $pad; }
+                        if ($bestCorner === 'bottom-left')  { $x = $pad; $y = $img->height() - $bgH - $pad; }
+                        if ($bestCorner === 'bottom-right') { $x = $img->width() - $bgW - $pad; $y = $img->height() - $bgH - $pad; }
+
+                        // Halvtransparent mörk platta med rundade hörn
+                        $img->rectangle($x, $y, $x + $bgW, $y + $bgH, function ($draw) {
+                            $draw->background('rgba(0,0,0,0.35)');
+                            $draw->border(width: 0, color: 'rgba(0,0,0,0)');
+                            if (method_exists($draw, 'radius')) {
+                                $draw->radius(12);
+                            }
+                        });
+
+                        // Placera loggan inuti plattan
+                        $img->place($logo, 'top-left', $x + $pad, $y + $pad);
+                    }
+                } catch (\Throwable $e) {
+                    \Log::warning('[AI Image] Kunde inte hämta/placera logotyp', ['error' => $e->getMessage()]);
+                }
+            }
+
+            // 2) Overlay-text (oförändrad)
+            if ($this->overlayEnabled && !empty($this->overlayText)) {
+                $padX = (int) max(16, round($img->width() * 0.02));
+                $padY = (int) max(10, round($img->height() * 0.015));
+                $fontSize = max(28, (int) round(min($img->width(), $img->height()) * 0.035));
+                $text = $this->overlayText;
+
+                $approxChars = max(8, min(60, mb_strlen($text)));
+                $boxWidth = min($img->width() - $padX*2, (int) round($fontSize * ($approxChars * 0.6)));
+                $boxHeight = $fontSize + $padY*2;
+
+                $x = $padX; $y = $img->height() - $boxHeight - $padY;
+                switch ($this->overlayPosition) {
+                    case 'top': case 'safe-top':        $x = $padX; $y = $padY; break;
+                    case 'bottom': case 'safe-bottom':  $x = $padX; $y = $img->height() - $boxHeight - $padY; break;
+                    case 'left':                        $x = $padX; $y = (int) round(($img->height() - $boxHeight)/2); break;
+                    case 'right':                       $x = $img->width() - $boxWidth - $padX; $y = (int) round(($img->height() - $boxHeight)/2); break;
+                    case 'center':                      $x = (int) round(($img->width() - $boxWidth)/2); $y = (int) round(($img->height() - $boxHeight)/2); break;
+                }
+
+                // Platta
+                $img->rectangle($x, $y, $x + $boxWidth, $y + $boxHeight, function ($draw) {
+                    $draw->background('rgba(0,0,0,0.6)');
+                    $draw->border(width: 0, color: 'rgba(0,0,0,0)');
+                    if (method_exists($draw, 'radius')) {
+                        $draw->radius(10);
+                    }
+                });
+
+                // Text
+                $img->text($text, $x + $padX, $y + (int) round($boxHeight/2), function ($font) use ($fontSize) {
+                    $font->size($fontSize);
+                    $font->color('#FFFFFF');
+                    $font->align('left');
+                    $font->valign('middle');
+                });
+            }
+
+            return (string) $img->toPng(quality: 90);
+        } catch (\Throwable $e) {
+            \Log::warning('[AI Image] applyCompositing misslyckades, använder original', ['error' => $e->getMessage()]);
+            return $binary;
+        }
     }
 }
