@@ -101,16 +101,19 @@
             </a>
 
             <!-- Mina hemsidor -->
-            <a href="{{ route('sites.index') }}" class="secondary-action-card">
-                <div class="bg-white rounded-xl p-6 shadow-md hover:shadow-lg border border-gray-200 hover:border-gray-300 transition-all">
+            <a href="{{ route('insights.index') }}" class="secondary-action-card">
+                <div class="bg-white rounded-xl p-6 shadow-md hover:shadow-lg border border-red-400 hover:border-red-600 transition-all relative overflow-hidden">
+                    <!-- Trending indikator -->
+                    <div class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+
                     <div class="flex flex-col items-center text-center">
-                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-3">
-                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9"/>
+                        <div class="w-12 h-12 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full flex items-center justify-center mb-3">
+                            <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
                             </svg>
                         </div>
-                        <h3 class="font-semibold text-gray-900 mb-1">Mina hemsidor</h3>
-                        <p class="text-sm text-gray-600">Hantera sidor</p>
+                        <h3 class="font-semibold text-gray-900 mb-1">Content Insights</h3>
+                        <p class="text-sm text-gray-600">Trender & idéer</p>
                     </div>
                 </div>
             </a>
