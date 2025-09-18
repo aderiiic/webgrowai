@@ -21,8 +21,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'onboarded' => EnsureOnboardingCompleted::class,
-            'paidOrTrial' => \App\Http\Middleware\PaidOrTrial::class,
+            'onboarded'     => EnsureOnboardingCompleted::class,
+            'paidOrTrial'   => \App\Http\Middleware\PaidOrTrial::class,
+            'premium'       => App\Http\Middleware\CheckPremiumPlan::class,
         ]);
         $middleware->appendToGroup('web', [
             LoadCurrentCustomer::class,

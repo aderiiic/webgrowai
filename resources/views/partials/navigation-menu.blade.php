@@ -1,3 +1,18 @@
+@php
+    use App\Services\Billing\PlanService;
+    use App\Support\CurrentCustomer;
+
+    $currentCustomerService = app(CurrentCustomer::class);
+    $planService = app(PlanService::class);
+
+    $customer = $currentCustomerService->resolveDefaultForUser();
+    $subscription = $customer ? $planService->getSubscription($customer) : null;
+    $planId = $planService->getPlanId($subscription);
+    $hasAccess = $customer ? $planService->hasAccess($customer) : false;
+
+    // Kontrollera om användaren har Premium-funktioner (plan 2 eller 3)
+    $hasPremiumAccess = $planId && in_array($planId, [2, 3]);
+@endphp
 <!-- Översikt -->
 <div>
     <div class="text-xs uppercase font-semibold text-gray-500 px-3 mb-3 tracking-wider">Översikt</div>
@@ -73,6 +88,7 @@
 </div>
 
 <!-- Förbättra din hemsida -->
+@if($hasPremiumAccess)
 <div>
     <div class="text-xs uppercase font-semibold text-gray-500 px-3 mb-3 tracking-wider">Förbättra din hemsida</div>
     <div class="space-y-1">
@@ -108,6 +124,7 @@
         @endif
     </div>
 </div>
+@endif
 
 <!-- Marknadsföring -->
 <div>

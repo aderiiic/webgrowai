@@ -168,7 +168,7 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
         }
 
         return back()->with('success', 'SEO audit startad. Uppdatera sidan om en stund.');
-    })->name('seo.audit.run');
+    })->name('seo.audit.run')->middleware('premium');
 
     Route::post('/sites/{site}/seo/audit/run', function (\App\Models\Site $site) {
         $user = auth()->user();
@@ -183,7 +183,7 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
         }
 
         return back()->with('success', 'SEO audit startad för '.$site->name.'.');
-    })->name('sites.seo.audit.run')->whereNumber('site');
+    })->name('sites.seo.audit.run')->whereNumber('site')->middleware('premium');
 
     Route::get('/ai/{id}/export', function (int $id) {
         $content = AiContent::findOrFail($id);
@@ -199,8 +199,8 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
         ]);
     })->name('ai.export')->whereNumber('id');
 
-    Route::get('/seo/audits', AuditHistory::class)->name('seo.audit.history');
-    Route::get('/seo/audits/{auditId}', AuditDetail::class)->name('seo.audit.detail')->whereNumber('auditId');
+    Route::get('/seo/audits', AuditHistory::class)->name('seo.audit.history')->middleware('premium');
+    Route::get('/seo/audits/{auditId}', AuditDetail::class)->name('seo.audit.detail')->whereNumber('auditId')->middleware('premium');
 
     Route::get('/ai', AiIndex::class)->name('ai.list');
     Route::get('/ai/compose', AiCompose::class)->name('ai.compose');
@@ -221,13 +221,13 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
     Route::delete('/api/linkedin/suggestions/{suggestion}', [LinkedInSuggestionController::class, 'destroy'])->name('linkedin.suggestions.destroy');
     Route::post('/api/linkedin/publish', [LinkedInSuggestionController::class, 'publish'])->name('linkedin.publish');
 
-    Route::get('/leads', LeadsIndex::class)->name('leads.index');
-    Route::get('/leads/{id}', LeadDetail::class)->name('leads.detail')->whereNumber('id');
+    Route::get('/leads', LeadsIndex::class)->name('leads.index')->middleware('premium');
+    Route::get('/leads/{id}', LeadDetail::class)->name('leads.detail')->whereNumber('id')->middleware('premium');
 
-    Route::get('/cro/suggestions', SuggestionIndex::class)->name('cro.suggestions.index');
+    Route::get('/cro/suggestions', SuggestionIndex::class)->name('cro.suggestions.index')->middleware('premium');
 
     // Flytta knappar (fetch/analyze) före den parameteriserade routen för att undvika krockar
-    Route::get('/seo/keywords', KeywordSuggestionsIndex::class)->name('seo.keywords.index');
+    Route::get('/seo/keywords', KeywordSuggestionsIndex::class)->name('seo.keywords.index')->middleware('premium');
 //
 //    Route::get('/seo/keywords/fetch', function () {
 //        $ctx = app(CurrentCustomer::class);
@@ -285,11 +285,11 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
         ])->dispatch();
 
         return back()->with('success', "Hämtning av rankingar (upp till {$limit} sidor) och AI‑analys har köats.");
-    })->name('seo.keywords.fetch_analyze');
+    })->name('seo.keywords.fetch_analyze')->middleware('premium');
 
     // Den parameteriserade routen kommer sist + begränsad till numeriskt id
-    Route::get('/cro/suggestions/{id}', SuggestionDetail::class)->name('cro.suggestion.detail')->whereNumber('id');
-    Route::get('/seo/keywords/{id}', KeywordSuggestionDetail::class)->name('seo.keywords.detail')->whereNumber('id');
+    Route::get('/cro/suggestions/{id}', SuggestionDetail::class)->name('cro.suggestion.detail')->whereNumber('id')->middleware('premium');
+    Route::get('/seo/keywords/{id}', KeywordSuggestionDetail::class)->name('seo.keywords.detail')->whereNumber('id')->middleware('premium');
 
     Route::get('/cro/analyze/run', function () {
         /** @var CurrentCustomer $ctx */
@@ -306,7 +306,7 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
         dispatch(new AnalyzeConversionJob($siteId, $limit))->onQueue('default');
 
         return back()->with('success', "Analys köad för vald sajt (upp till {$limit} sidor). Uppdatera sidan om en stund.");
-    })->name('cro.analyze.run');
+    })->name('cro.analyze.run')->middleware('premium');
 
     Route::post('/sites/{site}/cro/analyze', function (\App\Models\Site $site) {
         $user = auth()->user();
@@ -323,7 +323,7 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
         dispatch(new AnalyzeConversionJob($site->id))->onQueue('default');
 
         return back()->with('success', 'CRO‑analys köad för '.$site->name.'. Uppdatera om en stund.');
-    })->name('sites.cro.analyze')->whereNumber('site');
+    })->name('sites.cro.analyze')->whereNumber('site')->middleware('premium');
 
     Route::get('/media/assets', [ImageAssetController::class, 'index'])->name('assets.index');
     Route::post('/media/assets', [ImageAssetController::class, 'store'])->name('assets.store');
