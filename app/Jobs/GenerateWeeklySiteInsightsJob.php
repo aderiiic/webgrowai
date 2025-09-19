@@ -42,16 +42,16 @@ class GenerateWeeklySiteInsightsJob implements ShouldQueue
             : Carbon::now()->startOfWeek(Carbon::MONDAY);
 
         Log::info("Generating insights", [
-            'site_id' => $site->id,
-            'site_name' => $site->name,
-            'week_start' => $weekStart->toDateString(),
-            'force_refresh' => $this->forceRefresh
+            'site_id'       => $site->id,
+            'site_name'     => $site->name,
+            'week_start'    => $weekStart->toDateString(),
+            'force_refresh' => $this->forceRefresh,
         ]);
 
-        // Generera AI-baserade insights
+        // AI‑payload
         $payload = $gen->generateForWeek($site, $weekStart);
 
-        // Samla trenddata med force refresh
+        // Trenddata (force vid behov)
         $trendsData = $trendsCollector->collectTrendsData($site, $this->forceRefresh);
 
         $siteInsight = SiteInsight::updateOrCreate(
@@ -65,10 +65,13 @@ class GenerateWeeklySiteInsightsJob implements ShouldQueue
         );
 
         Log::info("Insights generated successfully", [
-            'site_id' => $site->id,
-            'insight_id' => $siteInsight->id,
-            'topics_count' => count($payload['topics'] ?? []),
-            'trending_topics_count' => count($trendsData['trending_topics'] ?? [])
+            'site_id'               => $site->id,
+            'insight_id'            => $siteInsight->id,
+            'topics_count'          => count($payload['topics'] ?? []),
+            'trending_topics_count' => count($trendsData['trending_topics'] ?? []),
         ]);
+
+        // broadcasta ett event om man vill slippa polling i UI:t.
+        // event(new \App\Events\InsightsGenerated($site->id, $siteInsight->id));
     }
 }
