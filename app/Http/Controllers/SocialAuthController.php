@@ -239,7 +239,7 @@ class SocialAuthController extends Controller
         $http = $this->http();
         $ig   = null;
 
-        foreach ($tryEdges as $try) {
+        foreach ($tryEdges as $index => $try) {
             try {
                 $query = ['access_token' => $token];
                 if ($try['fields']) {
@@ -249,8 +249,19 @@ class SocialAuthController extends Controller
                     $query['limit']  = 1;
                 }
 
+                Log::info('[FB] Försöker IG edge', [
+                    'edge_index' => $index,
+                    'path' => $try['path'],
+                    'query' => $query
+                ]);
+
                 $res  = $http->get($try['path'], ['query' => $query]);
                 $data = json_decode((string) $res->getBody(), true);
+
+                Log::info('[FB] IG response', [
+                    'edge_index' => $index,
+                    'response_data' => $data
+                ]);
 
                 if ($try['key'] === 'data') {
                     $candidate = $data['data'][0] ?? null;
@@ -260,14 +271,27 @@ class SocialAuthController extends Controller
 
                 if (!empty($candidate['id'])) {
                     $ig = $candidate;
+                    Log::info('[FB] IG hittad via edge', [
+                        'edge_index' => $index,
+                        'ig_data' => $ig
+                    ]);
                     break;
                 }
             } catch (\Throwable $e) {
-                // prova nästa edge
+                Log::warning('[FB] IG edge misslyckades', [
+                    'edge_index' => $index,
+                    'path' => $try['path'],
+                    'error' => $e->getMessage(),
+                    'response_body' => $e instanceof ClientException ? (string) $e->getResponse()?->getBody() : null
+                ]);
             }
         }
 
         if (!$ig || empty($ig['id'])) {
+            Log::warning('[FB] Ingen IG hittad för sidan', [
+                'site_id' => $siteId,
+                'page_id' => $pageId
+            ]);
             return null;
         }
 

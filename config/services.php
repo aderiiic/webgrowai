@@ -72,9 +72,6 @@ return [
             'read_insights',
             'email',
             'business_management',
-            'instagram_basic',
-            'instagram_manage_comments',
-            'instagram_manage_insights',
         ],
     ],
 
