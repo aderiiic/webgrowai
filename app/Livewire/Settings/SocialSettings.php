@@ -5,6 +5,7 @@ namespace App\Livewire\Settings;
 use App\Models\SocialIntegration;
 use App\Support\CurrentCustomer;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -263,60 +264,82 @@ class SocialSettings extends Component
 
     private function getPageAccessToken(string $pageId, string $token): ?string
     {
-        $res = $this->http()->get($pageId, [
-            'query' => ['access_token' => $token, 'fields' => 'access_token'],
-        ]);
-        $data = json_decode((string)$res->getBody(), true);
-        return !empty($data['access_token']) ? (string)$data['access_token'] : null;
+        try {
+            $res = $this->http()->get($pageId, [
+                'query' => ['access_token' => $token, 'fields' => 'access_token'],
+            ]);
+            $data = json_decode((string)$res->getBody(), true);
+            return !empty($data['access_token']) ? (string)$data['access_token'] : null;
+        } catch (\Throwable $e) {
+            Log::warning('[FB] Kunde inte hämta Page Access Token', ['page_id' => $pageId, 'err' => $e->getMessage()]);
+            return null;
+        }
     }
 
     private function ensureInstagramFromFacebook(string $pageId, string $token): void
     {
-        $ig = null;
+        $http = $this->http();
 
-        // Försök 1: instagram_business_account
-        try {
-            $res = $this->http()->get($pageId, [
-                'query' => ['access_token' => $token, 'fields' => 'instagram_business_account{id,username}'],
-            ]);
-            $data = json_decode((string)$res->getBody(), true);
-            $ig = $data['instagram_business_account'] ?? null;
-        } catch (\Throwable $e) {
-            // Fortsätt med fallback
-        }
+        $tryEdges = [
+            ['fields' => 'instagram_business_account{id,username}', 'path' => $pageId, 'key' => 'instagram_business_account'],
+            ['fields' => 'connected_instagram_account{id,username}', 'path' => $pageId, 'key' => 'connected_instagram_account'],
+            ['fields' => null, 'path' => $pageId.'/instagram_accounts', 'key' => 'data'],
+        ];
 
-        // Försök 2: connected_instagram_account
-        if (!$ig) {
+        $found = null;
+        foreach ($tryEdges as $try) {
             try {
-                $res = $this->http()->get($pageId, [
-                    'query' => ['access_token' => $token, 'fields' => 'connected_instagram_account{id,username}'],
-                ]);
+                $query = ['access_token' => $token];
+                if ($try['fields']) {
+                    $query['fields'] = $try['fields'];
+                } else {
+                    $query['fields'] = 'id,username';
+                    $query['limit']  = 1;
+                }
+
+                $res  = $http->get($try['path'], ['query' => $query]);
                 $data = json_decode((string)$res->getBody(), true);
-                $ig = $data['connected_instagram_account'] ?? null;
+
+                Log::info('[FB] IG lookup', [
+                    'site_id' => $this->siteId,
+                    'edge'    => $try['path'],
+                    'status'  => $res->getStatusCode(),
+                    'has_key' => array_key_exists($try['key'], $data),
+                ]);
+
+                if ($try['key'] === 'data') {
+                    $candidate = $data['data'][0] ?? null;
+                    if (!empty($candidate['id'])) {
+                        $found = $candidate;
+                        break;
+                    }
+                } else {
+                    $candidate = $data[$try['key']] ?? null;
+                    if (!empty($candidate['id'])) {
+                        $found = $candidate;
+                        break;
+                    }
+                }
             } catch (\Throwable $e) {
-                // Fortsätt med fallback
+                Log::warning('[FB] IG lookup fel', [
+                    'site_id' => $this->siteId,
+                    'edge'    => $try['path'],
+                    'err'     => $e->getMessage(),
+                ]);
+                // pröva nästa edge
             }
         }
 
-        // Försök 3: edge /instagram_accounts
-        if (!$ig) {
-            try {
-                $res = $this->http()->get($pageId.'/instagram_accounts', [
-                    'query' => ['access_token' => $token, 'fields' => 'id,username', 'limit' => 1],
-                ]);
-                $data = json_decode((string)$res->getBody(), true);
-                $ig = $data['data'][0] ?? null;
-            } catch (\Throwable $e) {
-                // Sista fallback misslyckades
-            }
-        }
-
-        if (!$ig || empty($ig['id'])) {
-            // Ingen kopplad IG hittad – inget mer att göra
+        if (!$found || empty($found['id'])) {
+            // Ingen IG hittad – ge tydligt meddelande i UI
+            $this->ig_message = 'Hittade inget kopplat Instagram-konto på vald Facebook-sida. Kontrollera att:
+- Sidan är kopplad till ett Instagram Business/Creator-konto i Meta (Linked Accounts).
+- Du gav appen åtkomst till just denna sida och IG vid inloggningen.
+- Appen har rätt scopes (t.ex. pages_show_list, pages_manage_metadata, pages_read_engagement, instagram_basic).';
             return;
         }
 
-        $igUserId = (string) $ig['id'];
+        $igUserId = (string) $found['id'];
 
         $insta = SocialIntegration::firstOrNew([
             'site_id'  => $this->siteId,
@@ -328,11 +351,11 @@ class SocialSettings extends Component
         $insta->customer_id = $this->customerId;
         $insta->ig_user_id  = $igUserId;
 
-        // Token: använd existerande IG‑token om finns, annars återanvänd page token
+        // Använd befintligt IG-token om finns, annars återanvänd sidtoken
         if ($this->ig_access_token !== '') {
             $insta->access_token = $this->ig_access_token;
         } elseif ($insta->exists && !empty($insta->access_token)) {
-            // behåll
+            // behåll befintlig IG‑token
         } else {
             $insta->access_token = $token;
         }
@@ -340,7 +363,6 @@ class SocialSettings extends Component
         $insta->status = 'active';
         $insta->save();
 
-        // Uppdatera UI‑fält/status
         $this->ig_user_id = $insta->ig_user_id;
         $this->ig_status  = $insta->status;
         $this->ig_message = 'Instagram auto‑anslutet via vald Facebook‑sida.';
