@@ -45,6 +45,7 @@ Schedule::command('weekly:digest monday')->mondays()->at('08:00');
 Schedule::command('weekly:digest friday')->fridays()->at('15:00');
 Schedule::command('suggestions:purge-expired')->dailyAt('03:10');
 Schedule::command('insights:generate')->weeklyOn(1, '07:00')->onOneServer()->withoutOverlapping();
+Schedule::command('insights:generate')->weeklyOn(3, '14:00')->onOneServer()->withoutOverlapping();
 
 Schedule::command('social:process-scheduled')->everyMinute()->withoutOverlapping()->onOneServer();
 Schedule::command('metrics:refresh-recent --hours=72 --stale=6')

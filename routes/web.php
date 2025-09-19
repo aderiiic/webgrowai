@@ -341,6 +341,8 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
     Route::get('/planner', PlannerIndex::class)->name('planner.index');
 
     Route::get('/ai/images', AiImageGenerator::class)->name('ai.images');
+
+    Route::get('/insights', \App\Livewire\Insights\Index::class)->name('insights.index');
 });
 
 Route::middleware(['auth','verified','can:admin'])->prefix('admin')->name('admin.')->group(function () {
