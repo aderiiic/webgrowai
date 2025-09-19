@@ -72,6 +72,7 @@ return [
             'read_insights',
             'email',
             'business_management',
+            'instagram_basic',
         ],
     ],
 
