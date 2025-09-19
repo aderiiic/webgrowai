@@ -3,6 +3,7 @@
 namespace App\Services\Insights;
 
 use App\Models\Site;
+use App\Models\SocialIntegration;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -430,43 +431,45 @@ class TrendsCollector
     private function getFacebookPopularContent(Site $site): array
     {
         try {
-            $fbIntegration = $site->integrations()
+            $fb = SocialIntegration::where('site_id', $site->id)
                 ->where('provider', 'facebook')
                 ->where('status', 'active')
                 ->first();
 
-            if (!$fbIntegration || !$fbIntegration->access_token) {
+            if (!$fb || !$fb->access_token || !$fb->page_id) {
+                Log::info('FB: ingen aktiv integration eller saknar token/page_id', ['site_id' => $site->id]);
                 return [];
             }
 
-            $response = Http::timeout(15)->get("https://graph.facebook.com/v19.0/{$fbIntegration->page_id}/posts", [
-                'access_token' => $fbIntegration->access_token,
+            $response = Http::timeout(15)->get("https://graph.facebook.com/v19.0/{$fb->page_id}/posts", [
+                'access_token' => $fb->access_token,
                 'fields'       => 'message,created_time,engagement',
                 'since'        => now()->subDays(30)->toISOString(),
-                'limit'        => 10
+                'limit'        => 10,
             ]);
 
             if ($response->successful()) {
                 $posts = $response->json()['data'] ?? [];
-                $popularContent = [];
-
-                foreach (array_slice($posts, 0, 2) as $post) {
-                    if (!empty($post['message'])) {
-                        $popularContent[] = [
+                return collect($posts)
+                    ->filter(fn($p) => !empty($p['message']))
+                    ->map(function ($post) {
+                        return [
                             'type'             => 'social_post',
-                            'title'            => \Illuminate\Support\Str::limit($post['message'], 50),
-                            'engagement_score' => $post['engagement']['count'] ?? 0,
+                            'title'            => \Illuminate\Support\Str::limit((string) $post['message'], 80),
+                            'engagement_score' => (int)($post['engagement']['count'] ?? 0),
                             'platform'         => 'Facebook',
-                            'why'              => 'Högt engagemang på din Facebook-sida'
+                            'why'              => 'Högt engagemang på din Facebook-sida',
                         ];
-                    }
-                }
-
-                Log::info("Got Facebook content", ['count' => count($popularContent)]);
-                return $popularContent;
+                    })
+                    ->sortByDesc('engagement_score')
+                    ->take(5)
+                    ->values()
+                    ->all();
             }
-        } catch (\Exception $e) {
-            Log::warning('Facebook content fetch error', ['error' => $e->getMessage()]);
+
+            Log::warning('FB fetch non-2xx', ['status' => $response->status()]);
+        } catch (\Throwable $e) {
+            Log::warning('FB content fetch error', ['error' => $e->getMessage(), 'site_id' => $site->id]);
         }
 
         return [];
@@ -631,23 +634,25 @@ class TrendsCollector
     private function getInstagramPopularContent(Site $site): array
     {
         try {
-            $igIntegration = $site->integrations()
+            $ig = SocialIntegration::where('site_id', $site->id)
                 ->where('provider', 'instagram')
                 ->where('status', 'active')
                 ->first();
 
-            if (!$igIntegration || !$igIntegration->access_token || !$igIntegration->page_id) {
+            if (!$ig || !$ig->access_token) {
+                Log::info('IG: ingen aktiv integration eller saknar token', ['site_id' => $site->id]);
                 return [];
             }
 
-            $accountId = $igIntegration->ig_user_id ?: $igIntegration->page_id;
+            // Rätt konto-ID för Graph: ig_user_id om möjligt, annars fallback
+            $accountId = $ig->ig_user_id ?: $ig->page_id;
             if (!$accountId) {
+                Log::info('IG: saknar ig_user_id och page_id', ['site_id' => $site->id]);
                 return [];
             }
 
-            // page_id här bör vara IG business account id om du lagrar det; annars behöver du slå upp det via FB‑sidan
-            $res = Http::timeout(15)->get("https://graph.facebook.com/v19.0/{$igIntegration->page_id}/media", [
-                'access_token' => $igIntegration->access_token,
+            $res = Http::timeout(15)->get("https://graph.facebook.com/v19.0/{$accountId}/media", [
+                'access_token' => $ig->access_token,
                 'fields'       => 'caption,like_count,comments_count,media_type,timestamp',
                 'since'        => now()->subDays(30)->toISOString(),
                 'limit'        => 10,
@@ -657,68 +662,80 @@ class TrendsCollector
                 $items = $res->json()['data'] ?? [];
                 return collect($items)
                     ->map(function ($i) {
-                        $score = (int)($i['like_count'] ?? 0) + (int)($i['comments_count'] ?? 0);
+                        $likes = (int)($i['like_count'] ?? 0);
+                        $comments = (int)($i['comments_count'] ?? 0);
+                        $score = $likes + $comments;
                         return [
                             'platform'         => 'Instagram',
-                            'title'            => Str::limit((string)($i['caption'] ?? ''), 80),
+                            'title'            => \Illuminate\Support\Str::limit((string)($i['caption'] ?? ''), 120),
                             'engagement_score' => $score,
                             'why'              => 'Bra engagemang på Instagram senaste 30 dagarna',
                         ];
                     })
+                    ->filter(fn($i) => !empty($i['title']) || $i['engagement_score'] > 0)
                     ->sortByDesc('engagement_score')
-                    ->take(3)
+                    ->take(5)
                     ->values()
                     ->all();
             }
-            Log::warning('Instagram content fetch non-2xx', ['status' => $res->status()]);
+
+            Log::warning('IG fetch non-2xx', ['status' => $res->status()]);
         } catch (\Throwable $e) {
-            Log::warning('Instagram content fetch error', ['error' => $e->getMessage()]);
+            Log::warning('IG content fetch error', ['error' => $e->getMessage(), 'site_id' => $site->id]);
         }
+
         return [];
     }
 
     private function getLinkedInPopularContent(Site $site): array
     {
-        // Kräver LinkedIn Marketing API + företagssida kopplad. Lämnar som ”best effort”.
         try {
-            $liIntegration = $site->integrations()
+            $li = SocialIntegration::where('site_id', $site->id)
                 ->where('provider', 'linkedin')
                 ->where('status', 'active')
                 ->first();
 
-            if (!$liIntegration || !$liIntegration->access_token || !$liIntegration->page_id) {
+            if (!$li || !$li->access_token || !$li->page_id) {
+                Log::info('LI: ingen aktiv integration eller saknar token/page_id', ['site_id' => $site->id]);
                 return [];
             }
 
-            $owner = $liIntegration->page_id;
+            // Stötta både URN och rena ID – extrahera orgId och använd URN i authors
+            $owner = (string) $li->page_id;
             $orgId = Str::startsWith($owner, 'urn:li:organization:')
                 ? Str::after($owner, 'urn:li:organization:')
                 : $owner;
+            $authorUrn = "urn:li:organization:{$orgId}";
 
-            // Exempel: hämta organisationsposter (endpoints kan variera med API-version/åtkomst)
-            $res = Http::timeout(15)->withToken($liIntegration->access_token)
+            $res = Http::timeout(15)
+                ->withToken($li->access_token)
                 ->get('https://api.linkedin.com/v2/ugcPosts', [
-                    'q' => 'authors',
-                    'authors' => "List(urn:li:organization:{$liIntegration->page_id})",
-                    'sortBy' => 'LAST_MODIFIED',
-                    'count' => 10,
+                    'q'       => 'authors',
+                    'authors' => "List({$authorUrn})",
+                    'sortBy'  => 'LAST_MODIFIED',
+                    'count'   => 10,
                 ]);
 
             if ($res->successful()) {
                 $items = $res->json()['elements'] ?? [];
                 return collect($items)->map(function ($i) {
-                    $text = data_get($i, 'specificContent.com.linkedin.ugc.ShareContent.shareCommentary.text', '');
+                    $text = (string) data_get($i, 'specificContent.com.linkedin.ugc.ShareContent.shareCommentary.text', '');
                     return [
                         'platform'         => 'LinkedIn',
-                        'title'            => Str::limit((string) $text, 100),
-                        'engagement_score' => 70, // Placeholder: kräver ytterligare anrop för reactions/comments
+                        'title'            => \Illuminate\Support\Str::limit($text, 140),
+                        'engagement_score' => 70, // Förfinas vid behov med extra metrics-anrop
                         'why'              => 'Senaste inlägg på din företagssida',
                     ];
-                })->take(3)->values()->all();
+                })
+                    ->filter(fn($i) => !empty($i['title']))
+                    ->take(5)
+                    ->values()
+                    ->all();
             }
-            Log::warning('LinkedIn content fetch non-2xx', ['status' => $res->status()]);
+
+            Log::warning('LI fetch non-2xx', ['status' => $res->status()]);
         } catch (\Throwable $e) {
-            Log::warning('LinkedIn content fetch error', ['error' => $e->getMessage()]);
+            Log::warning('LI content fetch error', ['error' => $e->getMessage(), 'site_id' => $site->id]);
         }
 
         return [];
