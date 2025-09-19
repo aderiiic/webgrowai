@@ -24,8 +24,7 @@ class SocialAuthController extends Controller
             'response_type' => 'code',
             'scope'         => implode(',', $scopes),
             'state'         => $state,
-            // Om användaren tidigare nekat någon permission: be Facebook att fråga igen
-            'auth_type'     => 'rerequest',
+            'auth_type'     => 'rerequest', // fråga igen om något nekats tidigare
         ];
 
         $url = 'https://www.facebook.com/v19.0/dialog/oauth?' . http_build_query($params);
@@ -41,7 +40,6 @@ class SocialAuthController extends Controller
         Log::info('[FB] Callback', ['customer' => $customer?->id]);
         abort_unless($customer, 403);
 
-        // Viktigt: läs aktiv sajt och säkerställ att vi sparar per SAJT
         $siteId = $current->getSiteId();
         abort_unless($siteId, 400, 'Ingen aktiv sajt vald vid koppling.');
 
@@ -53,7 +51,7 @@ class SocialAuthController extends Controller
         $client = new Client(['timeout' => 30]);
 
         try {
-            // 1) code -> user access token
+            // 1) Byt code -> user access token
             $tokenRes = $client->get('https://graph.facebook.com/v19.0/oauth/access_token', [
                 'query' => [
                     'client_id'     => config('services.facebook.client_id'),
@@ -66,7 +64,7 @@ class SocialAuthController extends Controller
             $userAccessToken = $token['access_token'] ?? null;
             abort_unless($userAccessToken, 400, 'Kunde inte hämta user access token');
 
-            // 2) försök long-lived
+            // 2) Försök long‑lived
             try {
                 $llRes = $client->get('https://graph.facebook.com/v19.0/oauth/access_token', [
                     'query' => [
@@ -81,10 +79,10 @@ class SocialAuthController extends Controller
                     $userAccessToken = $llBody['access_token'];
                 }
             } catch (\Throwable $e) {
-                Log::info('[FB] Long-lived token misslyckades', ['error' => $e->getMessage()]);
+                Log::info('[FB] Long‑lived token misslyckades', ['error' => $e->getMessage()]);
             }
 
-            // 3) Hämta sidor + välj en (du kan utöka UI för att välja)
+            // 3) Hämta sidor och välj en (MVP: första – kan utökas till UI-val)
             $pagesRes = $client->get('https://graph.facebook.com/v19.0/me/accounts', [
                 'query' => [
                     'access_token' => $userAccessToken,
@@ -101,32 +99,27 @@ class SocialAuthController extends Controller
                     ->with('error', 'Inga Facebook-sidor hittades för kontot.');
             }
 
-            $pageId = $firstPage['id'] ?? null;
+            $pageId          = $firstPage['id'] ?? null;
             $pageAccessToken = $firstPage['access_token'] ?? null;
             abort_unless($pageId && $pageAccessToken, 400, 'Sidan saknar giltigt Page Access Token');
 
-            // 4) Spara Facebook per SAJT
+            // 4) Spara Facebook-integration per sajt
             SocialIntegration::updateOrCreate(
                 ['customer_id' => $customer->id, 'site_id' => $siteId, 'provider' => 'facebook'],
                 ['page_id' => $pageId, 'access_token' => $pageAccessToken, 'status' => 'active']
             );
+            Log::info('[FB] Page sparad', ['site_id' => $siteId, 'page_id' => $pageId]);
 
-            // 5) Försök även IG Business User för samma sida per SAJT
-            try {
-                $igRes = $client->get("https://graph.facebook.com/v19.0/{$pageId}", [
-                    'query' => ['access_token' => $pageAccessToken, 'fields' => 'instagram_business_account'],
+            // 5) Auto‑koppla IG Business (robust: testa flera edges)
+            $ig = $this->ensureInstagramFromFacebook($siteId, $pageId, $pageAccessToken, $customer->id);
+            if ($ig) {
+                Log::info('[FB] IG auto‑kopplad', [
+                    'site_id'   => $siteId,
+                    'ig_user_id'=> $ig['id'] ?? null,
+                    'username'  => $ig['username'] ?? null
                 ]);
-                $igData = json_decode((string) $igRes->getBody(), true);
-                $igUserId = $igData['instagram_business_account']['id'] ?? null;
-
-                if ($igUserId) {
-                    SocialIntegration::updateOrCreate(
-                        ['customer_id' => $customer->id, 'site_id' => $siteId, 'provider' => 'instagram'],
-                        ['ig_user_id' => $igUserId, 'access_token' => $pageAccessToken, 'status' => 'active']
-                    );
-                }
-            } catch (\Throwable $e) {
-                Log::info('[IG Link] Ingen IG business eller fel', ['error' => $e->getMessage()]);
+            } else {
+                Log::info('[FB] IG ej hittad/kopplad för sidan', ['site_id' => $siteId, 'page_id' => $pageId]);
             }
 
             return redirect()->route('settings.social')->with('success', 'Facebook ansluten för denna sajt. (Instagram om kopplad)');
@@ -145,26 +138,22 @@ class SocialAuthController extends Controller
         }
     }
 
-    public function instagramCallback(Request $req, CurrentCustomer $current)
-    {
-        // Återanvänd FB-flödet – nu sparas det per sajt i facebookCallback
-        return $this->facebookCallback($req, $current);
-    }
-
-
-    // Instagram via direkt FB-login-flöde: vi återanvänder facebookRedirect/callback.
-    // Alternativ callback om du vill ha separat knapp/flow:
     public function instagramRedirect()
     {
-        // Reuse Facebook scopes/flow men länka från “Anslut Instagram”
+        // Återanvänd FB‑flödet (samma scopes), men utlösts från “Anslut Instagram”
         return $this->facebookRedirect(request());
+    }
+
+    public function instagramCallback(Request $req, CurrentCustomer $current)
+    {
+        // Återanvänd FB‑callback – den sparar både FB och IG per sajt om möjligt
+        return $this->facebookCallback($req, $current);
     }
 
     public function linkedinRedirect(Request $req)
     {
         Log::info('[LinkedIn] Redirecting');
         $scopes = config('services.linkedin.scopes', []);
-        Log::info('[LinkedIn] Scopes', ['scopes' => $scopes]);
         $params = [
             'response_type' => 'code',
             'client_id'     => config('services.linkedin.client_id'),
@@ -172,9 +161,7 @@ class SocialAuthController extends Controller
             'state'         => csrf_token(),
             'scope'         => implode(' ', $scopes),
         ];
-        Log::info('[LinkedIn] Params', ['params' => $params]);
         $url = 'https://www.linkedin.com/oauth/v2/authorization?' . http_build_query($params);
-        Log::info('[LinkedIn] URL', ['url' => $url]);
         return redirect()->away($url);
     }
 
@@ -191,7 +178,7 @@ class SocialAuthController extends Controller
 
         $client = new Client(['timeout' => 30]);
 
-        // 1) Byt code -> Access token
+        // 1) code -> access token
         $tokenRes = $client->post('https://www.linkedin.com/oauth/v2/accessToken', [
             'form_params' => [
                 'grant_type'    => 'authorization_code',
@@ -205,7 +192,7 @@ class SocialAuthController extends Controller
         $accessToken = $token['access_token'] ?? null;
         abort_unless($accessToken, 400, 'Kunde inte hämta access token');
 
-        // 2) Hämta person-id
+        // 2) userinfo (person)
         $api = new Client([
             'base_uri' => 'https://api.linkedin.com/',
             'timeout'  => 30,
@@ -217,37 +204,78 @@ class SocialAuthController extends Controller
 
         $userinfoRes = $api->get('v2/userinfo');
         $userinfo = json_decode((string) $userinfoRes->getBody(), true);
-
         $personSub = $userinfo['sub'] ?? null;
         abort_unless($personSub, 400, 'Kunde inte hämta userinfo');
 
-        $personUrn = 'urn:li:person:' . $personSub;
+        $ownerUrn = 'urn:li:person:' . $personSub;
 
-        // 3) Försök hitta första organisationen (om några) – annars postar vi som person
-        $ownerUrn = $personUrn;
-//        try {
-//            $orgsRes = $api->get('organizationalEntityAcls', [
-//                'query' => [
-//                    'q' => 'roleAssignee',
-//                    'projection' => '(elements*(organizationalTarget~(id,localizedName)))',
-//                ],
-//            ]);
-//            $orgs = json_decode((string) $orgsRes->getBody(), true);
-//            $first = $orgs['elements'][0]['organizationalTarget~']['id'] ?? null;
-//            if ($first) {
-//                $ownerUrn = 'urn:li:organization:' . $first;
-//            }
-//        } catch (\Throwable $e) {
-//            Log::info('[LinkedIn] Inga organisationer eller fel', ['error' => $e->getMessage()]);
-//        }
-
-        // 4) Spara/uppdatera social_integrations för LinkedIn
-        // Vi återanvänder page_id för att lagra "owner URN" (person eller org).
+        // 3) Spara/uppdatera
         SocialIntegration::updateOrCreate(
             ['customer_id' => $customer->id, 'site_id' => $siteId, 'provider' => 'linkedin'],
             ['page_id' => $ownerUrn, 'access_token' => $accessToken, 'status' => 'active']
         );
 
         return redirect()->route('settings.social')->with('success', 'LinkedIn ansluten.');
+    }
+
+    // ------------------------------------------------------------------------------------
+    // Hjälpare för IG‑auto‑koppling via Page
+    // ------------------------------------------------------------------------------------
+
+    private function http(): Client
+    {
+        return new Client(['base_uri' => 'https://graph.facebook.com/v19.0/', 'timeout' => 20]);
+    }
+
+    // Försök hitta IG via flera edges och spara per site
+    private function ensureInstagramFromFacebook(int $siteId, string $pageId, string $token, ?int $customerId = null): ?array
+    {
+        $tryEdges = [
+            ['path' => $pageId,                     'fields' => 'instagram_business_account{id,username}',  'key' => 'instagram_business_account'],
+            ['path' => $pageId,                     'fields' => 'connected_instagram_account{id,username}', 'key' => 'connected_instagram_account'],
+            ['path' => $pageId . '/instagram_accounts', 'fields' => null,                                  'key' => 'data'],
+        ];
+
+        $http = $this->http();
+        $ig   = null;
+
+        foreach ($tryEdges as $try) {
+            try {
+                $query = ['access_token' => $token];
+                if ($try['fields']) {
+                    $query['fields'] = $try['fields'];
+                } else {
+                    $query['fields'] = 'id,username';
+                    $query['limit']  = 1;
+                }
+
+                $res  = $http->get($try['path'], ['query' => $query]);
+                $data = json_decode((string) $res->getBody(), true);
+
+                if ($try['key'] === 'data') {
+                    $candidate = $data['data'][0] ?? null;
+                } else {
+                    $candidate = $data[$try['key']] ?? null;
+                }
+
+                if (!empty($candidate['id'])) {
+                    $ig = $candidate;
+                    break;
+                }
+            } catch (\Throwable $e) {
+                // prova nästa edge
+            }
+        }
+
+        if (!$ig || empty($ig['id'])) {
+            return null;
+        }
+
+        SocialIntegration::updateOrCreate(
+            ['customer_id' => $customerId, 'site_id' => $siteId, 'provider' => 'instagram'],
+            ['ig_user_id' => (string) $ig['id'], 'access_token' => $token, 'status' => 'active']
+        );
+
+        return $ig;
     }
 }
