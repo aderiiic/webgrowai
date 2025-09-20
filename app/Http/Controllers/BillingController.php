@@ -32,6 +32,11 @@ class BillingController extends Controller
         return $user->newSubscription('default', $data['price'])->checkout([
             'success_url' => route('billing.success').'?session_id={CHECKOUT_SESSION_ID}',
             'cancel_url'  => route('billing.pricing'),
+
+            'automatic_tax' => ['enabled' => true],
+            'billing_address_collection' => 'required',
+            'customer_update' => ['address' => 'auto'],
+            'tax_id_collection' => ['enabled' => true],
         ]);
     }
 
