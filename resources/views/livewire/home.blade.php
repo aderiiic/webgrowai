@@ -100,7 +100,7 @@
             </a>
 
             <!-- Besöksstatistik -->
-            <a href="{{ route('analytics.index') }}" class="secondary-action-card">
+            <a href="#" class="secondary-action-card">
                 <div class="bg-white rounded-xl p-6 shadow-md hover:shadow-lg border border-gray-200 hover:border-gray-300 transition-all">
                     <div class="flex flex-col items-center text-center">
                         <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mb-3">
@@ -108,8 +108,8 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12h4l3 8 4-16 3 8h4"/>
                             </svg>
                         </div>
-                        <h3 class="font-semibold text-gray-900 mb-1">Besöksstatistik</h3>
-                        <p class="text-sm text-gray-600">Se hur det går</p>
+                        <h3 class="font-semibold text-gray-900 mb-1">Inställningar</h3>
+                        <p class="text-sm text-gray-600">Anpassa dina inställningar</p>
                     </div>
                 </div>
             </a>
