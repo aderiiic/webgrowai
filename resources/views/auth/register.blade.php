@@ -178,9 +178,9 @@
                            class="mt-1 h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                     <label for="terms" class="text-sm text-gray-700">
                         Jag har läst och godkänner
-                        <a href="{{ url('/terms') }}" target="_blank" rel="noopener" class="text-indigo-600 hover:text-indigo-800 underline underline-offset-2">användarvillkoren</a>
+                        <a href="{{ route('terms') }}" target="_blank" rel="noopener" class="text-indigo-600 hover:text-indigo-800 underline underline-offset-2">användarvillkoren</a>
                         och
-                        <a href="{{ url('/privacy') }}" target="_blank" rel="noopener" class="text-indigo-600 hover:text-indigo-800 underline underline-offset-2">integritetspolicyn</a>.
+                        <a href="{{ route('privacy') }}" target="_blank" rel="noopener" class="text-indigo-600 hover:text-indigo-800 underline underline-offset-2">integritetspolicyn</a>.
                     </label>
                 </div>
                 @error('terms')<div class="mt-2 text-sm text-red-600">{{ $message }}</div>@enderror

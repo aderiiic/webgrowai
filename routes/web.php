@@ -115,6 +115,7 @@ Route::post('/demo-request', function (\Illuminate\Http\Request $request) {
 Route::get('/integritet', function () {
     return view('policy');
 })->name('privacy');
+
 Route::get('/villkor', function () {
     return view('terms');
 })->name('terms');
@@ -521,7 +522,7 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::get('/register', function () {
-   return view('coming-soon');
+   return view('auth.register');
 })->name('register');
 
 Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
