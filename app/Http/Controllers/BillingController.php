@@ -28,6 +28,16 @@ class BillingController extends Controller
             'price' => 'required|string', // Stripe Price ID, ex. "price_123"
         ]);
 
+        $user->createOrGetStripeCustomer();
+        $user->updateStripeCustomer([
+            'address' => array_filter([
+                'country'     => $user->country ?? 'SE',        // SE om dina kunder är svenska nu
+                'postal_code' => $user->postal_code ?? null,
+                'city'        => $user->city ?? null,
+                'line1'       => $user->address_line1 ?? null,
+            ]),
+        ]);
+
         // Skapa Stripe Checkout för prenumeration
         return $user->newSubscription('default', $data['price'])->checkout([
             'success_url' => route('billing.success').'?session_id={CHECKOUT_SESSION_ID}',
