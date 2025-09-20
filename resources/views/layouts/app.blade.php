@@ -51,7 +51,7 @@
                     @auth
                         <div class="mt-3">
                             <a href="{{ route('billing.portal') }}"
-                               class="inline-flex items-center px-3 py-2 rounded-lg text-sm bg-indigo-600 text-white hover:bg-indigo-700">
+                               class="w-full inline-flex items-center px-3 py-2 rounded-lg text-sm bg-indigo-600 text-white hover:bg-indigo-700">
                                 Hantera fakturering
                             </a>
                         </div>
