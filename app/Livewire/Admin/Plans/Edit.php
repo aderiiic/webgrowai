@@ -16,6 +16,10 @@ class Edit extends Component
     public int $price_yearly = 0;
     public bool $is_active = true;
 
+    // NYTT: Stripe Price‑ID för månads/års‑pris
+    public ?string $stripe_price_monthly = null;
+    public ?string $stripe_price_yearly  = null;
+
     // Feature-fält
     public array $features = []; // key => ['is_enabled'=>bool, 'limit_value'=>string|null, 'id'=>int|null]
 
@@ -26,6 +30,10 @@ class Edit extends Component
         $this->price_monthly = (int) $plan->price_monthly;
         $this->price_yearly = (int) $plan->price_yearly;
         $this->is_active = (bool) $plan->is_active;
+
+        // NYTT: hämta Stripe Price‑ID
+        $this->stripe_price_monthly = $plan->stripe_price_monthly;
+        $this->stripe_price_yearly  = $plan->stripe_price_yearly;
 
         $this->features = $plan->features()
             ->orderBy('key')
@@ -45,6 +53,8 @@ class Edit extends Component
             'name' => 'required|string|max:100',
             'price_monthly' => 'required|integer|min:0',
             'price_yearly' => 'required|integer|min:0',
+            'stripe_price_monthly' => 'nullable|string|max:255',
+            'stripe_price_yearly'  => 'nullable|string|max:255',
         ]);
 
         $this->plan->update([
@@ -52,6 +62,9 @@ class Edit extends Component
             'price_monthly' => $this->price_monthly,
             'price_yearly' => $this->price_yearly,
             'is_active' => $this->is_active,
+            // NYTT: spara Stripe Price‑ID
+            'stripe_price_monthly' => $this->stripe_price_monthly ?: null,
+            'stripe_price_yearly'  => $this->stripe_price_yearly ?: null,
         ]);
 
         session()->flash('success', 'Plan uppdaterad.');
@@ -67,7 +80,6 @@ class Edit extends Component
         foreach ($this->features as $key => $data) {
             $cleanKey = trim($key);
             if ($cleanKey === '') {
-                // hoppa över tomma rader
                 continue;
             }
             PlanFeature::updateOrCreate(
@@ -81,11 +93,9 @@ class Edit extends Component
             );
         }
 
-        // Rensa bort features som tagits bort i UI
         $existingKeys = collect($this->features)->keys()->map(fn($k) => trim($k))->filter()->values();
         $this->plan->features()->whereNotIn('key', $existingKeys)->delete();
 
-        // Reload för att uppdatera ids
         $this->mount($this->plan->fresh('features'));
 
         session()->flash('success', 'Features sparade.');
