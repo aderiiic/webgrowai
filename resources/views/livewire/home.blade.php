@@ -1,4 +1,18 @@
+@php
+    use App\Services\Billing\PlanService;
+    use App\Support\CurrentCustomer;
 
+    $currentCustomerService = app(CurrentCustomer::class);
+    $planService = app(PlanService::class);
+
+    $customer = $currentCustomerService->resolveDefaultForUser();
+    $subscription = $customer ? $planService->getSubscription($customer) : null;
+    $planId = $planService->getPlanId($subscription);
+    $hasAccess = $customer ? $planService->hasAccess($customer) : false;
+
+    // Kontrollera om användaren har Premium-funktioner (plan 2 eller 3)
+    $hasPremiumAccess = $planId && in_array($planId, [2, 3]);
+@endphp
 <div class="space-y-8">
     <!-- Förenklad header med personlig hälsning -->
     <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl">
@@ -154,6 +168,7 @@
     </div>
 
     <!-- Viktiga kort för återkommande användare (mindre prominent) -->
+    @if ($hasPremiumAccess)
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="bg-white rounded-xl shadow-sm border">
             <div class="p-6">
@@ -166,6 +181,7 @@
             </div>
         </div>
     </div>
+    @endif
 
     <!-- Senaste aktivitet (förenklad) -->
     <div class="bg-white rounded-xl shadow-sm border">
@@ -174,6 +190,7 @@
         </div>
     </div>
 
+    @if ($hasPremiumAccess)
     <!-- Utbyggda alternativ (för avancerade användare) -->
     <div class="text-center">
         <button id="show-more-actions" class="text-gray-500 hover:text-gray-700 font-medium">
@@ -213,6 +230,7 @@
             </a>
         </div>
     </div>
+    @endif
 
     <style>
         .action-card {
