@@ -8,10 +8,10 @@ class SubscriptionManager
 {
     public function applyPlanChange(int $customerId, int $planId, string $billingCycle = 'monthly'): void
     {
-        $sub = DB::table('subscriptions')->where('customer_id', $customerId)->orderByDesc('id')->first();
+        $sub = DB::table('app_subscriptions')->where('customer_id', $customerId)->orderByDesc('id')->first();
 
         if ($sub) {
-            DB::table('subscriptions')->where('id', $sub->id)->update([
+            DB::table('app_subscriptions')->where('id', $sub->id)->update([
                 'plan_id' => $planId,
                 'billing_cycle' => $billingCycle,
                 'status' => 'active',
@@ -19,7 +19,7 @@ class SubscriptionManager
                 'updated_at' => now(),
             ]);
         } else {
-            DB::table('subscriptions')->insert([
+            DB::table('app_subscriptions')->insert([
                 'customer_id' => $customerId,
                 'plan_id'     => $planId,
                 'status'      => 'active',

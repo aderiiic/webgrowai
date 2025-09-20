@@ -9,7 +9,7 @@ class PlanService
 {
     public function getSubscription(Customer $customer): ?object
     {
-        return DB::table('subscriptions')->where('customer_id', $customer->id)->orderByDesc('id')->first();
+        return DB::table('app_subscriptions')->where('customer_id', $customer->id)->orderByDesc('id')->first();
     }
 
     public function inTrial(?object $sub): bool

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Analytics\Ga4OAuthController;
+use App\Http\Controllers\BillingController;
 use App\Http\Controllers\ImageAssetController;
 use App\Http\Controllers\Integrations\ShopifyOAuthController;
 use App\Http\Controllers\LinkedInSuggestionController;
@@ -70,6 +71,7 @@ use App\Livewire\Admin\Invoices\Show as AdminInvoicesShow;
 use App\Livewire\Admin\Subscriptions\RequestsIndex as AdminSubRequests;
 use App\Livewire\Admin\Customers\Index as AdminCustomersIndex;
 use App\Livewire\Admin\Sites\Index as AdminSitesIndex;
+use Laravel\Cashier\Http\Controllers\WebhookController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -526,3 +528,14 @@ Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
 Route::get('/robots.txt', [SeoController::class, 'robots'])->name('robots');
 
 Route::post('/contact', [App\Http\Controllers\ContactController::class, 'store'])->name('contact.store');
+
+Route::post('/stripe/webhook', [WebhookController::class, 'handleWebhook'])
+    ->name('cashier.webhook');
+
+// Billing: pricing/checkout/success/portal
+Route::middleware(['auth','verified'])->group(function () {
+    Route::get('/billing/pricing', [BillingController::class, 'pricing'])->name('billing.pricing');
+    Route::post('/billing/checkout', [BillingController::class, 'checkout'])->name('billing.checkout');
+    Route::get('/billing/success', [BillingController::class, 'success'])->name('billing.success');
+    Route::get('/billing/portal', [BillingController::class, 'portal'])->name('billing.portal');
+});

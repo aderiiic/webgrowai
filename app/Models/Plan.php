@@ -13,6 +13,8 @@ class Plan extends Model
         'is_active',
         'price_monthly',
         'price_yearly',
+        'stripe_price_monthly',
+        'stripe_price_yearly',
     ];
 
     protected $casts = [

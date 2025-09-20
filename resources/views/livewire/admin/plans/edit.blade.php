@@ -22,13 +22,27 @@
             <!-- Plan Details Section -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-100">
-                    <div class="flex items-center">
-                        <div class="p-2 bg-blue-100 rounded-lg">
-                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="p-2 bg-blue-100 rounded-lg">
+                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                            </div>
+                            <h2 class="ml-3 text-lg font-semibold text-gray-900">Planinformation</h2>
                         </div>
-                        <h2 class="ml-3 text-lg font-semibold text-gray-900">Planinformation</h2>
+
+                        <!-- Snabb status om Stripe IDs -->
+                        <div class="flex items-center gap-2">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs
+                                {{ $stripe_price_monthly ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600' }}">
+                                Månads‑price {{ $stripe_price_monthly ? 'OK' : 'saknas' }}
+                            </span>
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs
+                                {{ $stripe_price_yearly ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600' }}">
+                                Års‑price {{ $stripe_price_yearly ? 'OK' : 'saknas' }}
+                            </span>
+                        </div>
                     </div>
                 </div>
 
@@ -39,104 +53,69 @@
                             <input type="text" wire:model.defer="name"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                                    placeholder="t.ex. Basic, Pro, Enterprise">
-                            @error('name')
-                            <p class="text-red-600 text-sm flex items-center mt-1">
-                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                                </svg>
-                                {{ $message }}
-                            </p>
-                            @enderror
+                            @error('name') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
                         </div>
 
                         <div class="space-y-2">
                             <label class="block text-sm font-medium text-gray-700">Månadspris (SEK) *</label>
-                            <div class="relative">
-                                <input type="number" wire:model.defer="price_monthly"
-                                       class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                                       placeholder="0">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span class="text-gray-500 text-sm">kr</span>
-                                </div>
-                            </div>
-                            @error('price_monthly')
-                            <p class="text-red-600 text-sm flex items-center mt-1">
-                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                                </svg>
-                                {{ $message }}
-                            </p>
-                            @enderror
+                            <input type="number" wire:model.defer="price_monthly"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                   placeholder="0">
+                            @error('price_monthly') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
                         </div>
 
                         <div class="space-y-2">
                             <label class="block text-sm font-medium text-gray-700">Årspris (SEK) *</label>
-                            <div class="relative">
-                                <input type="number" wire:model.defer="price_yearly"
-                                       class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                                       placeholder="0">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span class="text-gray-500 text-sm">kr</span>
-                                </div>
-                            </div>
-                            @error('price_yearly')
-                            <p class="text-red-600 text-sm flex items-center mt-1">
-                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                                </svg>
-                                {{ $message }}
-                            </p>
-                            @enderror
+                            <input type="number" wire:model.defer="price_yearly"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                   placeholder="0">
+                            @error('price_yearly') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
                         </div>
 
-                        <div class="flex items-end space-y-2">
-                            <label class="inline-flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200 cursor-pointer">
+                        <div class="flex items-end">
+                            <label class="inline-flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200 cursor-pointer w-full">
                                 <input type="checkbox" wire:model="is_active"
                                        class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2">
-                                <span class="ml-3 text-sm font-medium text-gray-700">Plan är aktiv</span>
+                                <span class="ml-3 text-sm text-gray-700">Plan är aktiv</span>
                             </label>
+                        </div>
+                    </div>
+
+                    <!-- NYTT: Stripe Price‑ID fält -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Stripe Price (månadsvis)</label>
+                            <input type="text" wire:model.defer="stripe_price_monthly" placeholder="price_..."
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            @error('stripe_price_monthly') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+                            <p class="text-xs text-gray-500 mt-1">Klistra in Price‑ID från Stripe (återkommande monthly)</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Stripe Price (årsvis)</label>
+                            <input type="text" wire:model.defer="stripe_price_yearly" placeholder="price_..."
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            @error('stripe_price_yearly') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+                            <p class="text-xs text-gray-500 mt-1">Klistra in Price‑ID från Stripe (återkommande yearly)</p>
                         </div>
                     </div>
 
                     <div class="mt-6 flex gap-3">
                         <button wire:click="savePlan"
-                                class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors duration-200">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
                             Spara plan
                         </button>
                         <button type="button" onclick="window.history.back()"
-                                class="inline-flex items-center px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg border border-gray-300 shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                class="inline-flex items-center px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg border border-gray-300 shadow-sm transition-colors duration-200">
                             Avbryt
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Features Section -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="bg-gradient-to-r from-purple-50 to-pink-50 px-6 py-4 border-b border-gray-100">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <div class="p-2 bg-purple-100 rounded-lg">
-                                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                            </div>
-                            <h2 class="ml-3 text-lg font-semibold text-gray-900">Plan Features</h2>
-                        </div>
-                        <button wire:click="addFeatureRow"
-                                class="inline-flex items-center px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                            </svg>
-                            Lägg till feature
-                        </button>
-                    </div>
-                </div>
-
-                <div class="p-6">
+            <div class="p-6">
                     @if(empty($features))
                         <div class="text-center py-8">
                             <div class="inline-flex items-center justify-center w-12 h-12 bg-gray-100 rounded-full mb-4">

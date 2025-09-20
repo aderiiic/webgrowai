@@ -47,6 +47,15 @@
                             {{ \Illuminate\Support\Str::limit($activeCustomer->name, 28) }}
                         </span>
                     </div>
+
+                    @auth
+                        <div class="mt-3">
+                            <a href="{{ route('billing.portal') }}"
+                               class="inline-flex items-center px-3 py-2 rounded-lg text-sm bg-indigo-600 text-white hover:bg-indigo-700">
+                                Hantera fakturering
+                            </a>
+                        </div>
+                    @endauth
                 </div>
             @endif
         </div>
@@ -104,6 +113,7 @@
         @include('navigation-menu')
 
         @auth
+            @livewire('partials.trial-badge')
             @livewire('partials.usage-banner')
             <livewire:components.news-popup />
         @endauth
