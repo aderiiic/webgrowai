@@ -119,7 +119,7 @@
         @endauth
 
         <!-- Page Content -->
-        <main class="flex-1 px-4 sm:px-6 lg:px-8 py-6 lg:py-8 lg:pl-8 pl-16">
+        <main class="flex-1 px-4 sm:px-6 lg:px-8 py-6 lg:py-8 lg:pl-8 pl-4">
             <div class="max-w-7xl mx-auto">
                 @if(session('success'))
                     <div class="mb-6 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl">

@@ -1,6 +1,8 @@
 <div x-data="{
         openPanel: false,
-        showInsights: JSON.parse(localStorage.getItem('planner_showInsights') ?? 'false')
+        showInsights: JSON.parse(localStorage.getItem('planner_showInsights') ?? 'false'),
+        currentDayIndex: 0,
+        totalDays: 7
     }" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
     <!-- Förbättrad header med gradient bakgrund -->
@@ -46,14 +48,14 @@
             </div>
 
             <div class="flex flex-col sm:flex-row items-stretch gap-3 lg:gap-4 w-full sm:w-auto lg:w-auto">
-                <div class="flex rounded-xl lg:rounded-2xl overflow-hidden bg-white/20 backdrop-blur border border-white/30">
-                    <button wire:click="setView('timeline')" class="flex items-center gap-2 px-4 lg:px-6 py-2 lg:py-3 text-sm lg:text-base font-medium transition-all duration-200 whitespace-nowrap {{ $view === 'timeline' ? 'bg-white text-indigo-600 shadow-lg' : 'text-white hover:bg-white/20' }}">
+                <div class="flex rounded-xl lg:rounded-2xl overflow-hidden bg-white/20 backdrop-blur border border-white/30 justify-between">
+                    <button wire:click="setView('timeline')" class="w-full flex items-center gap-2 px-4 lg:px-6 py-2 lg:py-3 text-sm lg:text-base font-medium transition-all duration-200 whitespace-nowrap {{ $view === 'timeline' ? 'bg-white text-indigo-600 shadow-lg' : 'text-white hover:bg-white/20' }}">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
                         </svg>
                         Tidslinje
                     </button>
-                    <button wire:click="setView('calendar')" class="flex items-center gap-2 px-4 lg:px-6 py-2 lg:py-3 text-sm lg:text-base font-medium transition-all duration-200 whitespace-nowrap {{ $view === 'calendar' ? 'bg-white text-indigo-600 shadow-lg' : 'text-white hover:bg-white/20' }}">
+                    <button wire:click="setView('calendar')" class="w-full flex items-center gap-2 px-4 lg:px-6 py-2 lg:py-3 text-sm lg:text-base font-medium transition-all duration-200 whitespace-nowrap {{ $view === 'calendar' ? 'bg-white text-indigo-600 shadow-lg' : 'text-white hover:bg-white/20' }}">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2z"/>
                         </svg>
@@ -416,15 +418,40 @@
             @endforelse
         </div>
     @else
-        <!-- Kalendervy: Full bredd kalender + modal för detaljer -->
+        <!-- Kalendervy: Mobil- och desktopanpassad -->
         <div class="w-full">
             <div class="bg-white border border-gray-200 rounded-2xl lg:rounded-3xl overflow-hidden shadow-xl">
                 <div class="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 lg:p-6">
-                    <h3 class="text-white text-lg lg:text-xl font-bold mb-2">Veckoöversikt</h3>
-                    <p class="text-indigo-100 text-sm lg:text-base">{{ $weekStart->translatedFormat('j M') }} – {{ $weekEnd->translatedFormat('j M Y') }}</p>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-white text-lg lg:text-xl font-bold mb-2">Veckoöversikt</h3>
+                            <p class="text-indigo-100 text-sm lg:text-base">{{ $weekStart->translatedFormat('j M') }} – {{ $weekEnd->translatedFormat('j M Y') }}</p>
+                        </div>
+
+                        <!-- Mobile navigation controls för dagvy -->
+                        <div class="flex md:hidden items-center gap-2">
+                            <button
+                                @click="currentDayIndex = currentDayIndex > 0 ? currentDayIndex - 1 : 6"
+                                class="p-2 bg-white/20 hover:bg-white/30 rounded-xl transition-colors">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                </svg>
+                            </button>
+                            <span class="text-white font-medium min-w-[40px] text-center" x-text="`${currentDayIndex + 1}/7`"></span>
+                            <button
+                                @click="currentDayIndex = currentDayIndex < 6 ? currentDayIndex + 1 : 0"
+                                class="p-2 bg-white/20 hover:bg-white/30 rounded-xl transition-colors">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div class="grid grid-cols-7 gap-px bg-gray-200">
-                    @foreach($weekDays as $d)
+
+                <!-- Desktop: Hela veckan (7 kolumner) -->
+                <div class="hidden md:grid md:grid-cols-7 gap-px bg-gray-200">
+                    @foreach($weekDays as $dayIndex => $d)
                         @php
                             $rows = collect($items)->filter(fn($r) => $r['scheduled_at'] && \Illuminate\Support\Carbon::parse($r['scheduled_at'])->isSameDay($d))->sortBy('scheduled_at')->values();
                             $isToday = $d->isToday();
@@ -444,7 +471,7 @@
                                     @endif
 
                                     @if($isPastDay)
-                                            <span class="text-xs px-1.5 lg:px-2 py-0.5 lg:py-1 text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed select-none" title="Kan inte lägga till i förflutna">
+                                        <span class="text-xs px-1.5 lg:px-2 py-0.5 lg:py-1 text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed select-none" title="Kan inte lägga till i förflutna">
                                             <span class="hidden lg:inline">+ Lägg till</span>
                                             <span class="lg:hidden">+</span>
                                         </span>
@@ -532,6 +559,136 @@
                                         </span>
                                     </div>
                                 @endif
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                <!-- Mobile: En dag åt gången -->
+                <div class="md:hidden">
+                    @foreach($weekDays as $dayIndex => $d)
+                        @php
+                            $rows = collect($items)->filter(fn($r) => $r['scheduled_at'] && \Illuminate\Support\Carbon::parse($r['scheduled_at'])->isSameDay($d))->sortBy('scheduled_at')->values();
+                            $isToday = $d->isToday();
+                            $isPastDay = $d->copy()->endOfDay()->isPast();
+                        @endphp
+                        <div x-show="currentDayIndex === {{ $dayIndex }}" class="min-h-[400px] {{ $isToday ? 'bg-indigo-50' : 'bg-white' }} p-4">
+                            <!-- Dagheader -->
+                            <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
+                                <div>
+                                    <div class="text-sm font-bold uppercase text-gray-500 mb-1">{{ $d->translatedFormat('l') }}</div>
+                                    <div class="text-2xl font-bold {{ $isToday ? 'text-indigo-600' : 'text-gray-900' }}">
+                                        {{ $d->translatedFormat('j M Y') }}
+                                        @if($isToday)
+                                            <span class="text-sm font-medium text-indigo-500 ml-2">Idag</span>
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    @if($rows->count() > 0)
+                                        <span class="text-sm px-3 py-1.5 rounded-full {{ $isToday ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700' }} font-bold">
+                                            {{ $rows->count() }} inlägg
+                                        </span>
+                                    @endif
+
+                                    @if($isPastDay)
+                                        <span class="text-sm px-3 py-1.5 text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed select-none" title="Kan inte lägga till i förflutna">
+                                            + Lägg till
+                                        </span>
+                                    @else
+                                        <button
+                                            wire:click="$set('selected', null); startQuickPlan('{{ $d->toDateString() }}')"
+                                            @click.stop="openPanel = true"
+                                            class="text-sm px-3 py-1.5 {{ $isToday ? 'text-indigo-600 hover:bg-indigo-100' : 'text-gray-600 hover:bg-gray-100' }} rounded-lg transition-colors font-medium">
+                                            + Lägg till inlägg
+                                        </button>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <!-- Inläggslista -->
+                            <div class="space-y-3">
+                                @forelse($rows as $r)
+                                    @php $badge = $statusBadge($r['status']); @endphp
+                                    <button
+                                        wire:click="select({{ $r['id'] }})"
+                                        @click="openPanel = true"
+                                        class="w-full text-left p-4 rounded-xl border-2 border-gray-100 bg-white hover:border-indigo-300 hover:shadow-lg transition-all duration-200 group">
+                                        <div class="flex items-start gap-4">
+                                            <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    {!! $targetIcon($r['target']) !!}
+                                                </svg>
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex items-center justify-between mb-2">
+                                                    <div class="text-sm font-bold text-indigo-600">
+                                                        {{ \Illuminate\Support\Carbon::parse($r['scheduled_at'])->format('H:i') }}
+                                                    </div>
+                                                    <div class="inline-flex items-center gap-2 px-2 py-1 text-xs font-bold rounded-full {{ $badge['bg'] }} {{ $badge['text'] }}">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            {!! $badge['svg'] !!}
+                                                        </svg>
+                                                        {{ $badge['label'] }}
+                                                    </div>
+                                                </div>
+                                                <div class="text-base font-medium text-gray-900 mb-1 line-clamp-2 group-hover:text-indigo-600 transition-colors">
+                                                    {{ $r['title'] }}
+                                                </div>
+                                                <div class="text-sm text-gray-600 mb-2">
+                                                    {{ ucfirst($r['target']) }} • {{ $r['site'] ?: 'Ingen sajt' }}
+                                                </div>
+
+                                                @if(($r['status'] ?? null) === 'published' && !empty($r['metrics']))
+                                                    @php
+                                                        $mm = $r['metrics'];
+                                                        $reach = $fmtNum($mm['reach'] ?? $mm['impressions'] ?? null);
+                                                        $eng   = $fmtNum($mm['reactions'] ?? $mm['likes'] ?? null);
+                                                    @endphp
+                                                    @if($reach || $eng)
+                                                        <div class="flex items-center gap-2 text-sm">
+                                                            @if($reach)
+                                                                <div class="inline-flex items-center gap-2 px-2 py-1 bg-emerald-100 text-emerald-800 rounded-lg font-semibold">
+                                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                                                    </svg>
+                                                                    {{ $reach }}
+                                                                </div>
+                                                            @endif
+                                                            @if($eng)
+                                                                <div class="inline-flex items-center gap-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-lg font-semibold">
+                                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                                                                    </svg>
+                                                                    {{ $eng }}
+                                                                </div>
+                                                            @endif
+                                                        </div>
+                                                    @endif
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </button>
+                                @empty
+                                    <div class="text-center py-8">
+                                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                                        </svg>
+                                        <div class="text-lg font-medium text-gray-500 mb-2">Inga inlägg denna dag</div>
+                                        @if(!$isPastDay)
+                                            <button
+                                                wire:click="$set('selected', null); startQuickPlan('{{ $d->toDateString() }}')"
+                                                @click.stop="openPanel = true"
+                                                class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-medium">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                                </svg>
+                                                Skapa nytt inlägg
+                                            </button>
+                                        @endif
+                                    </div>
+                                @endforelse
                             </div>
                         </div>
                     @endforeach
