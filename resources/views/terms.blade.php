@@ -42,15 +42,15 @@
 
                     <h2>1. Tjänsteleverantör</h2>
                     <p>
-                        WebGrow AI tillhandahålls av <strong>Webbi AB</strong>, org.nr 556XXX-XXXX,
+                        WebGrow AI tillhandahålls av <strong>Webbi AB</strong>, org.nr 5593313140,
                         med säte i Uddevalla, Sverige ("vi", "oss", "vårt", "Webbi AB").
                     </p>
                     <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 my-4">
                         <h4 class="font-semibold text-gray-900 mb-2">Kontaktuppgifter:</h4>
                         <ul class="text-sm text-gray-700 space-y-1">
-                            <li><strong>Adress:</strong> Sunnanvindsvägen 11, 451 61 Uddevalla, Sverige</li>
-                            <li><strong>E-post:</strong> support@webgrowai.com</li>
-                            <li><strong>Juridiska frågor:</strong> legal@webgrowai.com</li>
+                            <li><strong>Adress:</strong> Uddevalla, Sverige</li>
+                            <li><strong>E-post:</strong> info@webbi.se</li>
+                            <li><strong>Juridiska frågor:</strong> info@webbi.se</li>
                         </ul>
                     </div>
 
@@ -99,16 +99,11 @@
                         </h4>
                         <ul class="text-sm text-emerald-800 space-y-2">
                             <li>• <strong>Längd:</strong> 14 kalenderdagar från registrering</li>
-                            <li>• <strong>Tillgång:</strong> Full funktionalitet enligt vald plan</li>
+                            <li>• <strong>Tillgång:</strong> Full funktionalitet enligt Starter plan</li>
                             <li>• <strong>Betalning:</strong> Ingen betalning krävs under provperioden</li>
                             <li>• <strong>Avslut:</strong> Avsluta när som helst utan kostnad</li>
-                            <li>• <strong>Automatisk övergång:</strong> Efter 14 dagar börjar betalperioden om kontot är aktivt</li>
+                            <li>• <strong>Manuell övergång:</strong> Efter 14 dagar kan du påbörja en prenumeration</li>
                         </ul>
-                        <div class="mt-4 p-3 bg-emerald-100 border border-emerald-300 rounded-lg">
-                            <p class="text-xs text-emerald-900">
-                                <strong>Nöjd-kund-garanti:</strong> Inte nöjd inom 30 dagar? Kontakta oss så återbetalar vi hela månadsavgiften.
-                            </p>
-                        </div>
                     </div>
 
                     <h2>4. Priser och planer</h2>
@@ -127,21 +122,21 @@
                             <tbody class="divide-y divide-gray-200 text-sm">
                             <tr>
                                 <td class="px-4 py-3 font-medium">Starter</td>
-                                <td class="px-4 py-3">790 kr/mån*</td>
-                                <td class="px-4 py-3">1 290 kr/mån</td>
-                                <td class="px-4 py-3">1 098 kr/mån</td>
+                                <td class="px-4 py-3">390 kr/mån*</td>
+                                <td class="px-4 py-3">590 kr/mån</td>
+                                <td class="px-4 py-3">3 984 kr/mån*</td>
                             </tr>
                             <tr class="bg-blue-50">
                                 <td class="px-4 py-3 font-medium text-blue-800">Growth (Mest populär)</td>
-                                <td class="px-4 py-3">2 490 kr/mån*</td>
-                                <td class="px-4 py-3">3 990 kr/mån</td>
-                                <td class="px-4 py-3">3 392 kr/mån</td>
+                                <td class="px-4 py-3">990 kr/mån*</td>
+                                <td class="px-4 py-3">1 490 kr/mån</td>
+                                <td class="px-4 py-3"> 10 104kr/mån*</td>
                             </tr>
                             <tr>
                                 <td class="px-4 py-3 font-medium">Pro</td>
-                                <td class="px-4 py-3">8 900 kr/mån*</td>
-                                <td class="px-4 py-3">12 900 kr/mån</td>
-                                <td class="px-4 py-3">10 965 kr/mån</td>
+                                <td class="px-4 py-3">2 990 kr/mån*</td>
+                                <td class="px-4 py-3">3 990 kr/mån</td>
+                                <td class="px-4 py-3">30 504 kr/mån*</td>
                             </tr>
                             </tbody>
                         </table>
@@ -179,7 +174,7 @@
                                 <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                 </svg>
-                                Fakturabetalning
+                                Fakturabetalning (undantagsfall)
                             </h4>
                             <ul class="text-sm text-green-800 space-y-1">
                                 <li>• Månadsfaktura skickas senast den 14:e</li>
@@ -445,19 +440,18 @@
                                 <h4 class="font-semibold text-blue-900 mb-3">Kontakta oss</h4>
                                 <div class="space-y-2 text-sm text-blue-800">
                                     <p><strong>Webbi AB</strong></p>
-                                    <p>Sunnanvindsvägen 11</p>
-                                    <p>451 61 Uddevalla, Sverige</p>
-                                    <p>Org.nr: 556XXX-XXXX</p>
+                                    <p>451 60 Uddevalla, Sverige</p>
+                                    <p>Org.nr: 5593313140</p>
                                 </div>
                             </div>
                             <div class="space-y-3">
-                                <a href="mailto:support@webgrowai.com" class="flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition-colors text-sm">
+                                <a href="mailto:info@webbi.se" class="flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition-colors text-sm">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                                     </svg>
                                     Allmän support
                                 </a>
-                                <a href="mailto:legal@webgrowai.com" class="flex items-center px-4 py-2 bg-green-100 text-green-800 rounded-lg hover:bg-green-200 transition-colors text-sm">
+                                <a href="mailto:info@webbi.se" class="flex items-center px-4 py-2 bg-green-100 text-green-800 rounded-lg hover:bg-green-200 transition-colors text-sm">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                     </svg>
