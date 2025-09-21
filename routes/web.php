@@ -522,7 +522,7 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::get('/register', function () {
-   return view('auth.register');
+   return view('coming-soon');
 })->name('register');
 
 Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
