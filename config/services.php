@@ -100,10 +100,6 @@ return [
             'openid',
             'profile',
             'email',
-            'w_member_social',
-            'r_organization_social',
-            'rw_organization_admin',
-            'w_organization_social'
         ]
     ],
 
