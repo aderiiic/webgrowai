@@ -167,6 +167,7 @@ class SocialAuthController extends Controller
 
     public function linkedinCallback(Request $req, CurrentCustomer $current)
     {
+        Log::info('[LinkedIn] Callback');
         $customer = $current->get();
         abort_unless($customer, 403);
 
@@ -177,7 +178,6 @@ class SocialAuthController extends Controller
         abort_unless($code, 400, 'Saknar code');
 
         $client = new Client(['timeout' => 30]);
-        Log::info('[LinkedIn] Callback');
 
         // 1) code -> access token
         $tokenRes = $client->post('https://www.linkedin.com/oauth/v2/accessToken', [
@@ -189,7 +189,6 @@ class SocialAuthController extends Controller
                 'client_secret' => config('services.linkedin.client_secret'),
             ],
         ]);
-        Log::info('[LinkedIn] Access token mottagen');
         $token = json_decode((string) $tokenRes->getBody(), true);
         $accessToken = $token['access_token'] ?? null;
         abort_unless($accessToken, 400, 'Kunde inte hämta access token');
