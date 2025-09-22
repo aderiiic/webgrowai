@@ -206,10 +206,11 @@ class SocialAuthController extends Controller
 
         $userinfoRes = $api->get('v2/me');
         $userinfo = json_decode((string) $userinfoRes->getBody(), true);
-        $personSub = $userinfo['sub'] ?? null;
-        abort_unless($personSub, 400, 'Kunde inte hämta userinfo');
 
-        $ownerUrn = 'urn:li:person:' . $personSub;
+        $personId = $userinfo['id'] ?? null;
+        abort_unless($personId, 400, 'Kunde inte hämta användarprofil');
+
+        $ownerUrn = 'urn:li:person:' . $personId;
 
         // 3) Spara/uppdatera
         SocialIntegration::updateOrCreate(
