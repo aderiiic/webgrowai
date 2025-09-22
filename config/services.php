@@ -97,9 +97,9 @@ return [
         'client_secret' => env('LINKEDIN_CLIENT_SECRET'),
         'redirect_uri' => env('LINKEDIN_REDIRECT_URI'),
         'scopes' => [
-            'openid',
-            'profile',
-            'email',
+            'rw_organization_admin',
+            'r_organization_social',
+            'w_organization_social'
         ]
     ],
 
