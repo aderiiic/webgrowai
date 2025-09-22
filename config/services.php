@@ -100,7 +100,18 @@ return [
             'openid',
             'w_member_social',
             'profile',
-            'email'
+            'email',
+            'r_member_postAnalytics',
+            'r_organization_followers',
+            'r_organization_social',
+            'rw_organization_admin',
+            'r_organization_social_feed',
+            'r_member_profileAnalytics',
+            'w_organization_social',
+            'r_basicprofile',
+            'w_organization_social_feed',
+            'w_member_social_feed',
+            'r_1st_connections_size'
         ],
     ],
 

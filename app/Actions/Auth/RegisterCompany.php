@@ -32,7 +32,7 @@ class RegisterCompany
         }
 
         $starterPlan = DB::table('plans')->where('name','Starter')->first();
-        DB::table('subscriptions')->insert([
+        DB::table('app_subscriptions')->insert([
             'customer_id' => $customerId,
             'plan_id'     => $starterPlan?->id,
             'status'      => 'trial',
