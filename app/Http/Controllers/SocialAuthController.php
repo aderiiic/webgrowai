@@ -162,6 +162,7 @@ class SocialAuthController extends Controller
             'scope'         => implode(' ', $scopes),
         ];
         $url = 'https://www.linkedin.com/oauth/v2/authorization?' . http_build_query($params);
+        Log::info('[LinkedIn] Redirecting to', ['url' => $url]);
         return redirect()->away($url);
     }
 
@@ -190,7 +191,6 @@ class SocialAuthController extends Controller
             ],
         ]);
         $token = json_decode((string) $tokenRes->getBody(), true);
-        Log::info('[LinkedIn] Token response', $token);
         $accessToken = $token['access_token'] ?? null;
         abort_unless($accessToken, 400, 'Kunde inte hämta access token');
 
