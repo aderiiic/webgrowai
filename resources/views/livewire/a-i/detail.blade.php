@@ -199,6 +199,28 @@
             <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 overflow-hidden">
                 @if(!empty($md))
                     <div class="p-4 sm:p-6 lg:p-8">
+                        <div class="flex flex-wrap gap-2 mb-5">
+                            <a href="{{ route('ai.compose', ['from' => $content->id, 'title' => $content->title, 'channel' => 'facebook', 'tone' => 'short']) }}"
+                               class="inline-flex items-center justify-center px-3 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 text-sm">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                Facebook-variant
+                            </a>
+                            <a href="{{ route('ai.compose', ['from' => $content->id, 'title' => $content->title, 'channel' => 'instagram', 'tone' => 'short']) }}"
+                               class="inline-flex items-center justify-center px-3 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 text-sm">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                Instagram-variant
+                            </a>
+                            <a href="{{ route('ai.compose', ['from' => $content->id, 'title' => $content->title, 'channel' => 'linkedin', 'tone' => 'short']) }}"
+                               class="inline-flex items-center justify-center px-3 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 text-sm">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                LinkedIn-variant
+                            </a>
+                            <a href="{{ route('ai.compose', ['from' => $content->id, 'title' => $content->title, 'channel' => 'blog', 'tone' => 'long']) }}"
+                               class="inline-flex items-center justify-center px-3 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 text-sm">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                Blogg-variant
+                            </a>
+                        </div>
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 pb-4 border-b border-gray-200 space-y-3 sm:space-y-0">
                             <div class="flex items-center space-x-3">
                                 <div class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -652,7 +674,8 @@
                 timer = setInterval(() => {
                     polls++;
                     // Låt backend uppdatera ev. lista i bakgrunden (om komponenten exponerar en metod)
-                    if (@this.loadMediaLibrary) { @this.call('loadMediaLibrary'); }
+                    // (inaktiverad direktanrop här för att undvika parse-problem i byggsteg)
+                    // if (@this.loadMediaLibrary) { @this.call('loadMediaLibrary'); }
                     // När vi polllat ett tag, sluta
                     if (polls >= maxPolls) {
                         clearInterval(timer); timer = null;

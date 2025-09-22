@@ -45,6 +45,65 @@ class Compose extends Component
         if (is_string($qTitle) && $qTitle !== '') {
             $this->title = trim($qTitle);
         }
+
+        // Prefill from an existing AI content (remix)
+        $fromId = request()->query('from');
+        $qChannel = request()->query('channel');
+        $qTone = request()->query('tone');
+        $qTemplateId = request()->query('template_id');
+
+        $customer = $current->get();
+
+        if ($fromId && is_numeric($fromId)) {
+            $src = \App\Models\AiContent::find((int)$fromId);
+            if ($src && $customer && (int)$src->customer_id === (int)$customer->id) {
+                // Use same site by default if none selected
+                if ($this->site_id === null && $src->site_id) {
+                    $this->site_id = (int)$src->site_id;
+                }
+                // Prefill fields if not already set via query/UI
+                if (trim($this->title) === '') {
+                    $this->title = (string) ($src->title ?? '');
+                }
+                $inputs = (array) ($src->inputs ?? []);
+                $this->audience = (string) ($inputs['audience'] ?? $this->audience);
+                $this->goal     = (string) ($inputs['goal'] ?? $this->goal);
+                $kw = (array) ($inputs['keywords'] ?? []);
+                if (!empty($kw) && trim($this->keywords) === '') {
+                    $this->keywords = implode(', ', array_filter(array_map('trim', $kw)));
+                }
+                $brand = (array) ($inputs['brand'] ?? []);
+                if (!empty($brand['voice']) && trim($this->brand_voice) === '') {
+                    $this->brand_voice = (string) $brand['voice'];
+                }
+                // Default to short tone when creating a social variant, unless overridden
+                if (is_string($qTone) && in_array($qTone, ['short','long'], true)) {
+                    $this->tone = $qTone;
+                }
+            }
+        }
+
+        if (is_string($qChannel) && in_array($qChannel, ['auto','blog','facebook','instagram','linkedin','campaign'], true)) {
+            $this->channel = $qChannel;
+        }
+
+        // Preselect template when provided or when channel suggests one
+        if ($qTemplateId && is_numeric($qTemplateId)) {
+            $this->template_id = (int) $qTemplateId;
+        } elseif ($this->template_id === null) {
+            $slug = match ($this->channel) {
+                'facebook'  => 'social-facebook',
+                'instagram' => 'social-instagram',
+                'linkedin'  => 'social-linkedin',
+                'blog'      => 'blog',
+                'campaign'  => 'campaign',
+                default     => null,
+            };
+            if ($slug) {
+                $tpl = \App\Models\ContentTemplate::where('slug', $slug)->first();
+                if ($tpl) { $this->template_id = (int) $tpl->id; }
+            }
+        }
     }
 
     // Nytt: lyssna på topbarens event och uppdatera valet live
