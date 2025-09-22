@@ -99,7 +99,18 @@ return [
         'scopes' => [
             'rw_organization_admin',
             'r_organization_social',
-            'w_organization_social'
+            'w_organization_social',
+            'r_member_postAnalytics',
+            'r_organization_followers',
+            'rw_organization_admin',
+            'r_organization_social_feed',
+            'w_member_social',
+            'r_member_profileAnalytics',
+            'w_organization_social',
+            'r_basicprofile',
+            'w_organization_social_feed',
+            'w_member_social_feed',
+            'r_1st_connections_size'
         ]
     ],
 
