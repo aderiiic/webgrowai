@@ -238,7 +238,7 @@ class SocialSettings extends Component
                 $name = $data['localizedName'] ?? $orgId;
                 $this->li_message = 'OK: ' . $name . ' (' . $orgId . ')';
             } else {
-                $res = $http->get('v2/userinfo', [
+                $res = $http->get('v2/me', [
                     'headers' => ['Authorization' => "Bearer {$token}"],
                 ]);
                 $data = json_decode((string) $res->getBody(), true);

@@ -190,6 +190,7 @@ class SocialAuthController extends Controller
             ],
         ]);
         $token = json_decode((string) $tokenRes->getBody(), true);
+        Log::info('[LinkedIn] Token response', $token);
         $accessToken = $token['access_token'] ?? null;
         abort_unless($accessToken, 400, 'Kunde inte hämta access token');
 
