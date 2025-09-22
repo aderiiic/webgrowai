@@ -204,7 +204,7 @@ class SocialAuthController extends Controller
             ],
         ]);
 
-        $userinfoRes = $api->get('v2/userinfo');
+        $userinfoRes = $api->get('v2/me');
         $userinfo = json_decode((string) $userinfoRes->getBody(), true);
         $personSub = $userinfo['sub'] ?? null;
         abort_unless($personSub, 400, 'Kunde inte hämta userinfo');
