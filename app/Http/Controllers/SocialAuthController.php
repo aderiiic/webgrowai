@@ -192,6 +192,7 @@ class SocialAuthController extends Controller
         $accessToken = $token['access_token'] ?? null;
         abort_unless($accessToken, 400, 'Kunde inte hämta access token');
 
+        Log::info('[LinkedIn] Access token mottagen');
         // 2) userinfo (person)
         $api = new Client([
             'base_uri' => 'https://api.linkedin.com/',
@@ -201,6 +202,9 @@ class SocialAuthController extends Controller
                 'X-Restli-Protocol-Version' => '2.0.0',
             ],
         ]);
+        if ($api) {
+            Log::info('[LinkedIn] API-klient skapad');
+        }
 
         $userinfoRes = $api->get('v2/userinfo');
         $userinfo = json_decode((string) $userinfoRes->getBody(), true);
