@@ -62,11 +62,11 @@
                         Kalender
                     </button>
                 </div>
-                <a href="{{ route('ai.list') }}" class="inline-flex items-center justify-center px-4 lg:px-6 py-2 lg:py-3 bg-white text-indigo-600 rounded-xl lg:rounded-2xl hover:bg-gray-50 text-sm lg:text-base font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 whitespace-nowrap">
+                <a href="{{ route('ai.compose') }}" class="inline-flex items-center justify-center px-4 lg:px-6 py-2 lg:py-3 bg-white text-indigo-600 rounded-xl lg:rounded-2xl hover:bg-gray-50 text-sm lg:text-base font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 whitespace-nowrap">
                     <svg class="w-4 h-4 lg:w-5 lg:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
                     </svg>
-                    <span class="hidden sm:inline">Innehåll</span>
+                    <span class="hidden sm:inline">Ny text</span>
                     <span class="sm:hidden">AI</span>
                 </a>
             </div>

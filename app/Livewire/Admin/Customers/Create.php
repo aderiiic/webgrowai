@@ -128,7 +128,7 @@ class Create extends Component
                 if ($this->selected_plan_id) {
                     $selectedPlan = DB::table('plans')->where('id', $this->selected_plan_id)->first();
                     if ($selectedPlan) {
-                        DB::table('subscriptions')->insert([
+                        DB::table('app_subscriptions')->insert([
                             'customer_id' => $customerId,
                             'plan_id'     => $selectedPlan->id,
                             'status'      => 'trial',

@@ -122,6 +122,26 @@
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h8M8 11h8m-8 4h6"/>
+                                    </svg>
+                                    Bildstil
+                                </label>
+                                <select wire:model="render_mode"
+                                        class="w-full px-3 lg:px-4 py-2 lg:py-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm lg:text-base">
+                                    <option value="realistic">Realistisk</option>
+                                    <option value="animated">Animerad</option>
+                                </select>
+                                @error('render_mode') <div class="text-sm text-red-600 mt-1 flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    {{ $message }}
+                                </div> @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
                                     </svg>
                                     Kampanj
@@ -285,7 +305,7 @@
                                      x-transition:leave-end="opacity-0 transform -translate-y-2"
                                      style="display: none;">
                                     <input wire:model="label_text" type="text"
-                                           placeholder="Ex: "Sommarens smak – Citron""
+                                           placeholder="Ex: Sommarens smak – Citron"
                                     class="w-full px-3 lg:px-4 py-2 lg:py-3 bg-gray-50 border border-emerald-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-sm lg:text-base">
                                     @error('label_text') <div class="text-sm text-red-600 mt-1 flex items-center gap-1">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

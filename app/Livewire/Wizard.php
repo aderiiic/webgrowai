@@ -57,6 +57,11 @@ class Wizard extends Component
 
         $this->refreshStatus($current);
 
+        // Normalize removed step 5 to step 6
+        if ($this->step === 5) {
+            $this->step = 6;
+        }
+
         if ($this->primarySiteId && $this->step < 2) {
             $this->step = 2;
         }
@@ -104,7 +109,20 @@ class Wizard extends Component
             ? WpIntegration::where('site_id', $this->primarySiteId)->exists()
             : false;
 
-        $this->leadTrackerReady = $this->leadTrackerReady && (bool) $this->primarySiteId;
+        // Recompute weeklyConfigured from persisted site data
+        $this->weeklyConfigured = false;
+        if ($this->primarySiteId) {
+            $site = Site::find($this->primarySiteId);
+            if ($site) {
+                $hasVoice = !empty($site->weekly_brand_voice);
+                $hasAudience = !empty($site->weekly_audience);
+                $hasGoal = !empty($site->weekly_goal);
+                $hasKeywords = !empty($site->weekly_keywords) && is_array($site->weekly_keywords) && count($site->weekly_keywords) > 0;
+                $recipients = $site->effectiveRecipients();
+                $hasRecipients = is_array($recipients) && count($recipients) > 0;
+                $this->weeklyConfigured = $hasVoice && $hasAudience && $hasGoal && $hasKeywords && $hasRecipients;
+            }
+        }
     }
 
     public function updateSite(CurrentCustomer $current): void
@@ -209,7 +227,7 @@ class Wizard extends Component
         // Steg 4: integration (kräv för WordPress, hoppa annars)
         if ($this->step === 4) {
             if (in_array($this->provider, ['shopify', 'custom'], true)) {
-                $this->step = 5;
+                $this->step = 6; // skippar steg 5
                 $this->persistStep();
                 return;
             }
@@ -219,20 +237,16 @@ class Wizard extends Component
             }
         }
 
-        // Steg 5: kräver lead tracker bekräftad
-        if ($this->step === 5 && !$this->leadTrackerReady) {
-            $this->addError('leadTrackerReady', 'Bekräfta att lead-spårningen är installerad.');
-            return;
-        }
-
-        // Steg 8: Weekly (valfritt) – visa varning om du vill kräva val
+        // Steg 8: Weekly – obligatoriskt
         if ($this->step === 8 && !$this->weeklyConfigured) {
-            // valfritt att kräva; behålls för konsekvens
-            $this->addError('weeklyConfigured', 'Spara Weekly Digest-inställningarna eller hoppa över.');
+            $this->addError('weeklyConfigured', 'Fyll i alla fält i Weekly Digest-inställningarna innan du fortsätter.');
             return;
         }
 
-        $this->step = min($this->step + 1, 8);
+        // Hoppa över 5 i alla fall
+        $next = $this->step + 1;
+        if ($next === 5) { $next = 6; }
+        $this->step = min($next, 8);
         $this->persistStep();
     }
 
@@ -247,12 +261,15 @@ class Wizard extends Component
 
     public function prev(): void
     {
-        $this->step = max($this->step - 1, 1);
+        $prev = $this->step - 1;
+        if ($prev === 5) { $prev = 4; }
+        $this->step = max($prev, 1);
         $this->persistStep();
     }
 
     public function goto(int $step): void
     {
+        if ($step === 5) { $step = 6; }
         $this->step = max(1, min(8, $step));
         $this->persistStep();
     }
@@ -341,7 +358,10 @@ class Wizard extends Component
 
     public function complete()
     {
-        $this->weeklyConfigured = true;
+        if (!$this->weeklyConfigured) {
+            $this->addError('weeklyConfigured', 'Fyll i Weekly Digest-inställningarna innan du slutför.');
+            return;
+        }
         $this->completeOnboarding();
         return $this->redirectRoute('get-started');
     }

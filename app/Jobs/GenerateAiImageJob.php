@@ -33,7 +33,8 @@ class GenerateAiImageJob implements ShouldQueue
         public bool $overlayEnabled = false,
         public ?string $overlayText = null,
         public string $overlayPosition = 'auto',
-        public string $textLanguage = 'svenska'
+        public string $textLanguage = 'svenska',
+        public string $visualStyle = 'realistic'
     ) {
         $this->onQueue('ai');
         $this->afterCommit();
@@ -80,7 +81,8 @@ class GenerateAiImageJob implements ShouldQueue
                     'size' => $openAiSize,
                     'n' => 1,
                     'response_format' => 'b64_json',
-                    'quality' => 'standard', // Explicit kvalitet för konsistens
+                    'quality' => 'hd', // Premiumkvalitet
+                                        'style' => ($this->visualStyle === 'animated' ? 'vivid' : 'natural'),
                 ]);
 
             if (!$response->successful()) {
@@ -244,6 +246,9 @@ class GenerateAiImageJob implements ShouldQueue
                 'platform' => $this->platform,
                 'prompt_length' => strlen($this->prompt),
                 'dall_e_model' => 'dall-e-3',
+                'quality' => 'hd',
+                'style' => ($this->visualStyle === 'animated' ? 'vivid' : 'natural'),
+                'visual_style' => $this->visualStyle,
                 'generated_at' => now()->toISOString(),
             ]),
         ]);
@@ -303,7 +308,7 @@ class GenerateAiImageJob implements ShouldQueue
             'site_id' => $this->siteId,
             'platform' => $this->platform,
             'error' => $exception->getMessage(),
-            'attempts' => $this->attempts
+            'attempts' => method_exists($this, 'attempts') ? $this->attempts() : null
         ]);
 
         // Här kan du lägga till notification till användaren om jobbet misslyckades

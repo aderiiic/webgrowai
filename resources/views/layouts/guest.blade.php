@@ -1,6 +1,6 @@
 
 <!DOCTYPE html>
-<html lang="sv">
+<html lang="{{ app()->getLocale() === 'en' ? 'en' : 'sv' }}">
 <head>
     @php
         $appName    = 'WebGrow AI';
@@ -11,6 +11,16 @@
         $ogImage    = $ogImage ?? 'https://webbiab.s3.eu-north-1.amazonaws.com/webgrowai/WebGrowAI_transparent.png';
         $siteName   = $appName;
         $noindex    = isset($noindex) ? (bool)$noindex : !app()->environment('production');
+
+        $isEn = request()->segment(1) === 'en';
+        $path = trim(request()->path(), '/');
+        if ($isEn) {
+            $path = ltrim(preg_replace('/^en\/?/i', '', $path), '/');
+        }
+        $svUrl = $path ? url('/'.$path) : url('/');
+        $enUrl = url('/en'.($path ? '/'.$path : ''));
+
+        $ogLocale = app()->getLocale() === 'en' ? 'en_US' : 'sv_SE';
     @endphp
 
     <!-- Google tag (gtag.js) -->
@@ -39,7 +49,7 @@
 
     <!-- Open Graph -->
     <meta property="og:type" content="website">
-    <meta property="og:locale" content="sv_SE">
+    <meta property="og:locale" content="{{ $ogLocale }}">
     <meta property="og:site_name" content="{{ $siteName }}">
     <meta property="og:title" content="{{ $pageTitle }}">
     <meta property="og:description" content="{{ $desc }}">
@@ -177,6 +187,31 @@
                 </a>
             </nav>
 
+            <!-- Language Switcher (Desktop) -->
+            <div class="hidden lg:flex items-center gap-2 ml-4" title="Language">
+                <a href="{{ $svUrl }}" class="inline-flex items-center p-1.5 rounded-md border transition-colors {{ app()->getLocale()==='sv' ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:bg-slate-100' }}" aria-label="Svenska">
+                    <!-- Sweden Flag -->
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" class="w-6 h-4">
+                        <path fill="#006aa7" d="M0 0h640v480H0z"/>
+                        <path fill="#fecc00" d="M0 186.2h640v107.6H0zM186.2 0h107.6v480H186.2z"/>
+                    </svg>
+                </a>
+                <a href="{{ $enUrl }}" class="inline-flex items-center p-1.5 rounded-md border transition-colors {{ app()->getLocale()==='en' ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:bg-slate-100' }}" aria-label="English">
+                    <!-- UK Flag -->
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30" class="w-6 h-4">
+                        <clipPath id="s"><path d="M0,0 v30 h60 v-30 z"/></clipPath>
+                        <clipPath id="t"><path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z"/></clipPath>
+                        <g clip-path="url(#s)">
+                            <path d="M0,0 v30 h60 v-30 z" fill="#012169"/>
+                            <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/>
+                            <path d="M0,0 L60,30 M60,0 L0,30" clip-path="url(#t)" stroke="#C8102E" stroke-width="4"/>
+                            <path d="M30,0 v30 M0,15 h60" stroke="#fff" stroke-width="10"/>
+                            <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" stroke-width="6"/>
+                        </g>
+                    </svg>
+                </a>
+            </div>
+
             <!-- Desktop CTA Buttons -->
             <div class="hidden lg:flex items-center space-x-3">
                 <a href="{{ route('login') }}" class="px-4 py-2 text-slate-700 font-medium rounded-lg border border-slate-300 hover:bg-slate-50 hover:border-slate-400 transition-all duration-200">
@@ -231,6 +266,29 @@
                 <a href="{{ url('/#contact') }}" class="block text-slate-700 font-medium py-2 border-b border-slate-100 hover:text-indigo-600 transition-colors duration-200">
                     Kontakt
                 </a>
+
+                <!-- Mobile Language Switcher -->
+                <div class="flex items-center gap-3 pt-2">
+                    <a href="{{ $svUrl }}" class="inline-flex items-center p-1.5 rounded-md border transition-colors {{ app()->getLocale()==='sv' ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:bg-slate-100' }}" aria-label="Svenska">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" class="w-7 h-5">
+                            <path fill="#006aa7" d="M0 0h640v480H0z"/>
+                            <path fill="#fecc00" d="M0 186.2h640v107.6H0zM186.2 0h107.6v480H186.2z"/>
+                        </svg>
+                    </a>
+                    <a href="{{ $enUrl }}" class="inline-flex items-center p-1.5 rounded-md border transition-colors {{ app()->getLocale()==='en' ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:bg-slate-100' }}" aria-label="English">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30" class="w-7 h-5">
+                            <clipPath id="s-m"><path d="M0,0 v30 h60 v-30 z"/></clipPath>
+                            <clipPath id="t-m"><path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z"/></clipPath>
+                            <g clip-path="url(#s-m)">
+                                <path d="M0,0 v30 h60 v-30 z" fill="#012169"/>
+                                <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/>
+                                <path d="M0,0 L60,30 M60,0 L0,30" clip-path="url(#t-m)" stroke="#C8102E" stroke-width="4"/>
+                                <path d="M30,0 v30 M0,15 h60" stroke="#fff" stroke-width="10"/>
+                                <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" stroke-width="6"/>
+                            </g>
+                        </svg>
+                    </a>
+                </div>
 
                 <!-- Mobile CTA buttons -->
                 <div class="pt-4 space-y-3">

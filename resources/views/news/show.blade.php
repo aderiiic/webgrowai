@@ -23,7 +23,7 @@
                 <!-- Featured Image -->
                 @if($post->featuredImage)
                     <div class="aspect-w-16 aspect-h-9 overflow-hidden">
-                        <img src="{{ route('assets.thumb', $post->featured_image_id) }}"
+                        <img src="{{ $post->featured_image_url }}"
                              alt="{{ $post->title }}"
                              class="w-full h-64 md:h-80 object-cover">
                     </div>

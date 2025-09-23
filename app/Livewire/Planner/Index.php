@@ -561,7 +561,8 @@ class Index extends Component
         }
 
         $aiQ = AiContent::query()
-            ->select(['id','title','site_id'])
+            ->with(['site:id,name','template:id,name,slug'])
+            ->select(['id','title','site_id','template_id','inputs'])
             ->where('customer_id', $customer->id)
             ->where('status', 'ready')
             ->latest('id')
@@ -571,11 +572,35 @@ class Index extends Component
             $aiQ->where('site_id', $this->siteId);
         }
 
-        $this->readyContents = $aiQ->get()->map(fn($c) => [
-            'id'    => (int)$c->id,
-            'title' => (string)($c->title ?: '(utan titel)'),
-            'site'  => (int)$c->site_id,
-        ])->toArray();
+        $this->readyContents = $aiQ->get()->map(function($c) {
+            // Derive platforms from inputs if available
+            $inputs = (array) ($c->inputs ?? []);
+            $raw = $inputs['channels'] ?? $inputs['targets'] ?? $inputs['platforms'] ?? null;
+            $arr = is_string($raw) ? [$raw] : ( (is_array($raw) ? $raw : []) );
+            $mapPretty = [
+                'wp' => 'WordPress', 'wordpress' => 'WordPress',
+                'shopify' => 'Shopify',
+                'facebook' => 'Facebook',
+                'instagram' => 'Instagram',
+                'linkedin' => 'LinkedIn',
+            ];
+            $platforms = collect($arr)
+                ->map(fn($v) => strtolower((string)$v))
+                ->unique()
+                ->map(fn($v) => $mapPretty[$v] ?? ucfirst($v))
+                ->values()
+                ->all();
+
+            return [
+                'id'             => (int)$c->id,
+                'title'          => (string)($c->title ?: '(utan titel)'),
+                'site'           => (int)$c->site_id,
+                'site_name'      => (string)($c->site?->name ?? ''),
+                'template_name'  => (string)($c->template?->name ?? ''),
+                'template_slug'  => (string)($c->template?->slug ?? ''),
+                'platforms'      => implode(', ', array_slice($platforms, 0, 5)),
+            ];
+        })->toArray();
 
         return view('livewire.planner.index', [
             'items'        => $this->items,

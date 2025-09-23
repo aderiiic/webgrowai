@@ -59,16 +59,16 @@ class Index extends Component
     {
         $query = DB::table('customers')
             ->leftJoin('customer_user', 'customers.id', '=', 'customer_user.customer_id')
-            ->leftJoin('subscriptions', 'customers.id', '=', 'subscriptions.customer_id')
-            ->leftJoin('plans', 'subscriptions.plan_id', '=', 'plans.id')
+            ->leftJoin('app_subscriptions', 'customers.id', '=', 'app_subscriptions.customer_id')
+            ->leftJoin('plans', 'app_subscriptions.plan_id', '=', 'plans.id')
             ->select([
                 'customers.id',
                 'customers.name',
                 'customers.company_name',
                 'customers.contact_email',
                 'customers.status',
-                'subscriptions.status as sub_status',
-                'subscriptions.trial_ends_at',
+                'app_subscriptions.status as sub_status',
+                'app_subscriptions.trial_ends_at',
                 'plans.name as plan_name'
             ]);
 
@@ -81,7 +81,7 @@ class Index extends Component
         }
 
         if ($this->status !== 'all') {
-            $query->where('subscriptions.status', $this->status);
+            $query->where('app_subscriptions.status', $this->status);
         }
 
         $rows = $query->orderBy('customers.created_at', 'desc')->paginate(10);

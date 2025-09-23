@@ -17,22 +17,21 @@
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                             </svg>
-                            För svenska SME-företag
+                            {{ __('messages.hero_badge') }}
                         </div>
 
                         <!-- Main Headline -->
                         <div class="space-y-6">
                             <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight text-gray-900">
-                                AI som skriver,
+                                {{ __('messages.hero_headline_part1') }}
                                 <span class="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                                    publicerar & optimerar
+                                    {{ __('messages.hero_headline_part2') }}
                                 </span>
-                                åt dig
+                                {{ __('messages.hero_headline_part3') }}
                             </h1>
 
                             <p class="text-xl text-slate-600 leading-relaxed max-w-2xl">
-                                Textgenerering, bildgenerering och automatisk publicering på sociala medier.
-                                Branschspecifik AI som förstår svenska företag och ger dig mer tid för det viktiga.
+                                {{ __('messages.hero_sub') }}
                             </p>
                         </div>
 
@@ -92,7 +91,7 @@
                             @if(Route::has('register'))
                                 <a href="{{ route('register') }}"
                                    class="group inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300">
-                                    Starta gratis (14 dagar)
+                                    {{ __('messages.cta_start_trial') }}
                                     <svg class="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
                                     </svg>
@@ -104,7 +103,7 @@
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8z"/>
                                 </svg>
-                                Se demonstration
+                                {{ __('messages.cta_see_demo') }}
                             </button>
                         </div>
 

@@ -24,6 +24,13 @@ class Compose extends Component
     public string $keywords = '';
     public string $brand_voice = '';
 
+    // Language selection (stored as locale codes like sv_SE, en_US, de_DE)
+    public string $language = 'sv_SE';
+
+    // New optional link settings
+    public string $link_url = '';
+    public string $source_url = '';
+
     public string $channel = 'auto';
 
     public bool $genImage = false;
@@ -41,9 +48,76 @@ class Compose extends Component
             }
         }
 
+        // Initialize language from selected site's stored locale if available
+        if ($this->site_id) {
+            $site = \App\Models\Site::find($this->site_id);
+            if ($site) {
+                $this->language = $site->locale ?: 'sv_SE';
+            }
+        }
+
         $qTitle = request()->query('title');
         if (is_string($qTitle) && $qTitle !== '') {
             $this->title = trim($qTitle);
+        }
+
+        // Prefill from an existing AI content (remix)
+        $fromId = request()->query('from');
+        $qChannel = request()->query('channel');
+        $qTone = request()->query('tone');
+        $qTemplateId = request()->query('template_id');
+
+        $customer = $current->get();
+
+        if ($fromId && is_numeric($fromId)) {
+            $src = \App\Models\AiContent::find((int)$fromId);
+            if ($src && $customer && (int)$src->customer_id === (int)$customer->id) {
+                // Use same site by default if none selected
+                if ($this->site_id === null && $src->site_id) {
+                    $this->site_id = (int)$src->site_id;
+                }
+                // Prefill fields if not already set via query/UI
+                if (trim($this->title) === '') {
+                    $this->title = (string) ($src->title ?? '');
+                }
+                $inputs = (array) ($src->inputs ?? []);
+                $this->audience = (string) ($inputs['audience'] ?? $this->audience);
+                $this->goal     = (string) ($inputs['goal'] ?? $this->goal);
+                $kw = (array) ($inputs['keywords'] ?? []);
+                if (!empty($kw) && trim($this->keywords) === '') {
+                    $this->keywords = implode(', ', array_filter(array_map('trim', $kw)));
+                }
+                $brand = (array) ($inputs['brand'] ?? []);
+                if (!empty($brand['voice']) && trim($this->brand_voice) === '') {
+                    $this->brand_voice = (string) $brand['voice'];
+                }
+                // Default to short tone when creating a social variant, unless overridden
+                if (is_string($qTone) && in_array($qTone, ['short','long'], true)) {
+                    $this->tone = $qTone;
+                }
+            }
+        }
+
+        if (is_string($qChannel) && in_array($qChannel, ['auto','blog','facebook','instagram','linkedin','campaign'], true)) {
+            $this->channel = $qChannel;
+        }
+
+        // Preselect template when provided or when channel suggests one
+        if ($qTemplateId && is_numeric($qTemplateId)) {
+            $this->template_id = (int) $qTemplateId;
+        } elseif ($this->template_id === null) {
+            $slug = match ($this->channel) {
+                'facebook'  => 'social-facebook',
+                'instagram' => 'social-instagram',
+                'linkedin'  => 'social-linkedin',
+                'blog'      => 'blog',
+                'campaign'  => 'campaign',
+                default     => null,
+            };
+            if ($slug) {
+                $tpl = \App\Models\ContentTemplate::where('slug', $slug)->first();
+                if ($tpl) { $this->template_id = (int) $tpl->id; }
+            }
         }
     }
 
@@ -52,6 +126,12 @@ class Compose extends Component
     public function onActiveSiteUpdated(?int $siteId): void
     {
         $this->site_id = $siteId;
+        if ($siteId) {
+            $site = \App\Models\Site::find($siteId);
+            if ($site) {
+                $this->language = $site->locale ?: 'sv_SE';
+            }
+        }
     }
 
     public function submit(CurrentCustomer $current)
@@ -62,6 +142,9 @@ class Compose extends Component
             'tone'            => 'required|in:short,long',
             'site_id'         => 'nullable|exists:sites,id',
             'channel'         => 'nullable|in:auto,blog,facebook,instagram,linkedin,campaign',
+            'language'        => 'required|in:sv_SE,en_US,de_DE',
+            'link_url'        => 'nullable|url|max:500',
+            'source_url'      => 'nullable|url|max:500',
             'genImage'        => 'boolean',
             'imagePromptMode' => 'in:auto,custom',
             'imagePrompt'     => 'nullable|string|max:500',
@@ -84,13 +167,16 @@ class Compose extends Component
         $guidelines = $this->guidelinesFor($finalChannel);
 
         $inputs = [
-            'channel'   => $finalChannel,
-            'audience'  => $this->audience ?: null,
-            'goal'      => $this->goal ?: null,
-            'keywords'  => $this->keywords ? array_values(array_filter(array_map('trim', explode(',', $this->keywords)))) : [],
-            'brand'     => ['voice' => $this->brand_voice ?: null],
-            'guidelines'=> $guidelines,
-            'image'     => [
+            'channel'    => $finalChannel,
+            'audience'   => $this->audience ?: null,
+            'goal'       => $this->goal ?: null,
+            'keywords'   => $this->keywords ? array_values(array_filter(array_map('trim', explode(',', $this->keywords)))) : [],
+            'brand'      => ['voice' => $this->brand_voice ?: null],
+            'guidelines' => $guidelines,
+            'language'   => $this->language,
+            'link_url'   => $this->link_url ?: null,
+            'source_url' => $this->source_url ?: null,
+            'image'      => [
                 'generate' => $this->genImage,
                 'mode'     => $this->imagePromptMode,
                 'prompt'   => $this->imagePromptMode === 'custom' ? $this->imagePrompt : null,

@@ -49,6 +49,16 @@ class Site extends Model
         });
     }
 
+    public function preferredLanguage(): string
+    {
+        $locale = strtolower((string) $this->locale);
+        return match (true) {
+            str_starts_with($locale, 'en') => 'en',
+            str_starts_with($locale, 'de') => 'de',
+            default => 'sv',
+        };
+    }
+
     public function customer(): BelongsTo {
         return $this->belongsTo(Customer::class);
     }

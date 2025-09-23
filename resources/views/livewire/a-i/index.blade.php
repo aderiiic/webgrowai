@@ -297,6 +297,15 @@
                             'error' => ['bg' => 'from-red-50 to-pink-50', 'border' => 'border-red-200/50', 'text' => 'text-red-800', 'icon' => 'bg-red-500'],
                         ];
                         $colors = $statusColors[strtolower($c->status)] ?? ['bg' => 'from-gray-50 to-slate-50', 'border' => 'border-gray-200/50', 'text' => 'text-gray-800', 'icon' => 'bg-gray-500'];
+
+                        $statuses = [
+                            'ready' => 'Redo',
+                            'completed' => 'Färdig',
+                            'processing' => 'Förbereder',
+                            'draft' => 'Utkast',
+                            'error' => 'Fel',
+                            'queued' => 'Köad'
+                        ];
                     @endphp
 
                     <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-4 sm:p-6 hover:shadow-xl transition-all duration-200">
@@ -305,7 +314,7 @@
                             <div class="flex items-center space-x-2 sm:space-x-3">
                                 <div class="inline-flex items-center px-2 sm:px-3 py-1 bg-gradient-to-r {{ $colors['bg'] }} {{ $colors['border'] }} border rounded-full">
                                     <div class="w-2 h-2 sm:w-3 sm:h-3 {{ $colors['icon'] }} rounded-full mr-1.5 sm:mr-2"></div>
-                                    <span class="text-xs font-medium {{ $colors['text'] }} uppercase">{{ $c->status }}</span>
+                                    <span class="text-xs font-medium {{ $colors['text'] }} uppercase">{{ $statuses[$c->status] }}</span>
                                 </div>
                             </div>
                         </div>
