@@ -304,7 +304,8 @@
                             'processing' => 'Förbereder',
                             'draft' => 'Utkast',
                             'error' => 'Fel',
-                            'queued' => 'Köad'
+                            'queued' => 'Köad',
+                            'published' => 'Publicerad',
                         ];
                     @endphp
 
