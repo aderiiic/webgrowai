@@ -24,6 +24,10 @@ class Compose extends Component
     public string $keywords = '';
     public string $brand_voice = '';
 
+    // New optional link settings
+    public string $link_url = '';
+    public string $source_url = '';
+
     public string $channel = 'auto';
 
     public bool $genImage = false;
@@ -121,6 +125,8 @@ class Compose extends Component
             'tone'            => 'required|in:short,long',
             'site_id'         => 'nullable|exists:sites,id',
             'channel'         => 'nullable|in:auto,blog,facebook,instagram,linkedin,campaign',
+            'link_url'        => 'nullable|url|max:500',
+            'source_url'      => 'nullable|url|max:500',
             'genImage'        => 'boolean',
             'imagePromptMode' => 'in:auto,custom',
             'imagePrompt'     => 'nullable|string|max:500',
@@ -143,13 +149,15 @@ class Compose extends Component
         $guidelines = $this->guidelinesFor($finalChannel);
 
         $inputs = [
-            'channel'   => $finalChannel,
-            'audience'  => $this->audience ?: null,
-            'goal'      => $this->goal ?: null,
-            'keywords'  => $this->keywords ? array_values(array_filter(array_map('trim', explode(',', $this->keywords)))) : [],
-            'brand'     => ['voice' => $this->brand_voice ?: null],
-            'guidelines'=> $guidelines,
-            'image'     => [
+            'channel'    => $finalChannel,
+            'audience'   => $this->audience ?: null,
+            'goal'       => $this->goal ?: null,
+            'keywords'   => $this->keywords ? array_values(array_filter(array_map('trim', explode(',', $this->keywords)))) : [],
+            'brand'      => ['voice' => $this->brand_voice ?: null],
+            'guidelines' => $guidelines,
+            'link_url'   => $this->link_url ?: null,
+            'source_url' => $this->source_url ?: null,
+            'image'      => [
                 'generate' => $this->genImage,
                 'mode'     => $this->imagePromptMode,
                 'prompt'   => $this->imagePromptMode === 'custom' ? $this->imagePrompt : null,

@@ -433,6 +433,46 @@
                                 </div>
                             </div>
 
+                            <!-- Optional link to include at the end -->
+                            <div class="p-6 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border border-emerald-200/50">
+                                <div class="flex items-center space-x-3 mb-4">
+                                    <div class="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <label class="text-lg font-semibold text-gray-900">Lägg till länk i slutet (valfritt)</label>
+                                        <p class="text-sm text-emerald-700">T.ex. produktlänk, kampanjsida eller annan URL</p>
+                                    </div>
+                                </div>
+                                <input type="url" wire:model.defer="link_url" class="w-full px-4 py-3 bg-white border border-emerald-300 rounded-xl text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200" placeholder="https://dindomän.se/produkt...">
+                                @error('link_url')
+                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                                <p class="mt-2 text-xs text-emerald-700">Om angiven: vi instruerar AI att lägga till länken sist i texten. För bloggar infogas länken som 'Läs mer'.</p>
+                            </div>
+
+                            <!-- Source link to base the content on -->
+                            <div class="p-6 bg-gradient-to-r from-sky-50 to-blue-50 rounded-xl border border-sky-200/50">
+                                <div class="flex items-center space-x-3 mb-4">
+                                    <div class="w-8 h-8 bg-sky-500 rounded-lg flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A2 2 0 0122 9.528v4.944a2 2 0 01-2.447 1.804L15 14m-6 0l-4.553 2.276A2 2 0 012 14.472V9.528a2 2 0 012.447-1.804L9 10m6 0l-6 4m6-4l-6-4"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <label class="text-lg font-semibold text-gray-900">Skapa utifrån en länk (valfritt)</label>
+                                        <p class="text-sm text-sky-700">Klistra in en produkt- eller informationssida, så skriver AI en text baserat på innehållet</p>
+                                    </div>
+                                </div>
+                                <input type="url" wire:model.defer="source_url" class="w-full px-4 py-3 bg-white border border-sky-300 rounded-xl text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-all duration-200" placeholder="https://exempel.se/produkt/xyz...">
+                                @error('source_url')
+                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                                <p class="mt-2 text-xs text-sky-700">Vi försöker läsa sidan och använder en sammanfattning som underlag. AI formulerar om texten till vald kanal och stil.</p>
+                            </div>
+
                             <!-- Image generation -->
                             @if(config('features.image_generation'))
                                 <div class="p-6 bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl border border-violet-200/50">
@@ -502,3 +542,5 @@
             </div>
         </div>
     </div>
+
+</div>
