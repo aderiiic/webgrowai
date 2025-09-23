@@ -72,6 +72,10 @@ use App\Livewire\Admin\Subscriptions\RequestsIndex as AdminSubRequests;
 use App\Livewire\Admin\Customers\Index as AdminCustomersIndex;
 use App\Livewire\Admin\Sites\Index as AdminSitesIndex;
 use Laravel\Cashier\Http\Controllers\WebhookController;
+use App\Http\Controllers\LocaleProxyController;
+
+// Proxy all /en/* requests to the same routes without the prefix
+Route::any('/en/{any?}', [LocaleProxyController::class, 'handle'])->where('any', '.*');
 
 Route::get('/', function () {
     return view('welcome');

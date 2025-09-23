@@ -24,9 +24,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'onboarded'     => EnsureOnboardingCompleted::class,
             'paidOrTrial'   => \App\Http\Middleware\PaidOrTrial::class,
             'premium'       => App\Http\Middleware\CheckPremiumPlan::class,
+            'setLocale'     => App\Http\Middleware\SetLocale::class,
         ]);
         $middleware->appendToGroup('web', [
             LoadCurrentCustomer::class,
+            App\Http\Middleware\SetLocale::class,
         ]);
     })
     ->withSchedule(function (Schedule $schedule) {

@@ -39,7 +39,7 @@ class Show extends Component
     {
         $period = now()->format('Y-m');
 
-        $sub = DB::table('subscriptions')->where('customer_id', $this->customer->id)->orderByDesc('id')->first();
+        $sub = DB::table('app_subscriptions')->where('customer_id', $this->customer->id)->orderByDesc('id')->first();
         $this->status = (string) ($sub->status ?? 'active');
         $this->billing_cycle = (string) ($sub->billing_cycle ?? 'monthly');
         $this->trial_ends_at = $sub?->trial_ends_at ? \Illuminate\Support\Carbon::parse($sub->trial_ends_at)->toDateString() : null;
@@ -92,10 +92,10 @@ class Show extends Component
 
     public function savePlan(): void
     {
-        $sub = DB::table('subscriptions')->where('customer_id', $this->customer->id)->orderByDesc('id')->first();
+        $sub = DB::table('app_subscriptions')->where('customer_id', $this->customer->id)->orderByDesc('id')->first();
 
         if ($sub) {
-            DB::table('subscriptions')->where('id', $sub->id)->update([
+            DB::table('app_subscriptions')->where('id', $sub->id)->update([
                 'plan_id' => $this->planId,
                 'status' => $this->status,
                 'billing_cycle' => $this->billing_cycle,
@@ -103,7 +103,7 @@ class Show extends Component
                 'updated_at' => now(),
             ]);
         } else {
-            DB::table('subscriptions')->insert([
+            DB::table('app_subscriptions')->insert([
                 'customer_id' => $this->customer->id,
                 'plan_id'     => $this->planId,
                 'status'      => $this->status,
@@ -124,7 +124,7 @@ class Show extends Component
         $growth = DB::table('plans')->where('name','Growth')->first();
         abort_if(!$growth, 400, 'Growth-plan saknas.');
 
-        DB::table('subscriptions')->updateOrInsert(
+        DB::table('app_subscriptions')->updateOrInsert(
             ['customer_id' => $this->customer->id],
             [
                 'plan_id' => $growth->id,
