@@ -333,6 +333,25 @@
                                 <option value="long">Längre text (mer detaljerad)</option>
                             </select>
                         </div>
+
+                        <div class="p-6 bg-gradient-to-r from-lime-50 to-emerald-50 rounded-xl border border-lime-200/50">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <div class="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-4.596 2.65A1 1 0 019 12.917V7.083a1 1 0 011.156-.985l4.596 2.65a1 1 0 010 1.732z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <label class="text-lg font-semibold text-gray-900">Språk</label>
+                                    <p class="text-sm text-emerald-700">Vilket språk ska texten skrivas på?</p>
+                                </div>
+                            </div>
+                            <select wire:model="language" class="w-full px-4 py-3 bg-white border border-emerald-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200">
+                                <option value="sv_SE">Svenska (standard)</option>
+                                <option value="en_US">Engelska</option>
+                                <option value="de_DE">Tyska</option>
+                            </select>
+                        </div>
                     </div>
 
                     <!-- Step 4: Vem ska läsa texten + Vad vill du uppnå? -->

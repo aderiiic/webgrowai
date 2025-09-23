@@ -209,8 +209,12 @@
                                         @error('brand_voice') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Språk/Locale</label>
-                                        <input type="text" wire:model.defer="locale" class="w-full px-4 py-3 rounded-2xl border border-gray-300 bg-white/80 shadow-sm focus:ring-2 focus:ring-indigo-500" placeholder="sv_SE">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Standardspråk</label>
+                                        <select wire:model.defer="locale" class="w-full px-4 py-3 rounded-2xl border border-gray-300 bg-white/80 shadow-sm focus:ring-2 focus:ring-indigo-500">
+                                            <option value="sv_SE">Svenska (standard)</option>
+                                            <option value="en_US">Engelska</option>
+                                            <option value="de_DE">Tyska</option>
+                                        </select>
                                         @error('locale') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
                                     </div>
                                 </div>
@@ -232,7 +236,7 @@
                         </div>
 
                     @elseif($step === 4)
-                        <!-- Steg 3: Koppla integration (endast för WordPress) -->
+                        <!-- Steg 4: Koppla integration (endast för WordPress) -->
                         <div class="space-y-6">
                             <div class="text-center">
                                 <h2 class="text-2xl font-bold text-gray-900 mb-2">
@@ -331,7 +335,7 @@
                         </div>
 
                     @elseif($step === 5)
-                        <!-- Steg 4: Lead tracker -->
+                        <!-- Steg 5: Lead tracker -->
                         <div class="space-y-6">
                             <div class="text-center">
                                 <h2 class="text-2xl font-bold text-gray-900 mb-2">Installera besökarspårning</h2>
@@ -387,7 +391,7 @@
                         </div>
 
                     @elseif($step === 6)
-                        <!-- Steg 5: Sociala medier (valfritt) -->
+                        <!-- Steg 6: Sociala medier (valfritt) -->
                         <div class="space-y-6">
                             <div class="text-center">
                                 <h2 class="text-2xl font-bold text-gray-900 mb-2">Koppla sociala medier (valfritt)</h2>
@@ -430,7 +434,7 @@
                         </div>
 
                     @elseif($step === 7)
-                        <!-- Steg 6: Mailchimp (valfritt) -->
+                        <!-- Steg 7: Mailchimp (valfritt) -->
                         <div class="space-y-6">
                             <div class="text-center">
                                 <h2 class="text-2xl font-bold text-gray-900 mb-2">Koppla ditt nyhetsbrev (valfritt)</h2>
@@ -477,7 +481,7 @@
                         <div class="space-y-6">
                             <div class="text-center">
                                 <h2 class="text-2xl font-bold text-gray-900 mb-2">Veckorapport</h2>
-                                <p class="text-gray-600">Vill du få en sammanfattning varje vecka med vad som hänt? (kan hoppas över)</p>
+                                <p class="text-gray-600">Fyll i alla fält för veckorapporten i inställningarna. Detta steg är obligatoriskt för att slutföra onboarding.</p>
                             </div>
 
                             <div class="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200/50">
@@ -488,12 +492,9 @@
                                         </svg>
                                         Öppna inställningar
                                     </a>
-                                    <button wire:click="markWeeklyConfigured" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700">
-                                        Markera som klart
-                                    </button>
                                 </div>
-                                <div class="mt-3 text-sm {{ $weeklyConfigured ? 'text-emerald-700' : 'text-gray-700' }}">
-                                    Status: {{ $weeklyConfigured ? '✅ Klart' : '⏳ Valfritt (kan hoppas över)' }}
+                                <div class="mt-3 text-sm {{ $weeklyConfigured ? 'text-emerald-700' : 'text-amber-700' }}">
+                                    Status: {{ $weeklyConfigured ? '✅ Klart' : '⏳ Inte klart – fyll i inställningarna' }}
                                 </div>
                                 @error('weeklyConfigured')
                                 <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -505,12 +506,6 @@
                                     Tillbaka
                                 </button>
                                 <div class="flex items-center gap-3">
-                                    <button
-                                        wire:click="goDashboard"
-                                        class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 hover:border-gray-400 transition"
-                                    >
-                                        Hoppa över och starta
-                                    </button>
                                     <button
                                         wire:click="complete"
                                         class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl hover:from-emerald-700 hover:to-teal-700 shadow-lg transition"

@@ -24,6 +24,9 @@ class Compose extends Component
     public string $keywords = '';
     public string $brand_voice = '';
 
+    // Language selection (stored as locale codes like sv_SE, en_US, de_DE)
+    public string $language = 'sv_SE';
+
     // New optional link settings
     public string $link_url = '';
     public string $source_url = '';
@@ -42,6 +45,14 @@ class Compose extends Component
                 $this->site_id = (int) $activeSiteId;
             } else {
                 $this->site_id = $current->get()?->sites()->orderBy('name')->value('id');
+            }
+        }
+
+        // Initialize language from selected site's stored locale if available
+        if ($this->site_id) {
+            $site = \App\Models\Site::find($this->site_id);
+            if ($site) {
+                $this->language = $site->locale ?: 'sv_SE';
             }
         }
 
@@ -115,6 +126,12 @@ class Compose extends Component
     public function onActiveSiteUpdated(?int $siteId): void
     {
         $this->site_id = $siteId;
+        if ($siteId) {
+            $site = \App\Models\Site::find($siteId);
+            if ($site) {
+                $this->language = $site->locale ?: 'sv_SE';
+            }
+        }
     }
 
     public function submit(CurrentCustomer $current)
@@ -125,6 +142,7 @@ class Compose extends Component
             'tone'            => 'required|in:short,long',
             'site_id'         => 'nullable|exists:sites,id',
             'channel'         => 'nullable|in:auto,blog,facebook,instagram,linkedin,campaign',
+            'language'        => 'required|in:sv_SE,en_US,de_DE',
             'link_url'        => 'nullable|url|max:500',
             'source_url'      => 'nullable|url|max:500',
             'genImage'        => 'boolean',
@@ -155,6 +173,7 @@ class Compose extends Component
             'keywords'   => $this->keywords ? array_values(array_filter(array_map('trim', explode(',', $this->keywords)))) : [],
             'brand'      => ['voice' => $this->brand_voice ?: null],
             'guidelines' => $guidelines,
+            'language'   => $this->language,
             'link_url'   => $this->link_url ?: null,
             'source_url' => $this->source_url ?: null,
             'image'      => [

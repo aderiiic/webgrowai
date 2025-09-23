@@ -9,6 +9,7 @@ use App\Support\Usage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class GenerateContentJob implements ShouldQueue
@@ -86,8 +87,52 @@ class GenerateContentJob implements ShouldQueue
             }
         }
 
+        // Determine language
+        $language = 'sv';
+        $langInput = null;
+        if (!empty($content->inputs['language'])) {
+            $langInput = (string) $content->inputs['language'];
+        } elseif (!empty($content->inputs['locale'])) {
+            $langInput = (string) $content->inputs['locale'];
+        }
+
+        if ($langInput) {
+            $lc = strtolower($langInput);
+            // Accept both locale codes (sv_SE) and language codes (sv)
+            if (str_contains($lc, '_') || str_contains($lc, '-')) {
+                $lc = substr($lc, 0, 2);
+            }
+            $language = in_array($lc, ['sv','en','de'], true) ? $lc : 'sv';
+
+            Log::info("Language input: {$langInput} -> {$language}");
+        } elseif (!empty($content->site_id)) {
+            // Fall back to the site's locale/language
+            $siteForLang = Site::find($content->site_id);
+            if ($siteForLang) {
+                $siteLocale = (string) ($siteForLang->locale ?: 'sv_SE');
+                $lc = strtolower($siteLocale);
+                $lc = (str_contains($lc, '_') || str_contains($lc, '-')) ? substr($lc, 0, 2) : $lc;
+                $language = in_array($lc, ['sv','en','de'], true) ? $lc : 'sv';
+            }
+        }
+        $writeRule = match ($language) {
+            'en' => "- Write in English.",
+            'de' => "- Schreibe auf Deutsch.",
+            default => "- Skriv på svenska.",
+        };
+
+        // Extra enforcement to avoid language bleed from Swedish prompt text
+        $langEnforcement = match ($language) {
+            'en' => "- IMPORTANT: Output must be 100% in English. Some instructions below may appear in Swedish — interpret them, but your final response must be entirely in English with no Swedish words.",
+            'de' => "- WICHTIG: Die Ausgabe muss zu 100 % auf Deutsch sein. Einige Anweisungen unten können auf Schwedisch sein — interpretiere sie, aber die endgültige Antwort muss vollständig auf Deutsch sein (keine schwedischen Wörter).",
+            default => null,
+        };
+
+        Log::info($writeRule);
+
         $hardRules = implode("\n", [
-            "- Skriv på svenska.",
+            $writeRule,
+            $langEnforcement,
             "- Inget försnack (inga 'Självklart!' etc.).",
             "- Inga kodblock (inga ```).",
             "- Leverera exakt 1 komplett version.",
@@ -170,29 +215,72 @@ class GenerateContentJob implements ShouldQueue
             $blogStructure = "\n\nSTRUKTUR FÖR BLOG:\n1. Börja med några inledande stycken (vanlig text utan rubriker)\n2. Fortsätt med H2-rubriker för huvudavsnitt\n3. Använd H3 för underavsnitt\n4. Avsluta med en slutsats eller sammanfattning\n\nExempel:\n[Inledningstext som förklarar ämnet...]\n\n[Mer inledande text som sätter upp problemet...]\n\n## Första huvudrubriken\n[Innehåll...]\n\n## Andra huvudrubriken\n[Innehåll...]\n";
         }
 
-        $finalPrompt = trim("
-Du är copywriter. Skapa innehåll anpassat för kanalen: {$channel}.
+        // Localize section headers to reduce language bias
+        $labels = match ($language) {
+            'en' => [
+                'role'        => "You are a copywriter. Create content tailored for the channel: {$channel}.",
+                'context'     => 'CONTEXT',
+                'guidelines'  => 'GUIDELINES',
+                'channel'     => 'CHANNEL-SPECIFIC RULES',
+                'lengthTone'  => 'LENGTH AND TONE',
+                'hard'        => 'HARD RULES',
+                'delivery'    => 'DELIVERY FORMAT',
+                'template'    => 'TEMPLATE HINT (FOLLOW RULES ABOVE FIRST):',
+                'deliveryBul1'=> '- Write plain text (Markdown only in blog mode for headings/lists).',
+                'deliveryBul2'=> '- Exactly 1 version (no variant separator).',
+                'bestPractice'=> '- Use sound best practices for the channel',
+            ],
+            'de' => [
+                'role'        => "Du bist Copywriter. Erstelle Inhalte, angepasst an den Kanal: {$channel}.",
+                'context'     => 'KONTEXT',
+                'guidelines'  => 'RICHTLINIEN',
+                'channel'     => 'KANALSPEZIFISCHE REGELN',
+                'lengthTone'  => 'LÄNGE UND TON',
+                'hard'        => 'HARTE REGELN',
+                'delivery'    => 'LIEFERFORMAT',
+                'template'    => 'VORLAGENHINWEIS (REGELN OBEN ZUERST BEFOLGEN):',
+                'deliveryBul1'=> '- Schreibe Klartext (Markdown nur im Blogmodus für Überschriften/Listen).',
+                'deliveryBul2'=> '- Genau 1 Version (kein Variantentrenner).',
+                'bestPractice'=> '- Verwende bewährte Praktiken für den Kanal',
+            ],
+            default => [
+                'role'        => "Du är copywriter. Skapa innehåll anpassat för kanalen: {$channel}.",
+                'context'     => 'KONTEXT',
+                'guidelines'  => 'RIKTLINJER',
+                'channel'     => 'KANALSPECIFIKA REGLER',
+                'lengthTone'  => 'LÄNGD OCH TON',
+                'hard'        => 'HÅRDA REGLER',
+                'delivery'    => 'LEVERANSFORMAT',
+                'template'    => 'INNEHÅLLSMALL (HINT – FÖLJ REGLERNA OVAN FÖRST):',
+                'deliveryBul1'=> '- Skriv ren text (Markdown endast i bloggläge för rubriker/listor).',
+                'deliveryBul2'=> '- Exakt 1 version (ingen variant-separator).',
+                'bestPractice'=> '- Använd sund bästa praxis för kanalen',
+            ],
+        };
 
-KONTEXT:
+        $finalPrompt = trim("
+{$labels['role']}
+
+{$labels['context']}:
 - " . implode("\n- ", $context) . "
 
-RIKTLINJER:
-" . (!empty($guides) ? "- " . implode("\n- ", $guides) : "- Använd sund bästa praxis för kanalen") . "
+{$labels['guidelines']}:
+" . (!empty($guides) ? "- " . implode("\n- ", $guides) : $labels['bestPractice']) . "
 
-KANALSPECIFIKA REGLER:
+{$labels['channel']}:
 {$channelRules}
 
-LÄNGD OCH TON:
+{$labels['lengthTone']}:
 {$toneRule}
 
-HÅRDA REGLER:
+{$labels['hard']}:
 {$hardRules}
 {$blogStructure}
-LEVERANSFORMAT:
-- Skriv ren text (Markdown endast i bloggläge för rubriker/listor).
-- Exakt 1 version (ingen variant-separator).
+{$labels['delivery']}:
+{$labels['deliveryBul1']}
+{$labels['deliveryBul2']}
 
-INNEHÅLLSMALL (HINT – FÖLJ REGLERNA OVAN FÖRST):
+{$labels['template']}
 {$templateHint}
         ");
 
