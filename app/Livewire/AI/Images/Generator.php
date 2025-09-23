@@ -30,6 +30,7 @@ class Generator extends Component
     public string $background_hex = '';        // #RRGGBB när background_mode=custom_hex
     public bool   $strict_background = true;   // extra hård kravställning på slät bakgrund
     public string $style = '';                 // icy|blur|clean|minimal|branding-anpassad|vintage|filmic|high-contrast
+    public string $render_mode = 'realistic';  // realistic|animated (påverkar AI-stil)
     public string $title = '';
     public bool   $overlay_enabled = false;
     public string $overlay_text = '';
@@ -110,6 +111,7 @@ class Generator extends Component
             'background_hex'    => 'nullable|regex:/^#?[0-9A-Fa-f]{6}$/',
             'strict_background' => 'boolean',
             'style'             => 'nullable|string|max:100',
+            'render_mode'       => 'required|in:realistic,animated',
             'title'             => 'nullable|string|max:180',
             'overlay_enabled'   => 'boolean',
             'overlay_text'      => 'nullable|required_if:overlay_enabled,true|string|max:200',
@@ -194,7 +196,8 @@ class Generator extends Component
             overlayEnabled: true, // tvinga overlay om text finns
             overlayText: $this->overlay_text ?: null,
             overlayPosition: $this->overlay_position,
-            textLanguage: $this->text_language ?: 'svenska'
+            textLanguage: $this->text_language ?: 'svenska',
+            visualStyle: $this->render_mode
         ))->afterCommit()->onQueue('ai');
 
         // UI-feedback
@@ -396,6 +399,14 @@ class Generator extends Component
         }
         $styleText = empty($styleParts) ? 'modern, kommersiell stil' : implode(', ', $styleParts);
 
+        // 5b) Renderingsstil (realistisk vs animerad)
+        $qualityBlock = $this->render_mode === 'animated'
+            ? 'Premium illustrerad/tecknad eller 3D-renderad stil (ej barnslig), rena linjer, balanserad färgpalett, hög detaljskärpa.'
+            : 'Fotorealistisk, kommersiell premiumkvalitet med naturligt ljus och materialåtergivning.';
+
+        // 4b) Relevans för bakgrund/miljö
+        $bgRelevance = 'Välj en relevant miljö som förstärker produkten och sammanhanget (t.ex. solkräm → strandmiljö med tonad, lätt suddad bakgrund; löparskor → urban löparmiljö; kaffe → köksbänk eller café). Bakgrunden får vara subtilt tonad/blurad men professionell.';
+
         // 6) Overlay-text
         if ($allowOverlayInImage && $this->overlay_enabled && $this->overlay_text !== '') {
             $overlay = 'Lägg in en text-overlay: "' . $this->overlay_text . '". Placering: ' . $this->overlay_position .
@@ -494,6 +505,7 @@ Motivscenario:
 
 Bakgrund:
 - {$bgHint}
+- {$bgRelevance}
 - {$strictBg}
 
 Stil/effekt:
@@ -513,7 +525,7 @@ Plattform:
 - {$pfText}. Anpassa kompositionen så att motiv och overlay ligger inom säkra beskärningszoner.
 
 Kvalitet & utförande:
-- Fotorealistisk, kommersiell premiumkvalitet.
+- {$qualityBlock}
 - Professionell ljussättning och tydlig separation mellan motiv och bakgrund.
 - {$productExtras}
 
