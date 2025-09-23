@@ -341,7 +341,12 @@
                 <select wire:model.defer="quickContentId" class="w-full px-3 py-2 lg:px-4 lg:py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white">
                     <option value="">Välj färdigt innehåll…</option>
                     @foreach(($readyContents ?? []) as $rc)
-                        <option value="{{ $rc['id'] }}" class="break-words">#{{ $rc['id'] }} — {{ \Illuminate\Support\Str::limit($rc['title'], 40) }}</option>
+                        <option value="{{ $rc['id'] }}" class="break-words">
+                            #{{ $rc['id'] }}
+                            @if(!empty($rc['template_name'])) • {{ $rc['template_name'] }} @endif
+                            @if(!empty($rc['platforms'])) • {{ $rc['platforms'] }} @endif
+                            — {{ \Illuminate\Support\Str::limit($rc['title'], 60) }}
+                        </option>
                     @endforeach
                 </select>
                 @error('quickContentId')
