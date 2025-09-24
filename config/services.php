@@ -73,6 +73,7 @@ return [
             'email',
             'business_management',
             'instagram_basic',
+            'instagram_content_publish'
         ],
     ],
 
