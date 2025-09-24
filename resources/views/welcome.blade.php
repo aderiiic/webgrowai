@@ -17,21 +17,21 @@
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                             </svg>
-                            {{ __('messages.hero_badge') }}
+                            {{ __('homepage.hero_badge') }}
                         </div>
 
                         <!-- Main Headline -->
                         <div class="space-y-6">
                             <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight text-gray-900">
-                                {{ __('messages.hero_headline_part1') }}
+                                {{ __('homepage.hero_headline_part1') }}
                                 <span class="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                                    {{ __('messages.hero_headline_part2') }}
+                                    {{ __('homepage.hero_headline_part2') }}
                                 </span>
-                                {{ __('messages.hero_headline_part3') }}
+                                {{ __('homepage.hero_headline_part3') }}
                             </h1>
 
                             <p class="text-xl text-slate-600 leading-relaxed max-w-2xl">
-                                {{ __('messages.hero_sub') }}
+                                {{ __('homepage.hero_sub') }}
                             </p>
                         </div>
 
@@ -44,8 +44,8 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <h3 class="font-semibold text-slate-800 text-sm">Smart textgenerering</h3>
-                                    <p class="text-xs text-slate-600">AI anpassad för svensk bransch</p>
+                                    <h3 class="font-semibold text-slate-800 text-sm">{{ __('homepage.hero_icon_1') }}</h3>
+                                    <p class="text-xs text-slate-600">{{ __('homepage.hero_icon_desc_1') }}</p>
                                 </div>
                             </div>
 
@@ -56,8 +56,8 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <h3 class="font-semibold text-slate-800 text-sm">AI-bildgenerering</h3>
-                                    <p class="text-xs text-slate-600">Professionella bilder till texter</p>
+                                    <h3 class="font-semibold text-slate-800 text-sm">{{ __('homepage.hero_icon_2') }}</h3>
+                                    <p class="text-xs text-slate-600">{{ __('homepage.hero_icon_desc_2') }}</p>
                                 </div>
                             </div>
 
@@ -68,8 +68,8 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <h3 class="font-semibold text-slate-800 text-sm">Schemaläggning</h3>
-                                    <p class="text-xs text-slate-600">Automatisk publicering</p>
+                                    <h3 class="font-semibold text-slate-800 text-sm">{{ __('homepage.hero_icon_3') }}</h3>
+                                    <p class="text-xs text-slate-600">{{ __('homepage.hero_icon_desc_3') }}</p>
                                 </div>
                             </div>
 
@@ -80,8 +80,8 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <h3 class="font-semibold text-slate-800 text-sm">Branschanalys</h3>
-                                    <p class="text-xs text-slate-600">Trender och insikter</p>
+                                    <h3 class="font-semibold text-slate-800 text-sm">{{ __('homepage.hero_icon_4') }}</h3>
+                                    <p class="text-xs text-slate-600">{{ __('homepage.hero_icon_desc_4') }}</p>
                                 </div>
                             </div>
                         </div>
@@ -113,16 +113,16 @@
                                 <svg class="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                                 </svg>
-                                <span class="font-medium">Inget kreditkort krävs</span>
+                                <span class="font-medium">{{ __('homepage.hero_info_1') }}</span>
                             </div>
                             <div class="flex items-center gap-2">
                                 <svg class="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                                 </svg>
-                                <span class="font-medium">Svensk support</span>
+                                <span class="font-medium">{{ __('homepage.hero_info_2') }}</span>
                             </div>
                             <a href="#pricing" class="text-indigo-600 hover:text-indigo-700 font-medium transition-colors">
-                                Från 390 kr/mån →
+                                {{ __('homepage.hero_info_3') }}
                             </a>
                         </div>
                     </div>
@@ -141,9 +141,9 @@
                             <div class="absolute -top-6 -right-6 bg-white rounded-xl shadow-xl p-4 border border-emerald-200 animate-pulse">
                                 <div class="flex items-center text-emerald-600 font-semibold text-sm">
                                     <div class="w-3 h-3 bg-emerald-500 rounded-full mr-2 animate-pulse"></div>
-                                    <span>AI arbetar...</span>
+                                    <span>{{ __('homepage.img_ai_working') }}</span>
                                 </div>
-                                <p class="text-xs text-slate-500 mt-1">Genererar innehåll</p>
+                                <p class="text-xs text-slate-500 mt-1">{{ __('homepage.img_ai_generating') }}</p>
                             </div>
 
                             <div class="absolute -bottom-6 -left-6 bg-white rounded-xl shadow-xl p-4 border border-blue-200">
@@ -151,9 +151,9 @@
                                     <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                                     </svg>
-                                    <span>23 texter redo</span>
+                                    <span>{{ __('homepage.img_text_ready') }}</span>
                                 </div>
-                                <p class="text-xs text-slate-500 mt-1">Publiceras imorgon</p>
+                                <p class="text-xs text-slate-500 mt-1">{{ __('homepage.img_publishing') }}</p>
                             </div>
                         </div>
                     </div>
@@ -166,10 +166,10 @@
             <div class="max-w-7xl mx-auto px-4">
                 <div class="text-center mb-16">
                     <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-4">
-                        Fungerar för alla typer av svenska företag
+                        {{ __('homepage.target_title') }}
                     </h2>
                     <p class="text-xl text-slate-600 max-w-3xl mx-auto">
-                        Vår AI är tränad på svenska affärstexter och förstår olika branscher och målgrupper
+                        {{ __('homepage.target_subtitle') }}
                     </p>
                 </div>
 
@@ -181,8 +181,8 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                             </svg>
                         </div>
-                        <h3 class="text-lg font-bold text-slate-800 mb-2">Tjänsteföretag</h3>
-                        <p class="text-sm text-slate-600">Konsulter, jurister, revisorer, fastighetsmäklare</p>
+                        <h3 class="text-lg font-bold text-slate-800 mb-2">{{ __('homepage.target_card_title_1') }}</h3>
+                        <p class="text-sm text-slate-600">{{ __('homepage.target_card_desc_1') }}</p>
                     </div>
 
                     <!-- E-handel -->
@@ -192,8 +192,8 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l-1 12H6L5 9z"/>
                             </svg>
                         </div>
-                        <h3 class="text-lg font-bold text-slate-800 mb-2">E-handel</h3>
-                        <p class="text-sm text-slate-600">Webshoppar, produktförsäljning, butiker online</p>
+                        <h3 class="text-lg font-bold text-slate-800 mb-2">{{ __('homepage.target_card_title_2') }}</h3>
+                        <p class="text-sm text-slate-600">{{ __('homepage.target_card_desc_2') }}</p>
                     </div>
 
                     <!-- Hälsa & Vård -->
@@ -203,8 +203,8 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                             </svg>
                         </div>
-                        <h3 class="text-lg font-bold text-slate-800 mb-2">Hälsa & Vård</h3>
-                        <p class="text-sm text-slate-600">Tandläkare, kliniker, vårdcentraler</p>
+                        <h3 class="text-lg font-bold text-slate-800 mb-2">{{ __('homepage.target_card_title_3') }}</h3>
+                        <p class="text-sm text-slate-600">{{ __('homepage.target_card_desc_3') }}</p>
                     </div>
 
                     <!-- Hantverk & Bygg -->
@@ -214,8 +214,8 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
                             </svg>
                         </div>
-                        <h3 class="text-lg font-bold text-slate-800 mb-2">Hantverk & Bygg</h3>
-                        <p class="text-sm text-slate-600">Byggfirmor, elektriker, VVS, målare</p>
+                        <h3 class="text-lg font-bold text-slate-800 mb-2">{{ __('homepage.target_card_title_4') }}g</h3>
+                        <p class="text-sm text-slate-600">{{ __('homepage.target_card_desc_4') }}</p>
                     </div>
                 </div>
 
@@ -223,20 +223,20 @@
                 <div class="grid md:grid-cols-3 gap-8">
                     <div class="text-center p-8 bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl border border-emerald-200/50">
                         <div class="text-4xl font-bold text-emerald-600 mb-2">+127%</div>
-                        <h4 class="text-lg font-bold text-slate-800 mb-2">Högre engagemang</h4>
-                        <p class="text-slate-600">AI-innehåll presterar bättre än manuellt skrivna texter</p>
+                        <h4 class="text-lg font-bold text-slate-800 mb-2">{{ __('homepage.target_stats_1_title') }}</h4>
+                        <p class="text-slate-600">{{ __('homepage.target_stats_1_desc') }}</p>
                     </div>
 
                     <div class="text-center p-8 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-200/50">
                         <div class="text-4xl font-bold text-indigo-600 mb-2">+89%</div>
-                        <h4 class="text-lg font-bold text-slate-800 mb-2">Fler leads</h4>
-                        <p class="text-slate-600">Branschspecifika texter attraherar rätt kunder</p>
+                        <h4 class="text-lg font-bold text-slate-800 mb-2">{{ __('homepage.target_stats_2_title') }}</h4>
+                        <p class="text-slate-600">{{ __('homepage.target_stats_2_desc') }}</p>
                     </div>
 
                     <div class="text-center p-8 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border border-purple-200/50">
                         <div class="text-4xl font-bold text-purple-600 mb-2">12h</div>
-                        <h4 class="text-lg font-bold text-slate-800 mb-2">Sparad tid/vecka</h4>
-                        <p class="text-slate-600">Fokusera på att driva företaget framåt</p>
+                        <h4 class="text-lg font-bold text-slate-800 mb-2">{{ __('homepage.target_stats_3_title') }}</h4>
+                        <p class="text-slate-600">{{ __('homepage.target_stats_3_desc') }}</p>
                     </div>
                 </div>
             </div>
@@ -247,10 +247,10 @@
             <div class="max-w-7xl mx-auto px-4">
                 <div class="text-center mb-16">
                     <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-4">
-                        Allt under ett tak
+                        {{ __('homepage.features_title') }}
                     </h2>
                     <p class="text-xl text-slate-600 max-w-3xl mx-auto">
-                        Slipp jonglera med flera verktyg. WebGrow AI är din kompletta lösning för innehållsmarknadsföring.
+                        {{ __('homepage.features_subtitle') }}
                     </p>
                 </div>
 
@@ -259,10 +259,10 @@
                     <div class="space-y-8">
                         <div>
                             <h3 class="text-2xl font-bold text-slate-800 mb-4">
-                                Smart text- och bildgenerering
+                                {{ __('homepage.features_part_title') }}
                             </h3>
                             <p class="text-lg text-slate-600 mb-6">
-                                AI som förstår svenska och din bransch. Skapar texter och bilder som faktiskt engagerar dina kunder.
+                                {{ __('homepage.features_part_desc') }}
                             </p>
                         </div>
 
@@ -274,8 +274,8 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <h4 class="text-lg font-semibold text-slate-800 mb-1">Textgenerering för alla behov</h4>
-                                    <p class="text-slate-600">Blogginlägg, produkttexter, sociala medier-inlägg, nyhetsbrev</p>
+                                    <h4 class="text-lg font-semibold text-slate-800 mb-1">{{ __('homepage.features_part_subtitle_1') }}</h4>
+                                    <p class="text-slate-600">{{ __('homepage.features_part_subtitle_1_desc') }}</p>
                                 </div>
                             </div>
 
@@ -286,8 +286,8 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <h4 class="text-lg font-semibold text-slate-800 mb-1">Professionell bildgenerering</h4>
-                                    <p class="text-slate-600">AI-genererade bilder som matchar dina texter perfekt</p>
+                                    <h4 class="text-lg font-semibold text-slate-800 mb-1">{{ __('homepage.features_part_subtitle_2') }}</h4>
+                                    <p class="text-slate-600">{{ __('homepage.features_part_subtitle_2_desc') }}</p>
                                 </div>
                             </div>
 
@@ -298,8 +298,8 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <h4 class="text-lg font-semibold text-slate-800 mb-1">Branschanalys och trender</h4>
-                                    <p class="text-slate-600">AI analyserar din bransch och föreslår populära ämnen</p>
+                                    <h4 class="text-lg font-semibold text-slate-800 mb-1">{{ __('homepage.features_part_subtitle_3') }}</h4>
+                                    <p class="text-slate-600">{{ __('homepage.features_part_subtitle_3_desc') }}</p>
                                 </div>
                             </div>
                         </div>
@@ -331,10 +331,10 @@
                     <div class="space-y-8 lg:order-2">
                         <div>
                             <h3 class="text-2xl font-bold text-slate-800 mb-4">
-                                Automatisk publicering & schemaläggning
+                                {{ __('homepage.features_part_title_2') }}
                             </h3>
                             <p class="text-lg text-slate-600 mb-6">
-                                Publicera direkt eller schemalägg innehåll för senare. Hantera alla dina kanaler från en plats.
+                                {{ __('homepage.features_part_desc_2') }}
                             </p>
                         </div>
 
@@ -346,8 +346,8 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <h4 class="text-lg font-semibold text-slate-800 mb-1">Smart schemaläggning</h4>
-                                    <p class="text-slate-600">AI föreslår optimala publiceringstider för max räckvidd</p>
+                                    <h4 class="text-lg font-semibold text-slate-800 mb-1">{{ __('homepage.features_part_subtitle_4') }}</h4>
+                                    <p class="text-slate-600">{{ __('homepage.features_part_subtitle_4_desc') }}</p>
                                 </div>
                             </div>
 
@@ -358,8 +358,8 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <h4 class="text-lg font-semibold text-slate-800 mb-1">Direktpublicering</h4>
-                                    <p class="text-slate-600">WordPress, Shopify, Facebook, Instagram, LinkedIn</p>
+                                    <h4 class="text-lg font-semibold text-slate-800 mb-1">{{ __('homepage.features_part_subtitle_5') }}</h4>
+                                    <p class="text-slate-600">{{ __('homepage.features_part_subtitle_5_desc') }}</p>
                                 </div>
                             </div>
 
@@ -370,8 +370,8 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <h4 class="text-lg font-semibold text-slate-800 mb-1">Full kontroll</h4>
-                                    <p class="text-slate-600">Du godkänner alltid innan publicering</p>
+                                    <h4 class="text-lg font-semibold text-slate-800 mb-1">{{ __('homepage.features_part_subtitle_6') }}</h4>
+                                    <p class="text-slate-600">{{ __('homepage.features_part_subtitle_6_desc') }}</p>
                                 </div>
                             </div>
                         </div>
@@ -385,10 +385,10 @@
             <div class="max-w-7xl mx-auto px-4">
                 <div class="text-center mb-16">
                     <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-4">
-                        Varför välja WebGrow AI?
+                        {{ __('homepage.why_title') }}
                     </h2>
                     <p class="text-xl text-slate-600 max-w-3xl mx-auto">
-                        Vi sticker ut genom att fokusera på svenska företag och leverera mer än bara text
+                        {{ __('homepage.why_subtitle') }}
                     </p>
                 </div>
 
@@ -400,25 +400,25 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                             </svg>
                         </div>
-                        <h3 class="text-xl font-bold text-slate-800 mb-4">Bättre än konkurrenterna</h3>
+                        <h3 class="text-xl font-bold text-slate-800 mb-4">{{ __('homepage.why_card_1_title') }}</h3>
                         <ul class="text-left space-y-2 text-slate-600">
                             <li class="flex items-center">
                                 <svg class="w-4 h-4 text-emerald-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
-                                Tränad på svenska texter
+                                {{ __('homepage.why_card_1_p1') }}
                             </li>
                             <li class="flex items-center">
                                 <svg class="w-4 h-4 text-emerald-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
-                                Branschspecifik kunskap
+                                {{ __('homepage.why_card_1_p2') }}
                             </li>
                             <li class="flex items-center">
                                 <svg class="w-4 h-4 text-emerald-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
-                                Mäter och optimerar
+                                {{ __('homepage.why_card_1_p3') }}
                             </li>
                         </ul>
                     </div>
@@ -430,25 +430,25 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
                             </svg>
                         </div>
-                        <h3 class="text-xl font-bold text-slate-800 mb-4">Bättre pris</h3>
+                        <h3 class="text-xl font-bold text-slate-800 mb-4">{{ __('homepage.why_card_2_title') }}</h3>
                         <ul class="text-left space-y-2 text-slate-600">
                             <li class="flex items-center">
                                 <svg class="w-4 h-4 text-emerald-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
-                                Från 390 kr/mån
+                                {{ __('homepage.why_card_2_p1') }}
                             </li>
                             <li class="flex items-center">
                                 <svg class="w-4 h-4 text-emerald-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
-                                Billigare än anställd
+                                {{ __('homepage.why_card_2_p2') }}
                             </li>
                             <li class="flex items-center">
                                 <svg class="w-4 h-4 text-emerald-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
-                                Ingen bindningstid
+                                {{ __('homepage.why_card_2_p3') }}
                             </li>
                         </ul>
                     </div>
@@ -460,25 +460,25 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                             </svg>
                         </div>
-                        <h3 class="text-xl font-bold text-slate-800 mb-4">Trygghet & Säkerhet</h3>
+                        <h3 class="text-xl font-bold text-slate-800 mb-4">{{ __('homepage.why_card_3_title') }}</h3>
                         <ul class="text-left space-y-2 text-slate-600">
                             <li class="flex items-center">
                                 <svg class="w-4 h-4 text-emerald-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
-                                GDPR-kompatibel
+                                {{ __('homepage.why_card_3_p1') }}
                             </li>
                             <li class="flex items-center">
                                 <svg class="w-4 h-4 text-emerald-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
-                                Svensk support
+                                {{ __('homepage.why_card_3_p2') }}
                             </li>
                             <li class="flex items-center">
                                 <svg class="w-4 h-4 text-emerald-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
-                                Du kontrollerar allt
+                                {{ __('homepage.why_card_3_p3') }}
                             </li>
                         </ul>
                     </div>
@@ -486,27 +486,27 @@
 
                 <!-- All-in-one benefit -->
                 <div class="bg-gradient-to-r from-slate-800 to-indigo-900 rounded-2xl p-12 text-center text-white">
-                    <h3 class="text-3xl font-bold mb-6">Allt under ett tak - ingen krångel</h3>
+                    <h3 class="text-3xl font-bold mb-6">{{ __('homepage.why_card_banner_title') }}</h3>
                     <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
                         <div>
-                            <div class="text-2xl font-bold mb-2">1 verktyg</div>
-                            <p class="text-sm text-slate-300">Istället för 5-10 olika tjänster</p>
+                            <div class="text-2xl font-bold mb-2">{{ __('homepage.why_card_banner_subtitle_1') }}</div>
+                            <p class="text-sm text-slate-300">{{ __('homepage.why_card_banner_desc_1') }}r</p>
                         </div>
                         <div>
-                            <div class="text-2xl font-bold mb-2">1 faktura</div>
-                            <p class="text-sm text-slate-300">Enkel ekonomi och administration</p>
+                            <div class="text-2xl font-bold mb-2">{{ __('homepage.why_card_banner_subtitle_2') }}</div>
+                            <p class="text-sm text-slate-300">{{ __('homepage.why_card_banner_desc_2') }}</p>
                         </div>
                         <div>
-                            <div class="text-2xl font-bold mb-2">1 support</div>
-                            <p class="text-sm text-slate-300">Ring oss när du behöver hjälp</p>
+                            <div class="text-2xl font-bold mb-2">{{ __('homepage.why_card_banner_subtitle_3') }}</div>
+                            <p class="text-sm text-slate-300">{{ __('homepage.why_card_banner_desc_3') }}</p>
                         </div>
                         <div>
-                            <div class="text-2xl font-bold mb-2">1 inloggning</div>
-                            <p class="text-sm text-slate-300">Hantera allt från samma ställe</p>
+                            <div class="text-2xl font-bold mb-2">{{ __('homepage.why_card_banner_subtitle_4') }}</div>
+                            <p class="text-sm text-slate-300">{{ __('homepage.why_card_banner_desc_4') }}</p>
                         </div>
                     </div>
                     <button @click="demoOpen = true" class="inline-flex items-center px-8 py-4 bg-white text-slate-800 font-semibold rounded-xl hover:bg-slate-100 transition-colors">
-                        Se hur enkelt det är
+                        {{ __('homepage.why_card_cta') }}
                         <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
                         </svg>
@@ -519,15 +519,15 @@
         <section id="pricing" class="py-20 bg-gradient-to-br from-slate-50 to-indigo-50">
             <div class="max-w-7xl mx-auto px-4">
                 <div class="text-center mb-16">
-                    <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-4">Enkel prissättning</h2>
-                    <p class="text-xl text-slate-600 max-w-3xl mx-auto">Välj det paket som passar ditt företag bäst. Inga dolda kostnader.</p>
+                    <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-4">{{ __('homepage.pricing_title') }}</h2>
+                    <p class="text-xl text-slate-600 max-w-3xl mx-auto">{{ __('homepage.pricing_subtitle') }}</p>
 
                     <!-- Annual discount notice -->
                     <div class="mt-6 inline-flex items-center px-4 py-2 bg-gradient-to-r from-emerald-100 to-green-100 text-emerald-800 rounded-full text-sm font-medium border border-emerald-200/50">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
                         </svg>
-                        15% extra rabatt på årsabonnemang
+                        {{ __('homepage.pricing_highlight') }}
                     </div>
                 </div>
 
@@ -535,19 +535,19 @@
                     <!-- Starter -->
                     <div class="relative bg-white rounded-2xl border border-slate-200 shadow-lg p-8 flex flex-col h-full">
                         <div class="text-center mb-8">
-                            <h3 class="text-lg font-semibold text-slate-600 mb-2">Starter</h3>
+                            <h3 class="text-lg font-semibold text-slate-600 mb-2">{{ __('homepage.pricing_starter_title') }}</h3>
                             <div class="mb-4">
                                 <div class="flex items-center justify-center gap-2 mb-2">
-                                    <span class="text-lg text-slate-400 line-through">590 kr</span>
-                                    <span class="text-4xl font-bold text-slate-800">390 kr</span>
+                                    <span class="text-lg text-slate-400 line-through">{{ __('homepage.pricing_starter_price_ordinary') }}</span>
+                                    <span class="text-4xl font-bold text-slate-800">{{ __('homepage.pricing_starter_price_extra') }}</span>
                                 </div>
                                 <div class="text-slate-600 text-sm">
-                                    <span>/mån</span>
-                                    <span class="block text-xs text-emerald-600 font-medium">Årspris: 332 kr/mån</span>
+                                    <span>{{ __('homepage.pricing_per_month') }}</span>
+                                    <span class="block text-xs text-emerald-600 font-medium">{{ __('homepage.pricing_starter_annual') }}</span>
                                 </div>
-                                <div class="text-xs text-orange-600 font-medium">Early bird-pris</div>
+                                <div class="text-xs text-orange-600 font-medium">{{ __('homepage.pricing_early_bird') }}</div>
                             </div>
-                            <p class="text-slate-600">Perfekt för små företag</p>
+                            <p class="text-slate-600">{{ __('homepage.pricing_starter_highlight') }}</p>
                         </div>
 
                         <ul class="space-y-3 mb-8 flex-1">
@@ -555,37 +555,37 @@
                                 <svg class="w-5 h-5 text-emerald-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
-                                <span class="text-slate-700">500 AI-texter/månad</span>
+                                <span class="text-slate-700">{{ __('homepage.pricing_starter_ai') }}</span>
                             </li>
                             <li class="flex items-start">
                                 <svg class="w-5 h-5 text-emerald-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
-                                <span class="text-slate-700">25 bildgenereringar/månad</span>
+                                <span class="text-slate-700">{{ __('homepage.pricing_starter_images') }}</span>
                             </li>
                             <li class="flex items-start">
                                 <svg class="w-5 h-5 text-emerald-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
-                                <span class="text-slate-700">50 schemalagda publiceringar</span>
+                                <span class="text-slate-700">{{ __('homepage.pricing_starter_posts') }}</span>
                             </li>
                             <li class="flex items-start">
                                 <svg class="w-5 h-5 text-emerald-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
-                                <span class="text-slate-700">Facebook, Instagram, LinkedIn & din webbplats</span>
+                                <span class="text-slate-700">{{ __('homepage.pricing_starter_social') }}</span>
                             </li>
                             <li class="flex items-start">
                                 <svg class="w-5 h-5 text-emerald-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
-                                <span class="text-slate-700">1 webbplats</span>
+                                <span class="text-slate-700">{{ __('homepage.pricing_starter_website') }}</span>
                             </li>
                         </ul>
 
                         <div class="mt-auto">
                             <a href="{{ route('register') }}" class="w-full inline-flex items-center justify-center px-6 py-3 bg-slate-800 text-white font-semibold rounded-xl hover:bg-slate-900 transition-colors">
-                                Starta 14 dagar gratis
+                                {{ __('homepage.pricing_cta_start_trial') }}
                             </a>
                         </div>
                     </div>
@@ -594,24 +594,24 @@
                     <div class="relative bg-white rounded-2xl border-2 border-indigo-500 shadow-2xl p-8 scale-105 flex flex-col h-full">
                         <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
                             <span class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
-                                Mest populär
+                                {{ __('homepage.pricing_most_popular') }}
                             </span>
                         </div>
 
                         <div class="text-center mb-8">
-                            <h3 class="text-lg font-semibold text-indigo-600 mb-2">Growth</h3>
+                            <h3 class="text-lg font-semibold text-indigo-600 mb-2">{{ __('homepage.pricing_growth_title') }}</h3>
                             <div class="mb-4">
                                 <div class="flex items-center justify-center gap-2 mb-2">
-                                    <span class="text-lg text-slate-400 line-through">1 490 kr</span>
-                                    <span class="text-4xl font-bold text-slate-800">990 kr</span>
+                                    <span class="text-lg text-slate-400 line-through">{{ __('homepage.pricing_growth_price_ordinary') }}</span>
+                                    <span class="text-4xl font-bold text-slate-800">{{ __('homepage.pricing_growth_price_extra') }}</span>
                                 </div>
                                 <div class="text-slate-600 text-sm">
-                                    <span>/mån</span>
-                                    <span class="block text-xs text-emerald-600 font-medium">Årspris: 842 kr/mån</span>
+                                    <span>{{ __('homepage.pricing_per_month') }}</span>
+                                    <span class="block text-xs text-emerald-600 font-medium">{{ __('homepage.pricing_growth_annual') }}</span>
                                 </div>
-                                <div class="text-xs text-orange-600 font-medium">Early bird-pris</div>
+                                <div class="text-xs text-orange-600 font-medium">{{ __('homepage.pricing_early_bird') }}</div>
                             </div>
-                            <p class="text-slate-600">För växande företag</p>
+                            <p class="text-slate-600">{{ __('homepage.pricing_growth_highlight') }}</p>
                         </div>
 
                         <ul class="space-y-3 mb-8 flex-1">
@@ -619,43 +619,43 @@
                                 <svg class="w-5 h-5 text-emerald-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
-                                <span class="text-slate-700">2 500 AI-texter/månad</span>
+                                <span class="text-slate-700">{{ __('homepage.pricing_growth_ai') }}</span>
                             </li>
                             <li class="flex items-start">
                                 <svg class="w-5 h-5 text-emerald-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
-                                <span class="text-slate-700">100 bildgenereringar/månad</span>
+                                <span class="text-slate-700">{{ __('homepage.pricing_growth_image') }}</span>
                             </li>
                             <li class="flex items-start">
                                 <svg class="w-5 h-5 text-emerald-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
-                                <span class="text-slate-700">200 schemalagda publiceringar</span>
+                                <span class="text-slate-700">{{ __('homepage.pricing_growth_posts') }}</span>
                             </li>
                             <li class="flex items-start">
                                 <svg class="w-5 h-5 text-emerald-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
-                                <span class="text-slate-700">Möjlighet till <a class="text-purple-800 hover:text-purple-600" href="{{ route('free-website') }}">gratis webbsida</a></span>
+                                <span class="text-slate-700">{{ __('homepage.pricing_option_for') }} <a class="text-purple-800 hover:text-purple-600" href="{{ route('free-website') }}">{{ __('homepage.pricing_a_free_website') }}</a></span>
                             </li>
                             <li class="flex items-start">
                                 <svg class="w-5 h-5 text-emerald-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
-                                <span class="text-slate-700">3 webbplatser</span>
+                                <span class="text-slate-700">{{ __('homepage.pricing_growth_website_count') }}</span>
                             </li>
                             <li class="flex items-start">
                                 <svg class="w-5 h-5 text-indigo-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
-                                <span class="text-slate-700 font-semibold">SEO & CRO-analys</span>
+                                <span class="text-slate-700 font-semibold">{{ __('homepage.pricing_growth_seo') }}</span>
                             </li>
                         </ul>
 
                         <div class="mt-auto">
                             <a href="{{ route('register') }}" class="w-full inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-colors">
-                                Starta 14 dagar gratis
+                                {{ __('homepage.pricing_cta_start_trial') }}
                             </a>
                         </div>
                     </div>
@@ -663,19 +663,19 @@
                     <!-- Pro -->
                     <div class="relative bg-white rounded-2xl border border-slate-200 shadow-lg p-8 flex flex-col h-full">
                         <div class="text-center mb-8">
-                            <h3 class="text-lg font-semibold text-slate-600 mb-2">Pro</h3>
+                            <h3 class="text-lg font-semibold text-slate-600 mb-2">{{ __('homepage.pricing_pro_title') }}</h3>
                             <div class="mb-4">
                                 <div class="flex items-center justify-center gap-2 mb-2">
-                                    <span class="text-lg text-slate-400 line-through">3 990 kr</span>
-                                    <span class="text-4xl font-bold text-slate-800">2 990 kr</span>
+                                    <span class="text-lg text-slate-400 line-through">{{ __('homepage.pricing_pro_price_ordinary') }}</span>
+                                    <span class="text-4xl font-bold text-slate-800">{{ __('homepage.pricing_pro_price_extra') }}</span>
                                 </div>
                                 <div class="text-slate-600 text-sm">
-                                    <span>/mån</span>
-                                    <span class="block text-xs text-emerald-600 font-medium">Årspris: 2 542 kr/mån</span>
+                                    <span>{{ __('homepage.pricing_per_month') }}</span>
+                                    <span class="block text-xs text-emerald-600 font-medium">{{ __('homepage.pricing_pro_annual') }}</span>
                                 </div>
-                                <div class="text-xs text-orange-600 font-medium">Early bird-pris</div>
+                                <div class="text-xs text-orange-600 font-medium">{{ __('homepage.pricing_early_bird') }}</div>
                             </div>
-                            <p class="text-slate-600">För stora företag</p>
+                            <p class="text-slate-600">{{ __('homepage.pricing_pro_highlight') }}</p>
                         </div>
 
                         <ul class="space-y-3 mb-8 flex-1">
@@ -683,37 +683,37 @@
                                 <svg class="w-5 h-5 text-emerald-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
-                                <span class="text-slate-700">10 000 AI-texter/månad</span>
+                                <span class="text-slate-700">{{ __('homepage.pricing_pro_ai') }}</span>
                             </li>
                             <li class="flex items-start">
                                 <svg class="w-5 h-5 text-emerald-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
-                                <span class="text-slate-700">500 bildgenereringar/månad</span>
+                                <span class="text-slate-700">{{ __('homepage.pricing_pro_images') }}</span>
                             </li>
                             <li class="flex items-start">
                                 <svg class="w-5 h-5 text-emerald-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
-                                <span class="text-slate-700">1 000 schemalagda publiceringar</span>
+                                <span class="text-slate-700">{{ __('homepage.pricing_pro_posts') }}</span>
                             </li>
                             <li class="flex items-start">
                                 <svg class="w-5 h-5 text-emerald-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
-                                <span class="text-slate-700">10 webbplatser</span>
+                                <span class="text-slate-700">{{ __('homepage.pricing_pro_website') }}</span>
                             </li>
                             <li class="flex items-start">
                                 <svg class="w-5 h-5 text-purple-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
-                                <span class="text-slate-700 font-semibold">Avancerad analys</span>
+                                <span class="text-slate-700 font-semibold">{{ __('homepage.pricing_pro_analytics') }}</span>
                             </li>
                         </ul>
 
                         <div class="mt-auto">
                             <button @click="demoOpen = true" class="w-full px-6 py-3 bg-slate-800 text-white font-semibold rounded-xl hover:bg-slate-900 transition-colors">
-                                Kontakta oss
+                                {{ __('homepage.pricing_contact_title') }}
                             </button>
                         </div>
                     </div>
@@ -721,8 +721,8 @@
 
                 <!-- Guarantee -->
                 <div class="text-center bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-2xl p-8">
-                    <h3 class="text-xl font-bold text-emerald-900 mb-2">14 dagar gratis - utan risk</h3>
-                    <p class="text-emerald-800">Testa alla funktioner. Ingen bindningstid. Avsluta när som helst.</p>
+                    <h3 class="text-xl font-bold text-emerald-900 mb-2">{{ __('homepage.pricing_free_without_risk') }}</h3>
+                    <p class="text-emerald-800">{{ __('homepage.pricing_test_it') }}</p>
                 </div>
             </div>
         </section>
@@ -731,8 +731,8 @@
         <section class="py-20 bg-white" id="testimonials">
             <div class="max-w-7xl mx-auto px-4">
                 <div class="text-center mb-16">
-                    <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-4">Vad säger kunderna?</h2>
-                    <p class="text-xl text-slate-600">Riktig feedback från svenska företag</p>
+                    <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-4">{{ __('homepage.customers_title') }}</h2>
+                    <p class="text-xl text-slate-600">{{ __('homepage.customers_subtitle') }}</p>
                 </div>
 
                 <div class="grid md:grid-cols-3 gap-8">
@@ -755,13 +755,13 @@
                             </svg>
                         </div>
                         <blockquote class="text-slate-700 mb-6 italic">
-                            "Våra kundförfrågningar ökade med 42% på två månader. AI:n skriver verkligen texter som säljer."
+                            {{ __('homepage.customers_card_1_title') }}
                         </blockquote>
                         <div class="flex items-center">
                             <div class="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center text-white font-semibold">S</div>
                             <div class="ml-4">
-                                <div class="font-semibold text-slate-800">Sara</div>
-                                <div class="text-sm text-slate-600">VD, Konsultbolag</div>
+                                <div class="font-semibold text-slate-800">{{ __('homepage.customers_card_1_customer') }}</div>
+                                <div class="text-sm text-slate-600">{{ __('homepage.customers_card_1_customer_title') }}</div>
                             </div>
                         </div>
                     </div>
@@ -785,13 +785,13 @@
                             </svg>
                         </div>
                         <blockquote class="text-slate-700 mb-6 italic">
-                            "Sparar 8 timmar i veckan och får bättre resultat än när jag skrev själv. Otroligt!"
+                            {{ __('homepage.customers_card_2_title') }}
                         </blockquote>
                         <div class="flex items-center">
                             <div class="w-12 h-12 bg-indigo-500 rounded-full flex items-center justify-center text-white font-semibold">J</div>
                             <div class="ml-4">
-                                <div class="font-semibold text-slate-800">Johan</div>
-                                <div class="text-sm text-slate-600">Marknadschef, E-handel</div>
+                                <div class="font-semibold text-slate-800">{{ __('homepage.customers_card_2_customer') }}</div>
+                                <div class="text-sm text-slate-600">{{ __('homepage.customers_card_2_customer_title') }}</div>
                             </div>
                         </div>
                     </div>
@@ -815,13 +815,13 @@
                             </svg>
                         </div>
                         <blockquote class="text-slate-700 mb-6 italic">
-                            "Äntligen svenskt innehåll som låter naturligt. Branschkunskapen är imponerande."
+                            {{ __('homepage.customers_card_3_title') }}
                         </blockquote>
                         <div class="flex items-center">
                             <div class="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center text-white font-semibold">A</div>
                             <div class="ml-4">
-                                <div class="font-semibold text-slate-800">Anna</div>
-                                <div class="text-sm text-slate-600">Grundare, Tech-startup</div>
+                                <div class="font-semibold text-slate-800">{{ __('homepage.customers_card_3_customer') }}</div>
+                                <div class="text-sm text-slate-600">{{ __('homepage.customers_card_3_customer_title') }}</div>
                             </div>
                         </div>
                     </div>
@@ -829,7 +829,7 @@
 
                 <div class="mt-20">
                     <div class="text-center mb-12">
-                        <p class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-8">Används av flera svenska företag</p>
+                        <p class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-8">{{ __('homepage.customers_title_2') }}</p>
                     </div>
 
                     <!-- Logo carousel with rotation effect -->
@@ -955,56 +955,56 @@
         <section class="py-20 bg-gradient-to-br from-slate-50 to-indigo-50" id="faq">
             <div class="max-w-4xl mx-auto px-4">
                 <div class="text-center mb-16">
-                    <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-4">Vanliga frågor</h2>
-                    <p class="text-xl text-slate-600">Svar på det du undrar över</p>
+                    <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-4">{{ __('homepage.faq_title') }}</h2>
+                    <p class="text-xl text-slate-600">{{ __('homepage.faq_subtitle') }}</p>
                 </div>
 
                 <div class="space-y-6">
                     <details class="group bg-white rounded-2xl shadow-lg overflow-hidden">
                         <summary class="cursor-pointer p-6 font-semibold text-slate-800 flex items-center justify-between">
-                            <span>Måste jag börja på en dyr plan?</span>
+                            <span>{{ __('homepage.faq_q_1') }}</span>
                             <svg class="w-5 h-5 text-indigo-500 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                             </svg>
                         </summary>
                         <div class="px-6 pb-6 text-slate-600">
-                            Nej. De flesta börjar på Starter (390 kr/mån) och uppgraderar när volymen växer.
+                            {{ __('homepage.faq_a_1') }}
                         </div>
                     </details>
 
                     <details class="group bg-white rounded-2xl shadow-lg overflow-hidden">
                         <summary class="cursor-pointer p-6 font-semibold text-slate-800 flex items-center justify-between">
-                            <span>Kan jag avsluta när jag vill?</span>
+                            <span>{{ __('homepage.faq_q_2') }}</span>
                             <svg class="w-5 h-5 text-indigo-500 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                             </svg>
                         </summary>
                         <div class="px-6 pb-6 text-slate-600">
-                            Ja. Ingen bindningstid. Avsluta när som helst.
+                            {{ __('homepage.faq_a_2') }}
                         </div>
                     </details>
 
                     <details class="group bg-white rounded-2xl shadow-lg overflow-hidden">
                         <summary class="cursor-pointer p-6 font-semibold text-slate-800 flex items-center justify-between">
-                            <span>Låter AI-texterna naturliga på svenska?</span>
+                            <span>{{ __('homepage.faq_q_3') }}</span>
                             <svg class="w-5 h-5 text-indigo-500 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                             </svg>
                         </summary>
                         <div class="px-6 pb-6 text-slate-600">
-                            Ja. Vår AI är tränad specifikt på svenska affärstexter och förstår olika branscher.
+                            {{ __('homepage.faq_a_3') }}
                         </div>
                     </details>
 
                     <details class="group bg-white rounded-2xl shadow-lg overflow-hidden">
                         <summary class="cursor-pointer p-6 font-semibold text-slate-800 flex items-center justify-between">
-                            <span>Publiceras innehåll automatiskt?</span>
+                            <span>{{ __('homepage.faq_q_4') }}</span>
                             <svg class="w-5 h-5 text-indigo-500 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                             </svg>
                         </summary>
                         <div class="px-6 pb-6 text-slate-600">
-                            Nej. Du godkänner alltid innan publicering. Du har full kontroll.
+                            {{ __('homepage.faq_a_4') }}
                         </div>
                     </details>
                 </div>
@@ -1017,17 +1017,17 @@
 
             <div class="relative max-w-4xl mx-auto px-4 text-center">
                 <h2 class="text-4xl md:text-5xl font-bold text-white mb-8">
-                    Redo att börja växa?
+                    {{ __('homepage.contact_title') }}
                 </h2>
                 <p class="text-xl text-slate-300 mb-12 max-w-2xl mx-auto">
-                    Gå med hundratals svenska företag som redan använder WebGrow AI för att skapa bättre innehåll på mindre tid.
+                    {{ __('homepage.contact_subtitle') }}
                 </p>
 
                 <div class="flex flex-col sm:flex-row gap-6 justify-center items-center">
                     @if(Route::has('register'))
                         <a href="{{ route('register') }}"
                            class="group inline-flex items-center justify-center px-8 py-4 bg-white text-slate-900 font-bold rounded-xl shadow-2xl hover:shadow-3xl hover:scale-105 transition-all duration-300 text-lg">
-                            Starta gratis idag
+                            {{ __('homepage.contact_cta_start_trial') }}
                             <svg class="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
                             </svg>
@@ -1039,12 +1039,12 @@
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8z"/>
                         </svg>
-                        Se demo först
+                        {{ __('homepage.contact_cta_demo') }}
                     </button>
                 </div>
 
                 <div class="mt-8 text-slate-400 text-sm">
-                    ✓ 14 dagar gratis • ✓ Inget kreditkort krävs • ✓ Svensk support
+                    ✓ {{ __('homepage.contact_cta_14_days') }} • ✓ {{ __('homepage.contact_cta_no_credit_card') }} • ✓ {{ __('homepage.contact_cta_support') }}
                 </div>
             </div>
         </section>

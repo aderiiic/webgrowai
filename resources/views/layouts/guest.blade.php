@@ -162,27 +162,27 @@
             <!-- Desktop Navigation -->
             <nav class="hidden lg:flex items-center space-x-8">
                 <a href="{{ url('/#features') }}" class="text-slate-600 hover:text-indigo-600 font-medium transition-colors duration-200 relative group">
-                    Funktioner
+                    {{ __('homepage.nav_functions') }}
                     <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-600 transition-all duration-200 group-hover:w-full"></span>
                 </a>
                 <a href="{{ url('/#pricing') }}" class="text-slate-600 hover:text-indigo-600 font-medium transition-colors duration-200 relative group">
-                    Priser
+                    {{ __('homepage.nav_pricing') }}
                     <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-600 transition-all duration-200 group-hover:w-full"></span>
                 </a>
                 <a href="{{ url('/#testimonials') }}" class="text-slate-600 hover:text-indigo-600 font-medium transition-colors duration-200 relative group">
-                    Kunder
+                    {{ __('homepage.nav_customers') }}
                     <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-600 transition-all duration-200 group-hover:w-full"></span>
                 </a>
                 <a href="{{ url('/#faq') }}" class="text-slate-600 hover:text-indigo-600 font-medium transition-colors duration-200 relative group">
-                    FAQ
+                    {{ __('homepage.nav_faq') }}
                     <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-600 transition-all duration-200 group-hover:w-full"></span>
                 </a>
                 <a href="{{ route('news.index') }}" class="text-slate-600 hover:text-indigo-600 font-medium transition-colors duration-200 relative group">
-                    Nyheter
+                    {{ __('homepage.nav_news') }}
                     <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-600 transition-all duration-200 group-hover:w-full"></span>
                 </a>
                 <a href="{{ url('/#kontakt') }}" class="text-slate-600 hover:text-indigo-600 font-medium transition-colors duration-200 relative group">
-                    Kontakt
+                    {{ __('homepage.nav_contact') }}
                     <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-600 transition-all duration-200 group-hover:w-full"></span>
                 </a>
             </nav>
@@ -215,13 +215,13 @@
             <!-- Desktop CTA Buttons -->
             <div class="hidden lg:flex items-center space-x-3">
                 <a href="{{ route('login') }}" class="px-4 py-2 text-slate-700 font-medium rounded-lg border border-slate-300 hover:bg-slate-50 hover:border-slate-400 transition-all duration-200">
-                    Logga in
+                    {{ __('homepage.nav_login') }}
                 </a>
                 @if(Route::has('register'))
                     <a href="{{ route('register') }}"
                        class="group relative px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200"
                        data-lead-cta="header_register">
-                        <span class="relative z-10">Prova gratis</span>
+                        <span class="relative z-10">{{ __('homepage.nav_register') }}</span>
                         <div class="absolute inset-0 bg-gradient-to-r from-indigo-700 to-purple-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
                     </a>
                 @endif
@@ -324,7 +324,7 @@
                     <img src="https://webbiab.s3.eu-north-1.amazonaws.com/webgrowai/WebGrowAI_transparent.png" alt="WebGrow AI" class="h-8 w-auto filter brightness-0 invert opacity-80">
                 </div>
                 <p class="text-slate-300 leading-relaxed mb-6">
-                    Automatiserad marknadsföring för WordPress, Shopify och custom sidor – SEO, CRO och publicering som hjälper ditt företag att växa snabbare.
+                    {{ __('homepage.footer_desc') }}
                 </p>
 
                 <!-- Social links -->
@@ -354,14 +354,14 @@
 
             <!-- Product links -->
             <div>
-                <h4 class="font-bold text-white mb-4">Produkt</h4>
+                <h4 class="font-bold text-white mb-4">{{ __('homepage.footer_column_1_title') }}</h4>
                 <ul class="space-y-3">
                     <li>
                         <a href="{{ url('/#features') }}" class="text-slate-300 hover:text-indigo-400 transition-colors duration-200 flex items-center group">
                             <svg class="w-4 h-4 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
                             </svg>
-                            Funktioner
+                            {{ __('homepage.footer_column_1_1') }}
                         </a>
                     </li>
                     <li>
@@ -369,7 +369,7 @@
                             <svg class="w-4 h-4 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
                             </svg>
-                            Priser
+                            {{ __('homepage.footer_column_1_2') }}
                         </a>
                     </li>
                     <li>
@@ -377,7 +377,7 @@
                             <svg class="w-4 h-4 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
                             </svg>
-                            Vanliga frågor
+                            {{ __('homepage.footer_column_1_3') }}
                         </a>
                     </li>
                     <li>
@@ -385,7 +385,7 @@
                             <svg class="w-4 h-4 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
                             </svg>
-                            Kundrecensioner
+                            {{ __('homepage.footer_column_1_4') }}
                         </a>
                     </li>
                 </ul>
@@ -393,14 +393,14 @@
 
             <!-- Resources links -->
             <div>
-                <h4 class="font-bold text-white mb-4">Resurser</h4>
+                <h4 class="font-bold text-white mb-4">{{ __('homepage.footer_column_2_title') }}</h4>
                 <ul class="space-y-3">
                     <li>
                         <a href="{{ route('news.index') }}" class="text-slate-300 hover:text-indigo-400 transition-colors duration-200 flex items-center group">
                             <svg class="w-4 h-4 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
                             </svg>
-                            Nyheter & uppdateringar
+                            {{ __('homepage.footer_column_2_1') }}
                         </a>
                     </li>
                     <li>
@@ -408,7 +408,7 @@
                             <svg class="w-4 h-4 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
                             </svg>
-                            Logga in
+                            {{ __('homepage.footer_column_2_2') }}
                         </a>
                     </li>
                     @if(Route::has('register'))
@@ -417,7 +417,7 @@
                                 <svg class="w-4 h-4 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
                                 </svg>
-                                Skapa konto
+                                {{ __('homepage.footer_column_2_3') }}
                             </a>
                         </li>
                     @endif
@@ -426,14 +426,14 @@
 
             <!-- Contact & Support -->
             <div>
-                <h4 class="font-bold text-white mb-4">Kontakt</h4>
+                <h4 class="font-bold text-white mb-4">{{ __('homepage.footer_column_3_title') }}</h4>
                 <ul class="space-y-3">
                     <li>
                         <a href="{{ url('/#pricing') }}" class="text-slate-300 hover:text-indigo-400 transition-colors duration-200 flex items-center group" data-lead-cta="footer_book_demo">
                             <svg class="w-4 h-4 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
                             </svg>
-                            Boka demo
+                            {{ __('homepage.footer_column_3_title') }}
                         </a>
                     </li>
                     <li class="text-slate-300">
@@ -448,11 +448,11 @@
 
                 <!-- CTA in footer -->
                 <div class="mt-6 p-4 bg-gradient-to-r from-indigo-600/20 to-purple-600/20 rounded-xl border border-indigo-500/30">
-                    <p class="text-sm text-indigo-300 font-medium mb-2">Redo att komma igång?</p>
+                    <p class="text-sm text-indigo-300 font-medium mb-2">{{ __('homepage.footer_column_3_cta_title') }}</p>
                     <a href="{{ route('register') }}"
                        class="inline-flex items-center text-sm font-semibold text-indigo-400 hover:text-indigo-300 transition-colors duration-200"
                        data-lead-cta="footer_cta_register">
-                        Starta gratis idag
+                        {{ __('homepage.footer_column_3_cta_14_days') }}
                         <svg class="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
                         </svg>
@@ -465,11 +465,11 @@
         <div class="border-t border-slate-700 pt-8">
             <div class="flex flex-col md:flex-row items-center justify-between gap-4">
                 <div class="text-sm text-slate-400">
-                    © {{ date('Y') }} WebGrow AI. Alla rättigheter förbehållna.
+                    © {{ date('Y') }} {{ __('homepage.footer_copyright') }}
                 </div>
                 <div class="flex items-center gap-6 text-sm">
-                    <a href="#" class="text-slate-400 hover:text-slate-300 transition-colors duration-200">Integritetspolicy</a>
-                    <a href="#" class="text-slate-400 hover:text-slate-300 transition-colors duration-200">Användarvillkor</a>
+                    <a href="#" class="text-slate-400 hover:text-slate-300 transition-colors duration-200">{{ __('homepage.footer_privacy_policy') }}</a>
+                    <a href="#" class="text-slate-400 hover:text-slate-300 transition-colors duration-200">{{ __('homepage.footer_terms') }}</a>
                 </div>
             </div>
         </div>
