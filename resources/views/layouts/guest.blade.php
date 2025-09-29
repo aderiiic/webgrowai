@@ -147,6 +147,8 @@
             animation: float6 7.5s ease-in-out infinite;
         }
     </style>
+
+    <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="aefaf1d4-8589-4f86-b031-4023368b8312" data-blockingmode="auto" type="text/javascript"></script>
 </head>
 <body class="bg-slate-50 text-slate-900 antialiased">
 
