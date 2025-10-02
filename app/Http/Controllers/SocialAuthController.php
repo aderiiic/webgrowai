@@ -416,6 +416,56 @@ class SocialAuthController extends Controller
             ['page_id' => $selected['id'], 'access_token' => $selected['token'], 'status' => 'active']
         );
 
+        try {
+            $http = new Client(['base_uri' => 'https://graph.facebook.com/v19.0/', 'timeout' => 20]);
+            $edges = [
+                ['path' => $selected['id'], 'fields' => 'instagram_business_account{id,username}',  'key' => 'instagram_business_account'],
+                ['path' => $selected['id'], 'fields' => 'connected_instagram_account{id,username}', 'key' => 'connected_instagram_account'],
+                ['path' => $selected['id'] . '/instagram_accounts', 'fields' => null, 'key' => 'data'],
+            ];
+            $candidates = [];
+            foreach ($edges as $try) {
+                $q = ['access_token' => $selected['token']];
+                if ($try['fields']) {
+                    $q['fields'] = $try['fields'];
+                } else {
+                    $q['fields'] = 'id,username';
+                    $q['limit'] = 5;
+                }
+                $res  = $http->get($try['path'], ['query' => $q]);
+                $data = json_decode((string)$res->getBody(), true);
+
+                if ($try['key'] === 'data') {
+                    foreach (($data['data'] ?? []) as $acc) {
+                        if (!empty($acc['id'])) {
+                            $candidates[$acc['id']] = ['id' => (string)$acc['id'], 'username' => $acc['username'] ?? $acc['id'], 'token' => $selected['token']];
+                        }
+                    }
+                } else {
+                    $acc = $data[$try['key']] ?? null;
+                    if (!empty($acc['id'])) {
+                        $candidates[$acc['id']] = ['id' => (string)$acc['id'], 'username' => $acc['username'] ?? $acc['id'], 'token' => $selected['token']];
+                    }
+                }
+            }
+
+            $accounts = array_values($candidates);
+            if (count($accounts) === 1) {
+                $ig = $accounts[0];
+                SocialIntegration::updateOrCreate(
+                    ['customer_id' => $customer->id, 'site_id' => (int)$pending['site_id'], 'provider' => 'instagram'],
+                    ['ig_user_id' => (string)$ig['id'], 'access_token' => $ig['token'], 'status' => 'active']
+                );
+            } elseif (count($accounts) > 1) {
+                session(['ig_connect_pending' => [
+                    'site_id'  => (int)$pending['site_id'],
+                    'accounts' => $accounts,
+                ]]);
+            }
+        } catch (\Throwable $e) {
+            // tyst – användaren kan ansluta IG separat
+        }
+
         session()->forget('fb_connect_pending');
 
         return redirect()->route('settings.social')->with('success', 'Facebook-sida kopplad till vald sajt.');
