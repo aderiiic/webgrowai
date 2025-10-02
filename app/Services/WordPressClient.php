@@ -216,7 +216,7 @@ class WordPressClient
         };
 
         $hint = match ($code) {
-            'auth_invalid' => 'Kontrollera URL, användarnamn och applikationslösenord (utan mellanslag) och spara igen.',
+            'auth_invalid' => 'Kontrollera URL, användarnamn och applikationslösenord och spara igen.',
             'auth_required' => 'Säkerställ att applikationslösenord används och kontot har rätt roll.',
             'insufficient_permissions' => 'Kontot behöver minst författar- eller redaktörsroll.',
             'forbidden' => 'Se över säkerhetsplugin/brandvägg (Wordfence/Cloudflare) som kan blockera REST API.',
