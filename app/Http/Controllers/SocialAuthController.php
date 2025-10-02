@@ -56,6 +56,8 @@ class SocialAuthController extends Controller
         $code = $req->query('code');
         abort_unless($code, 400, 'Saknar code');
 
+        session()->forget('facebook_state');
+
         Log::info('[FB] Auth code mottagen');
 
         $client = new Client(['timeout' => 30]);
@@ -101,35 +103,43 @@ class SocialAuthController extends Controller
                 ],
             ]);
             $pages = json_decode((string) $pagesRes->getBody(), true);
-            $firstPage = $pages['data'][0] ?? null;
-            if (!$firstPage) {
+            $list  = array_values($pages['data'] ?? []);
+
+            if (empty($list)) {
                 return redirect()->route('settings.social')->with('error', 'Inga Facebook-sidor hittades.');
             }
 
-            $pageId          = $firstPage['id'] ?? null;
-            $pageAccessToken = $firstPage['access_token'] ?? null;
-            abort_unless($pageId && $pageAccessToken, 400, 'Sidan saknar giltigt Page Access Token');
+            // Om det bara är en sida – spara direkt. Om flera – låt användaren välja i vår UI.
+            if (count($list) === 1) {
+                $pageId          = $list[0]['id'] ?? null;
+                $pageAccessToken = $list[0]['access_token'] ?? null;
+                abort_unless($pageId && $pageAccessToken, 400, 'Sidan saknar giltigt Page Access Token');
 
-            // 4) Spara Facebook-integration per sajt
-            SocialIntegration::updateOrCreate(
-                ['customer_id' => $customer->id, 'site_id' => $siteId, 'provider' => 'facebook'],
-                ['page_id' => $pageId, 'access_token' => $pageAccessToken, 'status' => 'active']
-            );
-            Log::info('[FB] Page sparad', ['site_id' => $siteId, 'page_id' => $pageId]);
+                SocialIntegration::updateOrCreate(
+                    ['customer_id' => $customer->id, 'site_id' => $siteId, 'provider' => 'facebook'],
+                    ['page_id' => $pageId, 'access_token' => $pageAccessToken, 'status' => 'active']
+                );
 
-            // 5) Auto‑koppla IG Business (robust: testa flera edges)
-            $ig = $this->ensureInstagramFromFacebook($siteId, $pageId, $pageAccessToken, $customer->id);
-            if ($ig) {
-                Log::info('[FB] IG auto‑kopplad', [
-                    'site_id'   => $siteId,
-                    'ig_user_id'=> $ig['id'] ?? null,
-                    'username'  => $ig['username'] ?? null
-                ]);
-            } else {
-                Log::info('[FB] IG ej hittad/kopplad för sidan', ['site_id' => $siteId, 'page_id' => $pageId]);
+                // Auto‑koppla IG om möjligt
+                $this->ensureInstagramFromFacebook($siteId, $pageId, $pageAccessToken, $customer->id);
+
+                return redirect()->route('settings.social')->with('success', 'Facebook ansluten för denna sajt.');
             }
 
-            return redirect()->route('settings.social')->with('success', 'Facebook ansluten för denna sajt. (Instagram om kopplad)');
+            // Flera sidor – spara temporärt i session för UI‑val
+            session([
+                'fb_connect_pending' => [
+                    'site_id' => $siteId,
+                    'channel' => $channel,
+                    'pages'   => array_map(fn($p) => [
+                        'id'    => $p['id'],
+                        'name'  => $p['name'] ?? $p['id'],
+                        'token' => $p['access_token'] ?? null,
+                    ], $list),
+                ],
+            ]);
+
+            return redirect()->route('settings.social')->with('success', 'Välj vilken Facebook-sida som ska kopplas till denna sajt.');
         } catch (ClientException $e) {
             $status = $e->getResponse()?->getStatusCode();
             $msg = $status === 400 ? 'Begäran nekades av Meta. Kontrollera att du valde rätt sida och gav behörigheter.' :
@@ -309,5 +319,33 @@ class SocialAuthController extends Controller
         );
 
         return $ig;
+    }
+
+    public function facebookChoose(Request $req, CurrentCustomer $current)
+    {
+        $req->validate([
+            'site_id' => 'required|integer',
+            'page_id' => 'required|string',
+        ]);
+
+        $pending = session('fb_connect_pending');
+        abort_unless($pending && (int)$pending['site_id'] === (int)$req->input('site_id'), 400, 'Ogiltig begäran');
+
+        $selected = collect($pending['pages'] ?? [])->firstWhere('id', $req->input('page_id'));
+        abort_unless($selected && !empty($selected['token']), 400, 'Ogiltigt sidval');
+
+        $customer = $current->get();
+        abort_unless($customer, 403);
+
+        // Spara koppling för exakt den sajt som valts
+        SocialIntegration::updateOrCreate(
+            ['customer_id' => $customer->id, 'site_id' => (int)$pending['site_id'], 'provider' => 'facebook'],
+            ['page_id' => $selected['id'], 'access_token' => $selected['token'], 'status' => 'active']
+        );
+
+        // Rensa pending och state
+        session()->forget('fb_connect_pending');
+
+        return redirect()->route('settings.social')->with('success', 'Facebook-sida kopplad till vald sajt.');
     }
 }

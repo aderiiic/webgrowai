@@ -79,6 +79,30 @@
                 </div>
             </div>
 
+            @php
+                $pending = session('fb_connect_pending');
+            @endphp
+            @if($pending && ($pending['site_id'] ?? null) === ($siteId ?? null) && !empty($pending['pages']))
+                <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                    <p class="text-sm font-medium text-blue-800 mb-3">Välj vilken Facebook‑sida som ska kopplas till denna sajt:</p>
+                    <form method="post" action="{{ route('auth.facebook.choose') }}" class="space-y-3">
+                        @csrf
+                        <input type="hidden" name="site_id" value="{{ $siteId }}">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            @foreach($pending['pages'] as $p)
+                                <label class="flex items-center space-x-2 p-2 bg-white border border-blue-200 rounded-lg">
+                                    <input type="radio" name="page_id" value="{{ $p['id'] }}" required>
+                                    <span class="text-sm text-gray-900">{{ $p['name'] }} <span class="text-xs text-gray-500">({{ $p['id'] }})</span></span>
+                                </label>
+                            @endforeach
+                        </div>
+                        <button type="submit" class="mt-2 inline-flex items-center px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
+                            Bekräfta val
+                        </button>
+                    </form>
+                </div>
+            @endif
+
             <!-- Advanced Facebook settings -->
             <details class="group">
                 <summary class="cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900 flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
