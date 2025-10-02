@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Sites;
 
+use App\Models\Integration;
 use App\Models\Site;
 use App\Models\WpIntegration;
 use App\Services\WordPressClient;
@@ -42,44 +43,83 @@ class WordPressConnect extends Component
         $this->validate([
             'wp_url' => 'required|url',
             'wp_username' => 'required|string',
-            'wp_app_password' => 'nullable|string', // tomt = behåll tidigare
+            'wp_app_password' => 'nullable|string',
         ]);
 
-        $integration = WpIntegration::firstOrNew(['site_id' => $this->site->id]);
-        $integration->wp_url = rtrim($this->wp_url, '/');
-        $integration->wp_username = $this->wp_username;
+        // 1) Spara/uppdatera WpIntegration (legacy)
+        $wp = WpIntegration::firstOrNew(['site_id' => $this->site->id]);
+        $wp->wp_url = rtrim($this->wp_url, '/');
+        $wp->wp_username = $this->wp_username;
 
-        if ($this->wp_app_password !== '') {
-            $integration->wp_app_password = Crypt::encryptString($this->wp_app_password);
-        } elseif (!$integration->exists) {
+        $newPassProvided = $this->wp_app_password !== '';
+        if ($newPassProvided) {
+            $enc = Crypt::encryptString(trim($this->wp_app_password));
+            $wp->wp_app_password = $enc;
+        } elseif (!$wp->exists) {
             $this->addError('wp_app_password', 'App-lösenord krävs vid första anslutningen.');
             return;
         }
 
-        // Testa anslutning genom att hämta en sida posts
+        // 2) Synka till Integration (provider=wordpress) som används av publiceringen
+        $int = Integration::firstOrNew([
+            'site_id'  => $this->site->id,
+            'provider' => 'wordpress',
+        ]);
+
+        $creds = (array) ($int->credentials ?? []);
+        // Normalisera nycklar
+        $creds['wp_url'] = rtrim($this->wp_url, '/');
+        $creds['wp_username'] = $this->wp_username;
+
+        // Lagra samma "format" som WpIntegration: krypterat strängvärde
+        if ($newPassProvided) {
+            $creds['wp_app_password'] = Crypt::encryptString(trim($this->wp_app_password));
+        } else {
+            // Om redan finns i Integration – behåll befintligt. Annars ta från WpIntegration.
+            if (!isset($creds['wp_app_password']) && $wp->wp_app_password) {
+                $creds['wp_app_password'] = $wp->wp_app_password;
+            }
+        }
+
+        $int->credentials = $creds;
+        if (!$int->exists) {
+            $int->name = 'WordPress';
+            $int->status = 'connected';
+        }
+
+        // 3) Testa anslutning via WordPressClient::for(WpIntegration) (samma som UI-test)
         try {
-            $client = WordPressClient::for($integration);
+            $client = WordPressClient::for($wp);
             $test = $client->testConnection();
 
             if (!($test['ok'] ?? false)) {
-                $integration->status = 'error';
-                $integration->last_error = trim(($test['message'] ?? 'Kunde inte ansluta.').' '.($test['hint'] ?? ''));
+                $wp->status = 'error';
+                $wp->last_error = trim(($test['message'] ?? 'Kunde inte ansluta.').' '.($test['hint'] ?? ''));
+                $int->status = 'error';
+                $int->last_error = $wp->last_error;
             } else {
-                $integration->status = 'connected';
-                $integration->last_error = null;
+                $wp->status = 'connected';
+                $wp->last_error = null;
+                $int->status = 'connected';
+                $int->last_error = null;
             }
         } catch (\Throwable $e) {
-            $integration->status = 'error';
-            $integration->last_error = $e->getMessage();
+            $wp->status = 'error';
+            $wp->last_error = $e->getMessage();
+            $int->status = 'error';
+            $int->last_error = $e->getMessage();
         }
 
-        $integration->save();
+        // 4) Spara båda posterna
+        $wp->save();
+        $int->save();
 
-        $this->status = $integration->status;
-        $this->last_error = $integration->last_error;
+        // 5) Uppdatera lokalt UI‑state
+        $this->status = $wp->status;
+        $this->last_error = $wp->last_error;
 
-        session()->flash('success', $integration->status === 'connected'
-            ? 'WordPress anslutet.'
+        session()->flash('success', $wp->status === 'connected'
+            ? 'WordPress anslutet och synkat.'
             : 'Misslyckades att ansluta. Kontrollera uppgifterna.');
     }
 
