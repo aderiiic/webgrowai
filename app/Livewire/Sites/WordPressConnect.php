@@ -29,12 +29,24 @@ class WordPressConnect extends Component
             abort_unless($user->customers()->whereKey($site->customer_id)->exists(), 403);
         }
 
-        $integration = WpIntegration::where('site_id', $site->id)->first();
-        if ($integration) {
-            $this->wp_url = $integration->wp_url;
-            $this->wp_username = $integration->wp_username;
-            $this->status = $integration->status;
-            $this->last_error = $integration->last_error;
+        // Läs endast från Integration (enda sanningen)
+        $int = \App\Models\Integration::where('site_id', $site->id)
+            ->where('provider', 'wordpress')
+            ->first();
+
+        if ($int) {
+            $creds = (array) ($int->credentials ?? []);
+            $this->wp_url = rtrim((string)($creds['wp_url'] ?? $creds['url'] ?? ''), '/');
+            $this->wp_username = (string)($creds['wp_username'] ?? $creds['username'] ?? '');
+            // Visa status/fel från Integration
+            $this->status = $int->status;
+            $this->last_error = $int->last_error;
+        } else {
+            // Inget Integration‑record ännu: lämna tomt i form
+            $this->wp_url = '';
+            $this->wp_username = '';
+            $this->status = null;
+            $this->last_error = null;
         }
     }
 
