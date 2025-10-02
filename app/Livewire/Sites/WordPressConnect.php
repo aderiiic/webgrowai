@@ -59,9 +59,15 @@ class WordPressConnect extends Component
         // Testa anslutning genom att hämta en sida posts
         try {
             $client = WordPressClient::for($integration);
-            $client->getPosts(['per_page' => 1]);
-            $integration->status = 'connected';
-            $integration->last_error = null;
+            $test = $client->testConnection();
+
+            if (!($test['ok'] ?? false)) {
+                $integration->status = 'error';
+                $integration->last_error = trim(($test['message'] ?? 'Kunde inte ansluta.').' '.($test['hint'] ?? ''));
+            } else {
+                $integration->status = 'connected';
+                $integration->last_error = null;
+            }
         } catch (\Throwable $e) {
             $integration->status = 'error';
             $integration->last_error = $e->getMessage();
@@ -75,6 +81,33 @@ class WordPressConnect extends Component
         session()->flash('success', $integration->status === 'connected'
             ? 'WordPress anslutet.'
             : 'Misslyckades att ansluta. Kontrollera uppgifterna.');
+    }
+
+    public function test(): void
+    {
+        $integration = WpIntegration::where('site_id', $this->site->id)->first();
+        if (!$integration) {
+            $this->addError('wp_url', 'Spara uppgifterna först.');
+            return;
+        }
+        try {
+            $client = WordPressClient::for($integration);
+            $test = $client->testConnection();
+
+            if (!($test['ok'] ?? false)) {
+                $this->status = 'error';
+                $this->last_error = trim(($test['message'] ?? 'Kunde inte ansluta.').' '.($test['hint'] ?? ''));
+                session()->flash('success', 'Misslyckades att ansluta – se felmeddelande nedan.');
+            } else {
+                $this->status = 'connected';
+                $this->last_error = null;
+                session()->flash('success', 'Anslutning OK. Användare: '.((string)($test['user']['name'] ?? 'okänd')));
+            }
+        } catch (\Throwable $e) {
+            $this->status = 'error';
+            $this->last_error = $e->getMessage();
+            session()->flash('success', 'Misslyckades att ansluta – se felmeddelande nedan.');
+        }
     }
 
     public function render()

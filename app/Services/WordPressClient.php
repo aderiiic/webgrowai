@@ -12,10 +12,12 @@ class WordPressClient
 {
     private Client $client;
     private string $baseUrl;
+    private string $username;
 
     public function __construct(string $baseUrl, string $username, string $appPassword)
     {
         $this->baseUrl = rtrim($baseUrl, '/');
+        $this->username = $username;
         $this->client = new Client([
             'base_uri' => $this->baseUrl,
             'auth'     => [$username, $appPassword],
@@ -160,5 +162,85 @@ class WordPressClient
 
             throw new \RuntimeException("WordPress media upload misslyckades (HTTP {$statusCode}): {$errorMessage}", $statusCode, $e);
         }
+    }
+
+    public function testConnection(): array
+    {
+        try {
+            $res = $this->client->get('/wp-json/wp/v2/users/me', ['query' => ['context' => 'edit']]);
+            if ($res->getStatusCode() >= 200 && $res->getStatusCode() < 300) {
+                $user = json_decode((string)$res->getBody(), true);
+                return ['ok' => true, 'status' => $res->getStatusCode(), 'user' => $user];
+            }
+            return $this->mapWpError($res->getStatusCode(), (string)$res->getBody());
+        } catch (ClientException $e) {
+            $status = $e->getResponse()?->getStatusCode() ?? 0;
+            $body   = (string)($e->getResponse()?->getBody() ?? '');
+            return $this->mapWpError($status, $body);
+        } catch (\Throwable $e) {
+            \Log::warning('[WP] Test connection exception', [
+                'url' => $this->baseUrl,
+                'user' => $this->username,
+                'error' => $e->getMessage(),
+            ]);
+            return [
+                'ok' => false,
+                'code' => 'network_error',
+                'status' => 0,
+                'message' => 'Nätverksfel eller timeout vid anslutning till WordPress.',
+                'hint' => 'Kontrollera att sajten svarar och att brandvägg/CDN inte blockerar REST API.',
+            ];
+        }
+    }
+
+    private function mapWpError(int $status, string $rawBody): array
+    {
+        $json = json_decode($rawBody, true);
+        $wpCode = is_array($json) ? ($json['code'] ?? null) : null;
+
+        $map = [
+            'incorrect_password' => ['auth_invalid', 'Felaktigt applikationslösenord.'],
+            'invalid_username'   => ['auth_invalid', 'Felaktigt användarnamn.'],
+            'rest_not_logged_in' => ['auth_required', 'Inloggning krävs för denna åtgärd.'],
+            'rest_cannot_view_user' => ['insufficient_permissions', 'Kontot saknar rättigheter.'],
+            'rest_forbidden'     => ['forbidden', 'Åtkomst blockerad (forbidden) på WordPress.'],
+        ];
+
+        [$code, $msg] = $map[$wpCode] ?? match (true) {
+            $status === 401 => ['auth_invalid', 'Autentisering misslyckades mot WordPress.'],
+            $status === 403 => ['forbidden', 'Åtkomst nekad av WordPress.'],
+            $status === 404 => ['not_found', 'REST-endpoint saknas (404).'],
+            $status === 429 => ['rate_limited', 'WordPress rate limit – försök igen senare.'],
+            $status >= 500  => ['wp_error', 'Fel på WordPress-sidan (serverfel).'],
+            default         => ['unknown', 'Okänt fel vid anrop till WordPress.'],
+        };
+
+        $hint = match ($code) {
+            'auth_invalid' => 'Kontrollera URL, användarnamn och applikationslösenord (utan mellanslag) och spara igen.',
+            'auth_required' => 'Säkerställ att applikationslösenord används och kontot har rätt roll.',
+            'insufficient_permissions' => 'Kontot behöver minst författar- eller redaktörsroll.',
+            'forbidden' => 'Se över säkerhetsplugin/brandvägg (Wordfence/Cloudflare) som kan blockera REST API.',
+            'not_found' => 'Kontrollera att WordPress REST API är aktiverat.',
+            'rate_limited' => 'För många förfrågningar – vänta och försök igen.',
+            'wp_error' => 'Kontrollera WordPress-felsloggar (teman/plugin kan orsaka fel).',
+            default => 'Verifiera inställningarna och försök igen.',
+        };
+
+        \Log::info('[WP] API error', [
+            'url' => $this->baseUrl,
+            'user' => $this->username,
+            'status' => $status,
+            'wp_code' => $wpCode,
+            'body_preview' => mb_substr($rawBody, 0, 400),
+        ]);
+
+        return [
+            'ok' => false,
+            'code' => $code,
+            'status' => $status,
+            'wp_code' => $wpCode,
+            'message' => $msg,
+            'hint' => $hint,
+        ];
     }
 }

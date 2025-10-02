@@ -171,8 +171,15 @@ class Detail extends Component
             $iso = Carbon::parse($this->publishAt)->toIso8601String();
         }
 
-        $client = app(IntegrationManager::class)->forSite($this->publishSiteId);
-        $provider = $client->provider();
+        try {
+            $client = app(IntegrationManager::class)->forSite($this->publishSiteId);
+            $provider = $client->provider();
+        } catch (\Throwable $e) {
+            $msg = $this->mapUserFriendlyWpError($e->getMessage());
+            session()->flash('error', $msg);
+            return;
+        }
+
         $target = $provider;
 
         $payload = [
@@ -547,5 +554,14 @@ Krav:
     {
         // $this->dispatch('media-picker:refresh');
         // Lämnas tom så länge – bara för att undvika fel i JS-anropet.
+    }
+
+    private function mapUserFriendlyWpError(string $raw): string
+    {
+        $lower = mb_strtolower($raw);
+        if (str_contains($lower, 'ogiltiga wordpress-uppgifter') || str_contains($lower, 'auth') || str_contains($lower, 'unauthorized') || str_contains($lower, 'incorrect_password')) {
+            return 'Autentisering mot WordPress misslyckades. Kontrollera URL, användarnamn och applikationslösenord och försök igen.';
+        }
+        return 'Kunde inte initiera publicering. Försök igen eller kontrollera din sajt-koppling.';
     }
 }

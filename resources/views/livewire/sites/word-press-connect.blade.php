@@ -181,6 +181,17 @@
                         </svg>
                         Spara & testa anslutning
                     </button>
+
+                    <button
+                        type="button"
+                        wire:click="test"
+                        class="flex-1 inline-flex items-center justify-center px-6 py-3 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200"
+                        title="Testa utan att ändra sparat lösenord">
+                        <svg class="w-5 h-5 mr-2 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Testa anslutning
+                    </button>
                 </div>
             </div>
         </div>

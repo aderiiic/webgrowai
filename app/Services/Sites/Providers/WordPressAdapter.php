@@ -7,6 +7,7 @@ use App\Services\Sites\SiteIntegrationClient;
 use App\Services\WordPressClient;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class WordPressAdapter implements SiteIntegrationClient
@@ -96,6 +97,16 @@ class WordPressAdapter implements SiteIntegrationClient
     {
         $wp = $this->wp();
 
+        try {
+            $wp->getMe();
+        } catch (\Throwable $e) {
+            Log::warning('[WP] getMe före publish misslyckades', [
+                'site_integration_id' => $this->integration->id ?? null,
+                'error' => $e->getMessage(),
+            ]);
+            throw new \RuntimeException('Autentisering mot WordPress misslyckades. Kontrollera användarnamn och applikationslösenord.');
+        }
+
         // 1) Om bild valts: ladda upp till WP Media med uploadMedia
         $mediaId = null;
         if (!empty($payload['image_asset_id'])) {
@@ -181,7 +192,7 @@ class WordPressAdapter implements SiteIntegrationClient
                     usleep(500_000); // 500 ms
                     $attempts++;
                     if ($attempts >= 3) {
-                        \Log::error('Kunde inte sätta featured media efter 3 försök', [
+                        Log::error('Kunde inte sätta featured media efter 3 försök', [
                             'post_id' => $postId,
                             'media_id' => $mediaId
                         ]);
