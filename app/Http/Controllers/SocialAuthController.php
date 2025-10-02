@@ -421,7 +421,6 @@ class SocialAuthController extends Controller
         return redirect()->route('settings.social')->with('success', 'Facebook-sida kopplad till vald sajt.');
     }
 
-    // Ny handler: användarval efter UI för IG
     public function instagramChoose(Request $req, CurrentCustomer $current)
     {
         $req->validate([
