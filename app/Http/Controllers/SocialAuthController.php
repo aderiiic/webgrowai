@@ -15,7 +15,13 @@ class SocialAuthController extends Controller
     {
         $scopes = config('services.facebook.scopes', []);
 
-        $state = bin2hex(random_bytes(16));
+        $statePayload = [
+            'nonce'   => bin2hex(random_bytes(16)),
+            'site'    => (string) $req->query('site', ''),
+            'channel' => (string) $req->query('channel', 'facebook'),
+        ];
+
+        $state = base64_encode(json_encode($statePayload));
         session(['facebook_state' => $state]);
 
         $params = [
@@ -36,11 +42,15 @@ class SocialAuthController extends Controller
         $savedState = session('facebook_state');
         abort_unless($req->query('state') === $savedState, 400, 'Ogiltig state');
 
+        $stateJson = json_decode(base64_decode($savedState) ?: '{}', true);
+        $stateSite = $stateJson['site'] ?? null;
+        $channel   = $stateJson['channel'] ?? 'facebook';
+
         $customer = $current->get();
         Log::info('[FB] Callback', ['customer' => $customer?->id]);
         abort_unless($customer, 403);
 
-        $siteId = $current->getSiteId();
+        $siteId = $stateSite ?: $current->getSiteId();
         abort_unless($siteId, 400, 'Ingen aktiv sajt vald vid koppling.');
 
         $code = $req->query('code');
@@ -87,16 +97,13 @@ class SocialAuthController extends Controller
                 'query' => [
                     'access_token' => $userAccessToken,
                     'fields'       => 'id,name,access_token',
-                    'limit'        => 50,
+                    'limit'        => 200,
                 ],
             ]);
             $pages = json_decode((string) $pagesRes->getBody(), true);
             $firstPage = $pages['data'][0] ?? null;
-
             if (!$firstPage) {
-                return redirect()
-                    ->route('settings.social')
-                    ->with('error', 'Inga Facebook-sidor hittades för kontot.');
+                return redirect()->route('settings.social')->with('error', 'Inga Facebook-sidor hittades.');
             }
 
             $pageId          = $firstPage['id'] ?? null;
@@ -124,14 +131,12 @@ class SocialAuthController extends Controller
 
             return redirect()->route('settings.social')->with('success', 'Facebook ansluten för denna sajt. (Instagram om kopplad)');
         } catch (ClientException $e) {
-            $resp = $e->getResponse();
-            $body = $resp ? (string) $resp->getBody() : null;
-            Log::error('[FB] ClientException', [
-                'status' => $resp?->getStatusCode(),
-                'body'   => $body,
-                'msg'    => $e->getMessage(),
-            ]);
-            return redirect()->route('settings.social')->with('error', 'Facebook-inloggningen misslyckades: ' . ($body ?: $e->getMessage()));
+            $status = $e->getResponse()?->getStatusCode();
+            $msg = $status === 400 ? 'Begäran nekades av Meta. Kontrollera att du valde rätt sida och gav behörigheter.' :
+                ($status === 401 ? 'Ogiltig inloggning. Försök igen.' :
+                    ($status === 403 ? 'Saknar behörighet för den valda sidan.' :
+                        'Tekniskt fel hos Meta.'));
+            return redirect()->route('settings.social')->with('error', $msg);
         } catch (\Throwable $e) {
             Log::error('[FB] Okänt fel', ['error' => $e->getMessage()]);
             return redirect()->route('settings.social')->with('error', 'Facebook-inloggningen misslyckades: ' . $e->getMessage());

@@ -28,6 +28,19 @@
                 </div>
             </div>
         @endif
+        @if(session('error'))
+            <div class="p-4 bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 rounded-xl">
+                <div class="flex items-center space-x-3">
+                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M4.93 4.93l14.14 14.14M12 22C6.48 22 2 17.52 2 12S6.48 2 12 2s10 4.48 10 10-4.48 10-10 10z"/>
+                    </svg>
+                    <div class="text-sm text-red-800">
+                        <p class="font-medium">Något gick fel vid anslutningen.</p>
+                        <p class="opacity-80">{{ str($errors->first()) ?: session('error') }}</p>
+                    </div>
+                </div>
+            </div>
+        @endif
 
         <!-- Facebook settings -->
         <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-8">
@@ -131,6 +144,7 @@
                     <div>
                         <h2 class="text-xl font-bold text-gray-900">Instagram Business</h2>
                         <p class="text-sm text-gray-600">Anslut ditt Instagram Business-konto för publicering</p>
+                        <p class="text-xs text-gray-500 mt-1">Du loggar in via Meta och kopplar kontot till en Facebook-sida (krav från Meta).</p>
                     </div>
                 </div>
 
