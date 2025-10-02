@@ -63,7 +63,7 @@ class SocialAuthController extends Controller
         $client = new Client(['timeout' => 30]);
 
         try {
-            // 1) Byt code -> user access token
+            // 1) code -> user token
             $tokenRes = $client->get('https://graph.facebook.com/v19.0/oauth/access_token', [
                 'query' => [
                     'client_id'     => config('services.facebook.client_id'),
@@ -76,7 +76,7 @@ class SocialAuthController extends Controller
             $userAccessToken = $token['access_token'] ?? null;
             abort_unless($userAccessToken, 400, 'Kunde inte hämta user access token');
 
-            // 2) Försök long‑lived
+            // 2) Long‑lived
             try {
                 $llRes = $client->get('https://graph.facebook.com/v19.0/oauth/access_token', [
                     'query' => [
@@ -94,7 +94,7 @@ class SocialAuthController extends Controller
                 Log::info('[FB] Long‑lived token misslyckades', ['error' => $e->getMessage()]);
             }
 
-            // 3) Hämta sidor och välj en (MVP: första – kan utökas till UI-val)
+            // 3) Hämta sidor användaren gett tillgång till
             $pagesRes = $client->get('https://graph.facebook.com/v19.0/me/accounts', [
                 'query' => [
                     'access_token' => $userAccessToken,
@@ -103,16 +103,16 @@ class SocialAuthController extends Controller
                 ],
             ]);
             $pages = json_decode((string) $pagesRes->getBody(), true);
-            $list  = array_values($pages['data'] ?? []);
+            $pageList  = array_values($pages['data'] ?? []);
 
-            if (empty($list)) {
+            if (empty($pageList)) {
                 return redirect()->route('settings.social')->with('error', 'Inga Facebook-sidor hittades.');
             }
 
-            // Om det bara är en sida – spara direkt. Om flera – låt användaren välja i vår UI.
-            if (count($list) === 1) {
-                $pageId          = $list[0]['id'] ?? null;
-                $pageAccessToken = $list[0]['access_token'] ?? null;
+            // Om bara en sida -> spara direkt och försök IG
+            if (count($pageList) === 1) {
+                $pageId          = $pageList[0]['id'] ?? null;
+                $pageAccessToken = $pageList[0]['access_token'] ?? null;
                 abort_unless($pageId && $pageAccessToken, 400, 'Sidan saknar giltigt Page Access Token');
 
                 SocialIntegration::updateOrCreate(
@@ -120,37 +120,111 @@ class SocialAuthController extends Controller
                     ['page_id' => $pageId, 'access_token' => $pageAccessToken, 'status' => 'active']
                 );
 
-                // Auto‑koppla IG om möjligt
-                $this->ensureInstagramFromFacebook($siteId, $pageId, $pageAccessToken, $customer->id);
+                // Försök IG‑auto
+                $igCandidates = $this->collectIgAccountsForPages($pageList, $client);
+                if (count($igCandidates) === 1) {
+                    $ig = $igCandidates[0];
+                    SocialIntegration::updateOrCreate(
+                        ['customer_id' => $customer->id, 'site_id' => $siteId, 'provider' => 'instagram'],
+                        ['ig_user_id' => (string)$ig['id'], 'access_token' => $ig['token'], 'status' => 'active']
+                    );
+                } elseif (count($igCandidates) > 1) {
+                    session(['ig_connect_pending' => [
+                        'site_id' => $siteId,
+                        'accounts' => $igCandidates,
+                    ]]);
+                }
 
-                return redirect()->route('settings.social')->with('success', 'Facebook ansluten för denna sajt.');
+                return redirect()->route('settings.social')->with('success', 'Facebook ansluten. ' . (count($igCandidates) > 1 ? 'Välj Instagram‑konto nedan.' : ''));
             }
 
-            // Flera sidor – spara temporärt i session för UI‑val
+            // Flera sidor – bygg pending listor för FB och IG
+            $fbPendingPages = array_map(fn($p) => [
+                'id'    => $p['id'],
+                'name'  => $p['name'] ?? $p['id'],
+                'token' => $p['access_token'] ?? null,
+            ], $pageList);
+
+            $igCandidates = $this->collectIgAccountsForPages($pageList, $client);
+
             session([
                 'fb_connect_pending' => [
                     'site_id' => $siteId,
                     'channel' => $channel,
-                    'pages'   => array_map(fn($p) => [
-                        'id'    => $p['id'],
-                        'name'  => $p['name'] ?? $p['id'],
-                        'token' => $p['access_token'] ?? null,
-                    ], $list),
+                    'pages'   => $fbPendingPages,
+                ],
+                'ig_connect_pending' => [
+                    'site_id' => $siteId,
+                    'accounts' => $igCandidates, // kan vara tom, 1 eller flera
                 ],
             ]);
 
-            return redirect()->route('settings.social')->with('success', 'Välj vilken Facebook-sida som ska kopplas till denna sajt.');
+            return redirect()->route('settings.social')->with('success', 'Välj Facebook‑sida' . (count($igCandidates) ? ' och Instagram‑konto' : '') . ' för denna sajt.');
+
         } catch (ClientException $e) {
             $status = $e->getResponse()?->getStatusCode();
-            $msg = $status === 400 ? 'Begäran nekades av Meta. Kontrollera att du valde rätt sida och gav behörigheter.' :
+            $msg = $status === 400 ? 'Begäran nekades av Meta. Kontrollera val och behörigheter.' :
                 ($status === 401 ? 'Ogiltig inloggning. Försök igen.' :
-                    ($status === 403 ? 'Saknar behörighet för den valda sidan.' :
-                        'Tekniskt fel hos Meta.'));
+                    ($status === 403 ? 'Saknar behörighet.' : 'Tekniskt fel hos Meta.'));
             return redirect()->route('settings.social')->with('error', $msg);
         } catch (\Throwable $e) {
             Log::error('[FB] Okänt fel', ['error' => $e->getMessage()]);
             return redirect()->route('settings.social')->with('error', 'Facebook-inloggningen misslyckades: ' . $e->getMessage());
         }
+    }
+
+    private function collectIgAccountsForPages(array $pages, Client $http): array
+    {
+        $found = [];
+        foreach ($pages as $p) {
+            $pageId = $p['id'] ?? null;
+            $token  = $p['access_token'] ?? null;
+            if (!$pageId || !$token) {
+                continue;
+            }
+
+            $edges = [
+                ['path' => $pageId, 'fields' => 'instagram_business_account{id,username}',  'key' => 'instagram_business_account'],
+                ['path' => $pageId, 'fields' => 'connected_instagram_account{id,username}', 'key' => 'connected_instagram_account'],
+                ['path' => $pageId.'/instagram_accounts', 'fields' => null, 'key' => 'data'],
+            ];
+
+            foreach ($edges as $try) {
+                try {
+                    $query = ['access_token' => $token];
+                    if ($try['fields']) {
+                        $query['fields'] = $try['fields'];
+                    } else {
+                        $query['fields'] = 'id,username';
+                        $query['limit']  = 5;
+                    }
+                    $res  = $http->get($try['path'], ['query' => $query]);
+                    $data = json_decode((string)$res->getBody(), true);
+
+                    if ($try['key'] === 'data') {
+                        foreach (($data['data'] ?? []) as $acc) {
+                            if (!empty($acc['id'])) {
+                                $found[] = ['id' => (string)$acc['id'], 'username' => $acc['username'] ?? $acc['id'], 'token' => $token];
+                            }
+                        }
+                    } else {
+                        $acc = $data[$try['key']] ?? null;
+                        if (!empty($acc['id'])) {
+                            $found[] = ['id' => (string)$acc['id'], 'username' => $acc['username'] ?? $acc['id'], 'token' => $token];
+                        }
+                    }
+                } catch (\Throwable) {
+                    // prova nästa
+                }
+            }
+        }
+
+        // Unika på id
+        $unique = [];
+        foreach ($found as $row) {
+            $unique[$row['id']] = $row;
+        }
+        return array_values($unique);
     }
 
     public function instagramRedirect()
@@ -337,15 +411,40 @@ class SocialAuthController extends Controller
         $customer = $current->get();
         abort_unless($customer, 403);
 
-        // Spara koppling för exakt den sajt som valts
         SocialIntegration::updateOrCreate(
             ['customer_id' => $customer->id, 'site_id' => (int)$pending['site_id'], 'provider' => 'facebook'],
             ['page_id' => $selected['id'], 'access_token' => $selected['token'], 'status' => 'active']
         );
 
-        // Rensa pending och state
         session()->forget('fb_connect_pending');
 
         return redirect()->route('settings.social')->with('success', 'Facebook-sida kopplad till vald sajt.');
+    }
+
+    // Ny handler: användarval efter UI för IG
+    public function instagramChoose(Request $req, CurrentCustomer $current)
+    {
+        $req->validate([
+            'site_id'   => 'required|integer',
+            'ig_user_id'=> 'required|string',
+        ]);
+
+        $pending = session('ig_connect_pending');
+        abort_unless($pending && (int)$pending['site_id'] === (int)$req->input('site_id'), 400, 'Ogiltig begäran');
+
+        $selected = collect($pending['accounts'] ?? [])->firstWhere('id', $req->input('ig_user_id'));
+        abort_unless($selected && !empty($selected['token']), 400, 'Ogiltigt konto');
+
+        $customer = $current->get();
+        abort_unless($customer, 403);
+
+        SocialIntegration::updateOrCreate(
+            ['customer_id' => $customer->id, 'site_id' => (int)$pending['site_id'], 'provider' => 'instagram'],
+            ['ig_user_id' => (string)$selected['id'], 'access_token' => $selected['token'], 'status' => 'active']
+        );
+
+        session()->forget('ig_connect_pending');
+
+        return redirect()->route('settings.social')->with('success', 'Instagram-konto kopplat till vald sajt.');
     }
 }

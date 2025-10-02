@@ -80,16 +80,16 @@
             </div>
 
             @php
-                $pending = session('fb_connect_pending');
+                $pendingFb = session('fb_connect_pending');
             @endphp
-            @if($pending && ($pending['site_id'] ?? null) === ($siteId ?? null) && !empty($pending['pages']))
+            @if($pendingFb && ($pendingFb['site_id'] ?? null) === ($siteId ?? null) && !empty($pendingFb['pages']))
                 <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
                     <p class="text-sm font-medium text-blue-800 mb-3">Välj vilken Facebook‑sida som ska kopplas till denna sajt:</p>
                     <form method="post" action="{{ route('auth.facebook.choose') }}" class="space-y-3">
                         @csrf
                         <input type="hidden" name="site_id" value="{{ $siteId }}">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            @foreach($pending['pages'] as $p)
+                            @foreach($pendingFb['pages'] as $p)
                                 <label class="flex items-center space-x-2 p-2 bg-white border border-blue-200 rounded-lg">
                                     <input type="radio" name="page_id" value="{{ $p['id'] }}" required>
                                     <span class="text-sm text-gray-900">{{ $p['name'] }} <span class="text-xs text-gray-500">({{ $p['id'] }})</span></span>
@@ -193,6 +193,30 @@
                     </a>
                 </div>
             </div>
+
+            @php
+                $pendingIg = session('ig_connect_pending');
+            @endphp
+            @if($pendingIg && ($pendingIg['site_id'] ?? null) === ($siteId ?? null) && !empty($pendingIg['accounts']))
+                <div class="mb-6 p-4 bg-pink-50 border border-pink-200 rounded-xl">
+                    <p class="text-sm font-medium text-pink-800 mb-3">Välj vilket Instagram‑konto som ska kopplas till denna sajt:</p>
+                    <form method="post" action="{{ route('auth.instagram.choose') }}" class="space-y-3">
+                        @csrf
+                        <input type="hidden" name="site_id" value="{{ $siteId }}">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            @foreach($pendingIg['accounts'] as $acc)
+                                <label class="flex items-center space-x-2 p-2 bg-white border border-pink-200 rounded-lg">
+                                    <input type="radio" name="ig_user_id" value="{{ $acc['id'] }}" required>
+                                    <span class="text-sm text-gray-900">{{ $acc['username'] }} <span class="text-xs text-gray-500">({{ $acc['id'] }})</span></span>
+                                </label>
+                            @endforeach
+                        </div>
+                        <button type="submit" class="mt-2 inline-flex items-center px-3 py-2 bg-pink-600 text-white text-sm font-medium rounded-lg hover:bg-pink-700">
+                            Bekräfta val
+                        </button>
+                    </form>
+                </div>
+            @endif
 
             <!-- Advanced Instagram settings -->
             <details class="group">

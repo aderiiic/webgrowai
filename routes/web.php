@@ -351,6 +351,7 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
 
     Route::get('/insights', \App\Livewire\Insights\Index::class)->name('insights.index');
     Route::post('/auth/facebook/choose', [\App\Http\Controllers\SocialAuthController::class, 'facebookChoose'])->name('auth.facebook.choose');
+    Route::post('/auth/instagram/choose', [\App\Http\Controllers\SocialAuthController::class, 'instagramChoose'])->name('auth.instagram.choose');
 });
 
 Route::middleware(['auth','verified','can:admin'])->prefix('admin')->name('admin.')->group(function () {
