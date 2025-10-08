@@ -4,7 +4,7 @@ namespace App\Jobs;
 
 use App\Services\Billing\QuotaGuard;
 use App\Support\Usage;
-use App\Models\{SeoAudit, Site, WpIntegration};
+use App\Models\{SeoAudit, SeoAuditItem, Site, WpIntegration};
 use App\Services\WordPressClient;
 use GuzzleHttp\Client;
 use Illuminate\Bus\Queueable;
@@ -44,7 +44,6 @@ class RunSeoAuditJob implements ShouldQueue
         ];
     }
 
-    // Bygg query-string med upprepade category-parametrar: category=...&category=...
     private function buildQueryString(array $base, array $categories = []): string
     {
         $qs = http_build_query($base, '', '&', PHP_QUERY_RFC3986);
@@ -54,7 +53,6 @@ class RunSeoAuditJob implements ShouldQueue
         return $qs;
     }
 
-    // Gör ett PSI-anrop med valfria kategorier (korrekt serialiserade)
     private function requestPsiWithCats(string $url, string $strategy, array $categories): array
     {
         $base = $this->baseQuery($url, $strategy);
@@ -67,15 +65,12 @@ class RunSeoAuditJob implements ShouldQueue
         return json_decode((string) $res->getBody(), true);
     }
 
-    // Försök: 1) ett anrop för alla; 2) per-kategori för saknade; 3) fallback-strategi per saknad
     private function fetchAllCategoriesMerged(string $url, string $primary, string $fallback): array
     {
         $cats = ['performance','accessibility','best-practices','seo'];
 
-        // 1) Alla på en gång
         $data = $this->requestPsiWithCats($url, $primary, $cats);
 
-        // 2) Komplettera per saknad kategori (primär strategi)
         foreach ($cats as $cat) {
             if (Arr::get($data, "lighthouseResult.categories.$cat.score") === null) {
                 $single = $this->requestPsiWithCats($url, $primary, [$cat]);
@@ -86,7 +81,6 @@ class RunSeoAuditJob implements ShouldQueue
             }
         }
 
-        // 3) Fallback för kvarvarande saknade
         foreach ($cats as $cat) {
             if (Arr::get($data, "lighthouseResult.categories.$cat.score") === null) {
                 $single = $this->requestPsiWithCats($url, $fallback, [$cat]);
@@ -97,7 +91,6 @@ class RunSeoAuditJob implements ShouldQueue
             }
         }
 
-        // Säkerställ struktur även om categories saknas helt
         if (!isset($data['lighthouseResult']['categories'])) {
             $data['lighthouseResult']['categories'] = [];
         }
@@ -141,7 +134,7 @@ class RunSeoAuditJob implements ShouldQueue
         $titleIssues = 0;
         $metaIssues = 0;
 
-        // 1) WP-analys (titlar/meta)
+        // 1) WP-analys (titlar/meta + Yoast-title/description om finns)
         if ($integration) {
             try {
                 $wp = WordPressClient::for($integration);
@@ -151,6 +144,20 @@ class RunSeoAuditJob implements ShouldQueue
                     $postLink = $p['link'] ?? $site->url;
 
                     $title = trim(strip_tags($p['title']['rendered'] ?? ''));
+                    $meta  = trim(strip_tags($p['excerpt']['rendered'] ?? ''));
+
+                    $yoastTitle = null;
+                    $yoastDesc  = null;
+                    try {
+                        if (method_exists($wp, 'getMeta')) {
+                            $m = $wp->getMeta((int)$postId, 'post');
+                            $yoastTitle = is_string(Arr::get($m, 'yoast_title')) ? trim($m['yoast_title']) : null;
+                            $yoastDesc  = is_string(Arr::get($m, 'yoast_description')) ? trim($m['yoast_description']) : null;
+                        }
+                    } catch (\Throwable) {
+                        // tyst
+                    }
+
                     if ($title === '' || Str::length($title) > 60) {
                         $titleIssues++;
                         $audit->items()->create([
@@ -158,11 +165,16 @@ class RunSeoAuditJob implements ShouldQueue
                             'page_url' => $postLink,
                             'message' => $title === '' ? 'Saknar titel' : 'Titel är för lång (>60 tecken)',
                             'severity' => 'medium',
-                            'data' => ['length' => Str::length($title), 'post_id' => $postId],
+                            'data' => [
+                                'length' => Str::length($title),
+                                'post_id' => $postId,
+                                'yoast_title' => $yoastTitle,
+                                'yoast_description' => $yoastDesc,
+                                'url' => $postLink,
+                            ],
                         ]);
                     }
 
-                    $meta = trim(strip_tags($p['excerpt']['rendered'] ?? ''));
                     if ($meta === '' || Str::length($meta) > 160) {
                         $metaIssues++;
                         $audit->items()->create([
@@ -170,7 +182,13 @@ class RunSeoAuditJob implements ShouldQueue
                             'page_url' => $postLink,
                             'message' => $meta === '' ? 'Saknar meta description' : 'Meta description är för lång (>160 tecken)',
                             'severity' => 'low',
-                            'data' => ['length' => Str::length($meta), 'post_id' => $postId],
+                            'data' => [
+                                'length' => Str::length($meta),
+                                'post_id' => $postId,
+                                'yoast_title' => $yoastTitle,
+                                'yoast_description' => $yoastDesc,
+                                'url' => $postLink,
+                            ],
                         ]);
                     }
                 }
@@ -181,6 +199,7 @@ class RunSeoAuditJob implements ShouldQueue
                     'page_url' => $site->url,
                     'message' => 'WP-analys misslyckades',
                     'severity' => 'high',
+                    'data' => ['url' => $site->url],
                 ]);
             }
         }
@@ -196,7 +215,94 @@ class RunSeoAuditJob implements ShouldQueue
         $bp   = $this->score($data, 'best-practices');
         $seo  = $this->score($data, 'seo');
 
-        // 3) Spara
+        // 2b) Extrahera Lighthouse-fynd som audit‑items
+        try {
+            $lhr = Arr::get($data, 'lighthouseResult', []);
+            $audits = Arr::get($lhr, 'audits', []);
+            $catScores = [
+                'performance'     => $perf,
+                'accessibility'   => $acc,
+                'best-practices'  => $bp,
+                'seo'             => $seo,
+            ];
+
+            // Hjälptabell: audit-id => kategori (enkel mappning)
+            $auditToCat = function (string $id) use ($lhr): ?string {
+                // försök via categories.*.auditRefs
+                foreach (['performance','accessibility','best-practices','seo'] as $cat) {
+                    $refs = Arr::get($lhr, "categories.$cat.auditRefs", []);
+                    foreach ($refs as $ref) {
+                        if (($ref['id'] ?? null) === $id) return $cat;
+                    }
+                }
+                return null;
+            };
+
+            foreach ($audits as $id => $a) {
+                $score = Arr::get($a, 'score');
+                $scoreDisplayMode = Arr::get($a, 'scoreDisplayMode');
+                $title = (string) Arr::get($a, 'title', ucfirst(str_replace('-', ' ', (string)$id)));
+                $desc  = trim((string) strip_tags(Arr::get($a, 'description', '')));
+                $display = (string) Arr::get($a, 'displayValue', '');
+                $details = Arr::get($a, 'details', []);
+                $cat = $auditToCat((string)$id) ?? 'lighthouse';
+
+                // Vi tar bara med audits som påverkar (inte 'notApplicable' eller 'informative' utan data)
+                if (in_array($scoreDisplayMode, ['notApplicable','manual'], true)) {
+                    continue;
+                }
+
+                // Sev: låg om score ~1.0, annars medium/hög
+                $sev = 'low';
+                if (is_numeric($score)) {
+                    $s = (float)$score;
+                    if ($s < 0.6) $sev = 'high';
+                    elseif ($s < 0.9) $sev = 'medium';
+                    else $sev = 'low';
+                } else {
+                    // saknar score men har displayValue => notice
+                    if ($display !== '') $sev = 'notice';
+                }
+
+                // Försök hitta sid-URL i detaljer (om finns)
+                $pageUrl = Arr::get($lhr, 'requestedUrl') ?: $site->url;
+
+                // Opportunity text om relevant
+                $opportunity = null;
+                if (is_array($details) && ($details['type'] ?? '') === 'opportunity') {
+                    $opportunity = Arr::get($details, 'overallSavingsMs');
+                    if (is_numeric($opportunity)) {
+                        $opportunity = round(((float)$opportunity) / 1000, 1).'s sparpotential';
+                    }
+                }
+
+                // Skapa item
+                $audit->items()->create([
+                    'type'     => in_array($cat, ['performance','accessibility','best-practices','seo'], true) ? $cat : 'lighthouse',
+                    'page_url' => $pageUrl,
+                    'title'    => $title,
+                    'message'  => $display ?: $desc,
+                    'severity' => $sev,
+                    'data'     => [
+                        'lh_category'    => $cat,
+                        'lh_rule'        => $id,
+                        'lh_score'       => $score,
+                        'lh_mode'        => $scoreDisplayMode,
+                        'lh_display'     => $display,
+                        'lh_description' => $desc,
+                        'lh_opportunity' => $opportunity,
+                        'url'            => $pageUrl,
+                    ],
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('[SEO Audit] Kunde inte extrahera Lighthouse audits', [
+                'site_id' => $site->id,
+                'error'   => $e->getMessage(),
+            ]);
+        }
+
+        // 3) Spara huvudresultat
         $audit->update([
             'lighthouse_performance'    => $perf,
             'lighthouse_accessibility'  => $acc,

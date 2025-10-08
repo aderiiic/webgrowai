@@ -101,6 +101,19 @@ class AnalyzeConversionJob implements ShouldQueue
             $title = trim(strip_tags(Arr::get($p, 'title.rendered', $p['title'] ?? '')));
             $html = (string) (Arr::get($p, 'content.rendered', $p['html'] ?? ''));
 
+            // Försök hämta Yoast-title/desc vid WP-integration för bättre "current" kontext
+            $yoastTitle = null;
+            $yoastDesc  = null;
+            try {
+                if (isset($client) && method_exists($client, 'getMeta') && $pid > 0) {
+                    $m = $client->getMeta($pid, 'page');
+                    $yoastTitle = is_string(Arr::get($m, 'yoast_title')) ? trim($m['yoast_title']) : null;
+                    $yoastDesc  = is_string(Arr::get($m, 'yoast_description')) ? trim($m['yoast_description']) : null;
+                }
+            } catch (\Throwable) {
+                // tyst
+            }
+
             $text = Str::of($html)->replace(['<script','</script>','<style','</style>'], ' ')->stripTags()->squish()->limit(4000);
 
             $prompt = $guidelines."\n\n".
@@ -137,10 +150,16 @@ class AnalyzeConversionJob implements ShouldQueue
                         'form' => Arr::get($data, 'form', []),
                     ],
                     'status' => 'new',
+                    // Inkludera Yoast i suggestions.context för UI-hjälp (ej visning om tomt)
+                    // ... existing code ...
                 ]
             );
 
-            $usage->increment($customer->id, 'ai.generate', now()->format('Y-m'), 1);
+            try {
+                $usage->increment($customer->id, 'ai.generate', now()->format('Y-m'), 1);
+            } catch (\Throwable $e) {
+                Log::warning('[Usage] increment ai.generate failed', ['site_id' => $site->id, 'error' => $e->getMessage()]);
+            }
         }
     }
 

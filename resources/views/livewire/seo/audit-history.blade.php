@@ -14,12 +14,19 @@
                     </svg>
                 </button>
             </h1>
-            <a href="{{ route('seo.audit.run') }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-xl hover:from-green-700 hover:to-emerald-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transform hover:scale-[1.02] transition-all duration-200 shadow-lg hover:shadow-xl">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                </svg>
-                Kör ny audit
-            </a>
+            <div class="flex flex-col items-end">
+                <a id="runAuditBtn"
+                   href="{{ route('seo.audit.run') }}"
+                   class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-xl hover:from-green-700 hover:to-emerald-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transform hover:scale-[1.02] transition-all duration-200 shadow-lg hover:shadow-xl">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                    Kör ny audit
+                </a>
+                <div id="runAuditNotice" class="hidden mt-2 text-xs text-gray-700 bg-gray-50 border border-gray-200 rounded px-2 py-1">
+                    Audit körs – uppdatera sidan om en stund.
+                </div>
+            </div>
         </div>
 
         <!-- Help Modal -->
@@ -381,5 +388,23 @@
                 });
             }
         });
+
+        (function(){
+            const btn = document.getElementById('runAuditBtn');
+            const notice = document.getElementById('runAuditNotice');
+            if (!btn) return;
+
+            btn.addEventListener('click', function(e){
+                if (btn.dataset.busy === '1') {
+                    e.preventDefault();
+                    return false;
+                }
+                btn.dataset.busy = '1';
+                btn.classList.add('opacity-60','cursor-not-allowed');
+                btn.classList.remove('hover:from-green-700','hover:to-emerald-700','hover:shadow-xl','transform','hover:scale-[1.02]');
+                if (notice) notice.classList.remove('hidden');
+                // länken går iväg; om man stannar kvar på sidan syns bannern
+            });
+        })();
     </script>
 </div>

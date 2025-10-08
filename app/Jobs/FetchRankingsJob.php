@@ -259,10 +259,6 @@ class FetchRankingsJob implements ShouldQueue
             ->all();
     }
 
-    /**
-     * Försök tolka både sitemapindex och urlset.
-     * @return \Illuminate\Support\Collection<int, array{url:string,title:string,score:int,priority:float,lastmod:?string}>
-     */
     private function parseSitemapAny(string $sitemapUrl, string $host)
     {
         try {
@@ -277,9 +273,6 @@ class FetchRankingsJob implements ShouldQueue
             if (!$sxe) {
                 return collect();
             }
-
-            $namespaces = $sxe->getDocNamespaces(true);
-            $ns = $namespaces[''] ?? null;
 
             // sitemapindex
             if (isset($sxe->sitemap) || $sxe->getName() === 'sitemapindex') {

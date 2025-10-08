@@ -2,17 +2,58 @@
 
 namespace App\Livewire\CRO;
 
-use App\Models\ConversionSuggestion;
+use App\Jobs\AnalyzeConversionJob;
+use App\Services\Billing\PlanService;
 use App\Support\CurrentCustomer;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-#[\Livewire\Attributes\Layout('layouts.app')]
+#[Layout('layouts.app')]
 class SuggestionIndex extends Component
 {
     use WithPagination;
 
-    public string $status = 'new'; // new|applied|dismissed|all
+    public string $status = 'new';
+    public bool $isPremium = false;
+    public bool $running = false;
+
+    public function mount(CurrentCustomer $current, PlanService $plans): void
+    {
+        $customer = $current->get();
+        if ($customer) {
+            $sub = $plans->getSubscription($customer);
+            $planId = (int)($plans->getPlanId($sub) ?? 0);
+            $this->isPremium = in_array($planId, [2,3], true);
+        }
+    }
+
+    public function rerun(CurrentCustomer $current, PlanService $plans): void
+    {
+        if ($this->running) return;
+
+        $customer = $current->get();
+        $sub = $customer ? $plans->getSubscription($customer) : null;
+        $planId = (int)($plans->getPlanId($sub) ?? 0);
+        $isPremium = in_array($planId, [2,3], true);
+
+        if (!$isPremium) {
+            session()->flash('error', 'Premium krävs för att köra om analysen.');
+            return;
+        }
+
+        $siteId = $current->getSiteId();
+        if (!$customer || !$siteId || !$customer->sites()->whereKey($siteId)->exists()) {
+            session()->flash('error', 'Ingen giltig sajt vald.');
+            return;
+        }
+
+        $this->running = true;
+
+        dispatch((new AnalyzeConversionJob($siteId, 12))->onQueue('default'));
+
+        session()->flash('success', 'CRO‑analys påbörjad. Uppdatera sidan om en stund.');
+    }
 
     public function render(CurrentCustomer $current)
     {
@@ -20,16 +61,17 @@ class SuggestionIndex extends Component
         abort_unless($customer, 403);
 
         $siteId = $current->getSiteId();
-        // Säkerställ att vald sajt tillhör aktiva kunden
         abort_unless($siteId && $customer->sites()->whereKey($siteId)->exists(), 404, 'Ingen sajt vald.');
 
-        $q = ConversionSuggestion::where('site_id', $siteId)->latest();
-        if ($this->status !== 'all') {
-            $q->where('status', $this->status);
-        }
+        $q = \App\Models\ConversionSuggestion::where('site_id', $siteId)
+            ->when($this->status !== 'all', fn($qq) => $qq->where('status', $this->status))
+            ->latest();
 
         return view('livewire.cro.suggestion-index', [
             'sugs' => $q->paginate(15),
+            'isPremium' => $this->isPremium,
+            'status' => $this->status,
+            'running' => $this->running,
         ]);
     }
 }
