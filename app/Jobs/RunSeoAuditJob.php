@@ -333,7 +333,7 @@ class RunSeoAuditJob implements ShouldQueue
 
                 $raw = $provider->generate($prompt, [
                     'temperature' => 0.4,
-                    'max_tokens'  => 1200,
+                    'max_tokens'  => 3000,
                 ]);
 
                 $text = trim((string) $raw);
@@ -343,9 +343,9 @@ class RunSeoAuditJob implements ShouldQueue
                     $text = trim((string) $text);
                 }
 
-                // Begränsa längd (ca 2000 tecken)
-                if (mb_strlen($text) > 2000) {
-                    $text = mb_substr($text, 0, 2000) . '…';
+                // Begränsa längd (ca 4000 tecken)
+                if (mb_strlen($text) > 4000) {
+                    $text = mb_substr($text, 0, 4000) . '…';
                 }
 
                 $audit->update([
@@ -422,7 +422,7 @@ class RunSeoAuditJob implements ShouldQueue
                 $clean = preg_replace('/<(\/?h[1-3]|\/?p|br\s*\/?)>/i', "\n", $clean);
                 $clean = strip_tags($clean);
                 $clean = \Illuminate\Support\Str::of($clean)->replace(["\r"], '')->squish();
-                $textSnippet = \Illuminate\Support\Str::limit((string) $clean, 2000, '...');
+                $textSnippet = \Illuminate\Support\Str::limit((string) $clean, 4000, '...');
 
                 $chunks = [];
                 if ($title) $chunks[] = "TITLE: {$title}";
