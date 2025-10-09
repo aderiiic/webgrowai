@@ -15,16 +15,86 @@
                 </button>
             </h1>
             <div class="flex flex-col items-end">
+                @php
+                    $lastAudit = $audits->first();
+                    $locked = false;
+                    $nextText = null;
+                    if ($lastAudit && $lastAudit->created_at) {
+                        $lockUntil = $lastAudit->created_at->copy()->addDays(3);
+                        if ($lockUntil->isFuture()) {
+                            $locked = true;
+                            $nextText = $lockUntil->diffForHumans();
+                        }
+                    }
+                @endphp
                 <a id="runAuditBtn"
-                   href="{{ route('seo.audit.run') }}"
-                   class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-xl hover:from-green-700 hover:to-emerald-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transform hover:scale-[1.02] transition-all duration-200 shadow-lg hover:shadow-xl">
+                   href="{{ $locked ? 'javascript:void(0);' : route('seo.audit.run') }}"
+                   class="inline-flex items-center px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl
+                          {{ $locked ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transform hover:scale-[1.02]' }}"
+                   @if(!$locked) data-allowed="1" @endif
+                >
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                     </svg>
-                    Kör ny audit
+                    {{ $locked ? 'Kör ny audit (låst)' : 'Kör ny audit' }}
                 </a>
-                <div id="runAuditNotice" class="hidden mt-2 text-xs text-gray-700 bg-gray-50 border border-gray-200 rounded px-2 py-1">
-                    Audit körs – uppdatera sidan om en stund.
+                <div class="mt-2 text-xs">
+                    @if($locked)
+                        <span class="text-gray-700 bg-gray-50 border border-gray-200 rounded px-2 py-1">Tillgänglig igen {{ $nextText }}</span>
+                    @else
+                        <span id="runAuditNotice" class="hidden text-gray-700 bg-gray-50 border border-gray-200 rounded px-2 py-1">Audit körs – uppdatera sidan om en stund.</span>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        <!-- AI-analys modal -->
+        <div id="aiAnalysisModal" class="fixed inset-0 z-50 hidden opacity-0 transition-opacity duration-300">
+            <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="toggleAiAnalysisModal()" aria-hidden="true"></div>
+            <div class="relative flex items-center justify-center min-h-screen p-4">
+                <div class="bg-white rounded-2xl shadow-2xl border border-gray-200 max-w-3xl w-full max-h-[85vh] overflow-hidden transform scale-95 transition-transform duration-300" id="aiAnalysisContent">
+                    <div class="flex items-center justify-between p-5 border-b border-gray-100 bg-white">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900">AI‑analys (uppdateras var 2:e vecka)</h3>
+                                @if($lastAudit && $lastAudit->ai_analysis_generated_at)
+                                    <p class="text-xs text-gray-500">Senast uppdaterad: {{ $lastAudit->ai_analysis_generated_at->diffForHumans() }}</p>
+                                @endif
+                            </div>
+                        </div>
+                        <button onclick="toggleAiAnalysisModal()" class="p-2 hover:bg-gray-100 rounded-xl transition-colors duration-200" aria-label="Stäng">
+                            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="p-0 h-[calc(85vh-56px-56px)] overflow-y-auto bg-white">
+                        @if($lastAudit && $lastAudit->ai_analysis)
+                            <div class="prose prose-slate max-w-none p-6
+                                        prose-headings:font-bold prose-headings:text-slate-800
+                                        prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg
+                                        prose-p:text-slate-700 prose-strong:text-slate-900 prose-strong:font-semibold
+                                        prose-ul:my-3 prose-li:marker:text-amber-600 prose-a:text-indigo-600">
+                                {!! \Illuminate\Support\Str::of($lastAudit->ai_analysis)->markdown() !!}
+                            </div>
+                        @else
+                            <div class="p-6 text-sm text-gray-600">
+                                Ingen AI‑analys tillgänglig ännu. Den genereras automatiskt i samband med audit (max 1 gång var 14:e dag).
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="px-5 py-4 border-t border-gray-100 bg-gray-50">
+                        <div class="flex items-center justify-end gap-2">
+                            <button onclick="toggleAiAnalysisModal()" class="px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors duration-200 text-sm">Stäng</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -236,21 +306,11 @@
         <div class="space-y-4">
             @forelse($audits as $a)
                 @php
-                    // Performance color logic
                     $perf = $a->lighthouse_performance;
-                    if ($perf === null) {
-                        $perfColor = 'text-gray-500';
-                        $perfBg = 'bg-gray-100';
-                    } elseif ($perf >= 90) {
-                        $perfColor = 'text-emerald-700';
-                        $perfBg = 'bg-emerald-100';
-                    } elseif ($perf >= 70) {
-                        $perfColor = 'text-amber-700';
-                        $perfBg = 'bg-amber-100';
-                    } else {
-                        $perfColor = 'text-red-700';
-                        $perfBg = 'bg-red-100';
-                    }
+                    if ($perf === null) { $perfColor = 'text-gray-500'; $perfBg = 'bg-gray-100'; }
+                    elseif ($perf >= 90) { $perfColor = 'text-emerald-700'; $perfBg = 'bg-emerald-100'; }
+                    elseif ($perf >= 70) { $perfColor = 'text-amber-700'; $perfBg = 'bg-amber-100'; }
+                    else { $perfColor = 'text-red-700'; $perfBg = 'bg-red-100'; }
                 @endphp
 
                 <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-6 hover:shadow-2xl transition-all duration-200">
@@ -306,17 +366,23 @@
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Action button -->
-                        <div class="ml-6 flex-shrink-0">
-                            <a href="{{ route('seo.audit.detail', $a->id) }}" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transform hover:scale-[1.02] transition-all duration-200 shadow-lg hover:shadow-xl">
+                    </div>
+                    <div class="flex items-center gap-3 mt-4">
+                        <a href="{{ route('seo.audit.detail', $a->id) }}" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transform hover:scale-[1.02] transition-all duration-200 shadow-lg hover:shadow-xl">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                            Visa detaljer
+                        </a>
+                        @if($a->ai_analysis)
+                            <button onclick="toggleAiAnalysisModal()" class="inline-flex items-center px-4 py-2 text-sm bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-colors shadow-md">
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                                 </svg>
-                                Visa detaljer
-                            </a>
-                        </div>
+                                Visa AI-analys
+                            </button>
+                        @endif
                     </div>
                 </div>
             @empty
@@ -406,5 +472,29 @@
                 // länken går iväg; om man stannar kvar på sidan syns bannern
             });
         })();
+
+        function toggleAiAnalysisModal() {
+            const modal = document.getElementById('aiAnalysisModal');
+            const content = document.getElementById('aiAnalysisContent');
+            if (!modal || !content) return;
+            const opening = modal.classList.contains('hidden');
+            if (opening) {
+                modal.classList.remove('hidden');
+                setTimeout(()=>{ modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); content.classList.add('scale-100'); },10);
+                document.documentElement.classList.add('overflow-y-hidden');
+                document.body.classList.add('overflow-y-hidden');
+            } else {
+                modal.classList.add('opacity-0'); content.classList.add('scale-95'); content.classList.remove('scale-100');
+                setTimeout(()=> modal.classList.add('hidden'),300);
+                document.documentElement.classList.remove('overflow-y-hidden');
+                document.body.classList.remove('overflow-y-hidden');
+            }
+        }
+        document.addEventListener('keydown', function(e) {
+            const modal = document.getElementById('aiAnalysisModal');
+            if (e.key === 'Escape' && modal && !modal.classList.contains('hidden')) {
+                toggleAiAnalysisModal();
+            }
+        });
     </script>
 </div>

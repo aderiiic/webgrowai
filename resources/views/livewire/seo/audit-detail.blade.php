@@ -1,4 +1,56 @@
 <div class="max-w-7xl mx-auto space-y-8">
+    <!-- AI-analys modal -->
+    <div id="aiAnalysisModal" class="fixed inset-0 z-50 hidden opacity-0 transition-opacity duration-300">
+        <!-- Overlay -->
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="toggleAiAnalysisModal()" aria-hidden="true"></div>
+        <div class="relative flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-2xl shadow-2xl border border-gray-200 max-w-3xl w-full max-h-[85vh] overflow-hidden transform scale-95 transition-transform duration-300" id="aiAnalysisContent">
+                <div class="flex items-center justify-between p-5 border-b border-gray-100 bg-white">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">AI‑analys (uppdateras var 2:e vecka)</h3>
+                            @if($audit->ai_analysis_generated_at)
+                                <p class="text-xs text-gray-500">Senast uppdaterad: {{ $audit->ai_analysis_generated_at->diffForHumans() }}</p>
+                            @endif
+                        </div>
+                    </div>
+                    <button onclick="toggleAiAnalysisModal()" class="p-2 hover:bg-gray-100 rounded-xl transition-colors duration-200" aria-label="Stäng">
+                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="p-0 h-[calc(85vh-56px-56px)] overflow-y-auto bg-white">
+                    @if($audit->ai_analysis)
+                        <div class="prose prose-slate max-w-none p-6
+                                    prose-headings:font-bold prose-headings:text-slate-800
+                                    prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg
+                                    prose-p:text-slate-700 prose-strong:text-slate-900 prose-strong:font-semibold
+                                    prose-ul:my-3 prose-li:marker:text-amber-600 prose-a:text-indigo-600">
+                            {!! \Illuminate\Support\Str::of($audit->ai_analysis)->markdown() !!}
+                        </div>
+                    @else
+                        <div class="p-6 text-sm text-gray-600">
+                            Ingen AI‑analys tillgänglig ännu. Den genereras automatiskt i samband med audit (max 1 gång var 14:e dag).
+                        </div>
+                    @endif
+                </div>
+
+                <div class="px-5 py-4 border-t border-gray-100 bg-gray-50">
+                    <div class="flex items-center justify-end gap-2">
+                        <button onclick="toggleAiAnalysisModal()" class="px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors duration-200 text-sm">Stäng</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Header Section -->
     <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border border-green-200/50 p-6 md:p-8">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -54,6 +106,20 @@
                     @endif
                 </div>
             </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            @if($audit->ai_analysis)
+                <button onclick="toggleAiAnalysisModal()" class="inline-flex items-center px-3 py-2 text-sm bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    Visa AI-analys
+                </button>
+                <span class="text-xs text-gray-500">Uppdateras var 2:e vecka</span>
+            @else
+                <span class="text-xs text-gray-500">AI‑analys genereras automatiskt (max var 2:e vecka)</span>
+            @endif
         </div>
     </div>
 
@@ -323,4 +389,30 @@
             {{ $items->links() }}
         </div>
     @endif
+
+    <script>
+        function toggleAiAnalysisModal() {
+            const modal = document.getElementById('aiAnalysisModal');
+            const content = document.getElementById('aiAnalysisContent');
+            if (!modal || !content) return;
+            const opening = modal.classList.contains('hidden');
+            if (opening) {
+                modal.classList.remove('hidden');
+                setTimeout(()=>{ modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); content.classList.add('scale-100'); },10);
+                document.documentElement.classList.add('overflow-y-hidden');
+                document.body.classList.add('overflow-y-hidden');
+            } else {
+                modal.classList.add('opacity-0'); content.classList.add('scale-95'); content.classList.remove('scale-100');
+                setTimeout(()=> modal.classList.add('hidden'),300);
+                document.documentElement.classList.remove('overflow-y-hidden');
+                document.body.classList.remove('overflow-y-hidden');
+            }
+        }
+        document.addEventListener('keydown', function(e) {
+            const modal = document.getElementById('aiAnalysisModal');
+            if (e.key === 'Escape' && modal && !modal.classList.contains('hidden')) {
+                toggleAiAnalysisModal();
+            }
+        });
+    </script>
 </div>

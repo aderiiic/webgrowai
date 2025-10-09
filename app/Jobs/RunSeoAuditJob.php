@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Services\AI\AiProviderManager;
 use App\Services\Billing\QuotaGuard;
 use App\Support\Usage;
 use App\Models\{SeoAudit, SeoAuditItem, Site, WpIntegration};
@@ -105,7 +106,7 @@ class RunSeoAuditJob implements ShouldQueue
         return $val === null ? null : (int) round(((float) $val) * 100);
     }
 
-    public function handle(QuotaGuard $quota, Usage $usage): void
+    public function handle(QuotaGuard $quota, Usage $usage, AiProviderManager $ai): void
     {
         $site = Site::with('customer')->findOrFail($this->siteId);
         $customer = $site->customer;
@@ -318,6 +319,49 @@ class RunSeoAuditJob implements ShouldQueue
         ]);
 
         try {
+            $lastWithAi = SeoAudit::where('site_id', $site->id)
+                ->whereNotNull('ai_analysis_generated_at')
+                ->latest('ai_analysis_generated_at')
+                ->first();
+
+            $shouldGenerateAi = !$lastWithAi || $lastWithAi->ai_analysis_generated_at->lt(now()->subDays(14));
+
+            if ($shouldGenerateAi) {
+                $prompt = $this->buildAiPrompt($site, $audit);
+                // Tvinga Anthropic om din manager har stöd, annars välj baserat på manager->choose(null, 'long')
+                $provider = $ai->choose(null, 'long');
+
+                $raw = $provider->generate($prompt, [
+                    'temperature' => 0.4,
+                    'max_tokens'  => 1200,
+                ]);
+
+                $text = trim((string) $raw);
+                if (str_starts_with($text, '```')) {
+                    $text = preg_replace('/^```[a-zA-Z0-9_-]*\n?/', '', $text);
+                    $text = preg_replace("/\n?```$/", '', $text);
+                    $text = trim((string) $text);
+                }
+
+                // Begränsa längd (ca 2000 tecken)
+                if (mb_strlen($text) > 2000) {
+                    $text = mb_substr($text, 0, 2000) . '…';
+                }
+
+                $audit->update([
+                    'ai_analysis' => $text,
+                    'ai_analysis_generated_at' => now(),
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('[SEO Audit] AI analysis failed', [
+                'site_id' => $site->id,
+                'audit_id' => $audit->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        try {
             $usage->increment($customer->id, 'seo.audit', now()->format('Y-m'), 1);
         } catch (\Throwable $e) {
             Log::warning('[Usage] increment seo.audit failed', ['site_id' => $site->id, 'error' => $e->getMessage()]);
@@ -327,6 +371,108 @@ class RunSeoAuditJob implements ShouldQueue
             'site_id' => $site->id,
             'perf' => $perf, 'acc' => $acc, 'bp' => $bp, 'seo' => $seo,
             'title_issues' => $titleIssues, 'meta_issues' => $metaIssues,
+            'ai' => (bool) $audit->ai_analysis,
         ]);
+    }
+
+    private function buildAiPrompt(\App\Models\Site $site, \App\Models\SeoAudit $audit): string
+    {
+        $lang = $site->preferredLanguage(); // sv|en|de
+        $scores = [
+            'Performance' => $audit->lighthouse_performance,
+            'Accessibility' => $audit->lighthouse_accessibility,
+            'Best Practices' => $audit->lighthouse_best_practices,
+            'SEO' => $audit->lighthouse_seo,
+        ];
+
+        $scoreLines = [];
+        foreach ($scores as $k => $v) {
+            $scoreLines[] = "$k: " . ($v === null ? '—' : $v);
+        }
+
+        $issues = [
+            "Titelproblem: {$audit->title_issues}",
+            "Meta‑problem: {$audit->meta_issues}",
+        ];
+
+        $ctx = $site->aiContextSummary();
+        $url = trim((string) $site->url);
+
+        // Hämta startsidans HTML snabbt (timeout kort) och extrahera lättläst text + viktiga meta
+        $pageContext = '';
+        try {
+            $resp = \Illuminate\Support\Facades\Http::timeout(8)->get($url);
+            if ($resp->successful()) {
+                $html = (string) $resp->body();
+                // Plocka title
+                $title = '';
+                if (preg_match('/<title[^>]*>(.*?)<\/title>/is', $html, $m)) {
+                    $title = \Illuminate\Support\Str::of($m[1])->stripTags()->squish();
+                }
+                // Plocka meta description
+                $metaDesc = '';
+                if (preg_match('/<meta[^>]+name=["\']description["\'][^>]*content=["\']([^"\']+)["\']/i', $html, $m)) {
+                    $metaDesc = trim($m[1]);
+                } elseif (preg_match('/<meta[^>]+property=["\']og:description["\'][^>]*content=["\']([^"\']+)["\']/i', $html, $m)) {
+                    $metaDesc = trim($m[1]);
+                }
+                // Rensa scripts/styles och extrahera synlig text (h1–h3, p)
+                $clean = preg_replace('/<script[\s\S]*?<\/script>/i', ' ', $html);
+                $clean = preg_replace('/<style[\s\S]*?<\/style>/i', ' ', $clean);
+                $clean = preg_replace('/<(\/?h[1-3]|\/?p|br\s*\/?)>/i', "\n", $clean);
+                $clean = strip_tags($clean);
+                $clean = \Illuminate\Support\Str::of($clean)->replace(["\r"], '')->squish();
+                $textSnippet = \Illuminate\Support\Str::limit((string) $clean, 1200, '...');
+
+                $chunks = [];
+                if ($title) $chunks[] = "TITLE: {$title}";
+                if ($metaDesc) $chunks[] = "META: {$metaDesc}";
+                if ($textSnippet) $chunks[] = "TEXT: {$textSnippet}";
+                if ($chunks) {
+                    $host = parse_url($url, PHP_URL_HOST) ?: $url;
+                    $pageContext = "UTDRAG FRÅN STARTSIDAN ({$host}):\n- " . implode("\n- ", $chunks);
+                }
+            }
+        } catch (\Throwable $e) {
+            // tyst fail – vi kör vidare utan sidkontext
+        }
+
+        // Lokala rubriker/texter
+        $head = match ($lang) {
+            'en' => "You are an SEO expert. Give a concise, balanced analysis (what’s good and what to improve). Then provide a prioritized Top‑10 action list with the biggest impact. Keep it under ~2000 characters. Use short paragraphs and bullet lists.",
+            'de' => "Du bist SEO‑Experte. Gib eine kurze, ausgewogene Analyse (Stärken und Verbesserungen). Danach eine priorisierte Top‑10‑Maßnahmenliste mit größtem Impact. Max. ~2000 Zeichen. Kurze Absätze und Stichpunkte.",
+            default => "Du är SEO‑expert. Ge en kort, balanserad analys (vad som är bra och vad som kan förbättras). Ge sedan en prioriterad Topp‑10‑lista över åtgärder med störst effekt. Håll dig under ~2000 tecken. Använd korta stycken och punktlistor.",
+        };
+
+        $labelScores = match ($lang) {
+            'en' => 'Scores',
+            'de' => 'Werte',
+            default => 'Poäng',
+        };
+        $labelIssues = match ($lang) {
+            'en' => 'Detected issues',
+            'de' => 'Erkannte Probleme',
+            default => 'Upptäckta problem',
+        };
+        $labelFocus = match ($lang) {
+            'en' => 'Deliver exactly 10 prioritized actions (Top‑10), each as a short bullet with why it matters and intended effect.',
+            'de' => 'Liefere genau 10 priorisierte Maßnahmen (Top‑10), jeweils als kurzer Stichpunkt mit Begründung und erwarteter Wirkung.',
+            default => 'Leverera exakt 10 prioriterade åtgärder (Topp‑10), varje som en kort punkt med varför det är viktigt och förväntad effekt.',
+        };
+
+        return trim("
+            {$head}
+
+            URL: {$url}
+            KONTEXT: {$ctx}
+
+            {$labelScores}:
+            - " . implode("\n- ", $scoreLines) . "
+
+            {$labelIssues}:
+            - " . implode("\n- ", $issues) . "
+
+            " . ($pageContext !== '' ? "{$pageContext}\n\n" : "") . "{$labelFocus}
+        ");
     }
 }

@@ -168,6 +168,12 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
         $siteId = $customer->sites()->value('id');
         abort_unless($siteId, 404, 'Ingen sajt i aktuell kund.');
 
+        $last = \App\Models\SeoAudit::where('site_id', $siteId)->latest('id')->first();
+        if ($last && $last->created_at && $last->created_at->gt(now()->subDays(3))) {
+            $next = $last->created_at->addDays(3)->diffForHumans(null, true);
+            return back()->with('error', "Du kan köra nästa audit om {$next}.");
+        }
+
         if (request()->boolean('sync')) {
             dispatch_sync(new RunSeoAuditJob($siteId));
         } else {
@@ -181,6 +187,12 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
         $user = auth()->user();
         if (!$user->isAdmin()) {
             abort_unless($user->customers()->whereKey($site->customer_id)->exists(), 403);
+        }
+
+        $last = \App\Models\SeoAudit::where('site_id', $site->id)->latest('id')->first();
+        if ($last && $last->created_at && $last->created_at->gt(now()->subDays(3))) {
+            $next = $last->created_at->addDays(3)->diffForHumans(null, true);
+            return back()->with('error', "Du kan köra nästa audit för {$site->name} om {$next}.");
         }
 
         if (request()->boolean('sync')) {

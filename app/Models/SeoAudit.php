@@ -17,10 +17,13 @@ class SeoAudit extends Model
         'title_issues',
         'meta_issues',
         'summary',
+        'ai_analysis',
+        'ai_analysis_generated_at',
     ];
 
     protected $casts = [
         'summary' => 'array',
+        'ai_analysis_generated_at' => 'datetime',
     ];
 
     public function site(): BelongsTo
