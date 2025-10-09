@@ -422,7 +422,7 @@ class RunSeoAuditJob implements ShouldQueue
                 $clean = preg_replace('/<(\/?h[1-3]|\/?p|br\s*\/?)>/i', "\n", $clean);
                 $clean = strip_tags($clean);
                 $clean = \Illuminate\Support\Str::of($clean)->replace(["\r"], '')->squish();
-                $textSnippet = \Illuminate\Support\Str::limit((string) $clean, 1200, '...');
+                $textSnippet = \Illuminate\Support\Str::limit((string) $clean, 2000, '...');
 
                 $chunks = [];
                 if ($title) $chunks[] = "TITLE: {$title}";
