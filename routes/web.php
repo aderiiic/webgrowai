@@ -162,11 +162,12 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
     Route::get('/sites/{site}/wp/posts/{postId}/meta', MetaEditor::class)->name('wp.posts.meta')->whereNumber('site')->whereNumber('postId');
 
     Route::get('/seo/audit/run', function () {
-        $customer = app(\App\Support\CurrentCustomer::class)->get();
+        $ctx = app(\App\Support\CurrentCustomer::class);
+        $customer = $ctx->get();
         abort_unless($customer, 403);
 
-        $siteId = $customer->sites()->value('id');
-        abort_unless($siteId, 404, 'Ingen sajt i aktuell kund.');
+        $siteId = $ctx->getSiteId();
+        abort_unless($siteId && $customer->sites()->whereKey($siteId)->exists(), 404, 'Ingen (giltig) sajt vald.');
 
         $last = \App\Models\SeoAudit::where('site_id', $siteId)->latest('id')->first();
         if ($last && $last->created_at && $last->created_at->gt(now()->subDays(3))) {

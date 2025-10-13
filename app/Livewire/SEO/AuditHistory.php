@@ -15,10 +15,21 @@ class AuditHistory extends Component
         $customer = $current->get();
         abort_unless($customer, 403);
 
-        $audits = SeoAudit::whereIn('site_id', $customer->sites()->pluck('id'))
-            ->latest()
-            ->paginate(15);
+        $activeSiteId = $current->getSiteId();
 
-        return view('livewire.seo.audit-history', compact('audits'));
+        $q = SeoAudit::query()
+            ->whereIn('site_id', $customer->sites()->pluck('id'));
+
+        // Om användaren har valt en aktiv sajt: visa endast dess audits
+        if ($activeSiteId) {
+            $q->where('site_id', (int) $activeSiteId);
+        }
+
+        $audits = $q->latest()->paginate(15);
+
+        return view('livewire.seo.audit-history', [
+            'audits' => $audits,
+            'activeSiteId' => $activeSiteId,
+        ]);
     }
 }
