@@ -5,7 +5,9 @@ namespace App\Services\Insights;
 use App\Models\Site;
 use App\Services\AI\AnthropicProvider;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class InsightsGenerator
 {
@@ -45,8 +47,40 @@ class InsightsGenerator
 
     private function buildContext(Site $site, Carbon $weekStart): array
     {
+        $homepage = [
+            'title' => null,
+            'meta'  => null,
+            'text'  => null,
+        ];
+
+        try {
+            if (!empty($site->url)) {
+                $resp = Http::timeout(6)->get((string) $site->url);
+                if ($resp->successful()) {
+                    $html = (string) $resp->body();
+                    if (preg_match('/<title[^>]*>(.*?)<\/title>/is', $html, $m)) {
+                        $homepage['title'] = (string) Str::of($m[1])->stripTags()->squish();
+                    }
+                    if (preg_match('/<meta[^>]+name=["\']description["\'][^>]*content=["\']([^"\']+)["\']/i', $html, $m)) {
+                        $homepage['meta'] = trim($m[1]);
+                    } elseif (preg_match('/<meta[^>]+property=["\']og:description["\'][^>]*content=["\']([^"\']+)["\']/i', $html, $m)) {
+                        $homepage['meta'] = trim($m[1]);
+                    }
+                    $clean = preg_replace('/<script[\s\S]*?<\/script>/i', ' ', $html);
+                    $clean = preg_replace('/<style[\s\S]*?<\/style>/i', ' ', $clean);
+                    $clean = preg_replace('/<(\/?h[1-3]|\/?p|br\s*\/?)>/i', "\n", $clean);
+                    $clean = strip_tags($clean);
+                    $clean = Str::of($clean)->replace(["\r"], '')->squish();
+                    $homepage['text'] = Str::limit((string) $clean, 800, '...');
+                }
+            }
+        } catch (\Throwable $e) {
+            // tyst fail
+        }
+
         return [
             'site' => [
+                'id'          => $site->id,
                 'name'        => $site->name,
                 'url'         => $site->url,
                 'industry'    => $site->industry,
@@ -54,10 +88,10 @@ class InsightsGenerator
                 'audience'    => $site->effectiveAudience(),
                 'brand_voice' => $site->effectiveBrandVoice(),
                 'goal'        => $site->effectiveGoal(),
-                'keywords'    => $site->effectiveKeywords(),
+                'keywords'    => $site->effectiveKeywords(), // per Site (ev. fallback från kund)
                 'locale'      => $site->locale ?? 'sv_SE',
-                // Kort sammanfattning för prompten
                 'summary'     => $site->aiContextSummary(),
+                'homepage'    => $homepage,
             ],
             'week' => [
                 'start' => $weekStart->toDateString(),
@@ -75,13 +109,21 @@ class InsightsGenerator
         $kwArr = (array)($s['keywords'] ?? []);
         $kwStr = !empty($kwArr) ? 'Nyckelord: '.implode(', ', array_slice($kwArr, 0, 12)) : 'Nyckelord: —';
 
-        // Förtydligande: svar ENBART i strikt JSON, inga kodstaket
+        $hp = (array)($s['homepage'] ?? []);
+        $hpBlock = [];
+        if (!empty($hp['title'])) $hpBlock[] = "TITLE: {$hp['title']}";
+        if (!empty($hp['meta']))  $hpBlock[] = "META: {$hp['meta']}";
+        if (!empty($hp['text']))  $hpBlock[] = "TEXT: {$hp['text']}";
+        $homepageSnippet = empty($hpBlock) ? '—' : implode("\n- ", $hpBlock);
+
+        // Strikt JSON-krav + guardrails för att inte “läcka” mellan sajter
         return trim("
 Du är en svensk senior content‑ och marknadsstrateg. Skapa KONKRETA och KORTFATTAT motiverade insikter för nedanstående sajt och vecka. Syftet är att guida vad man ska posta, när och varför.
 
-KONTEKST
-- Vecka: {$w['start']} – {$w['end']} (v. {$w['label']})
+KONTEKST (ENBART denna sajt)
+- SITE_ID: {$s['id']}
 - Site: {$s['name']} ({$s['url']})
+- Vecka: {$w['start']} – {$w['end']} (v. {$w['label']})
 - Sammanfattning: ".($s['summary'] ?: '—')."
 - Bransch: ".($s['industry'] ?: '—')."
 - Verksamhet: ".($s['description'] ?: '—')."
@@ -89,9 +131,16 @@ KONTEKST
 - Ton: ".($s['brand_voice'] ?: 'neutral')."
 - Veckans mål: ".($s['goal'] ?: '—')."
 - {$kwStr}
+- HOMEPAGE SNAPSHOT:
+- {$homepageSnippet}
 
-KRAV
-- Svara ENBART med strikt JSON enligt schema:
+HÅRDA REGLER
+- Anpassa uteslutande till sajten ovan. Blanda INTE in andra sajter från samma kund.
+- Om verksamhetsbeskrivningen inte nämner fastigheter/fastighetsförvaltning: skriv inte om det.
+- Prioritera det som explicit framgår i Verksamhet, Bransch och HOMEPAGE SNAPSHOT.
+- Svara ENBART med strikt JSON enligt schema nedan (inga kodstaket, inga kommentarer).
+
+JSON‑SCHEMA
 {
   \"summary\": \"1–2 meningar som sätter fokus för veckan\",
   \"topics\": [{\"title\":\"\",\"why\":\"\"}, ... (3–6 st)],
@@ -100,13 +149,11 @@ KRAV
   \"rationale\": \"1–2 meningar med övergripande motivering\"
 }
 
-REGLER
-- Använd svenska veckodagar och 24h‑format (t.ex. 09:00).
-- Ge praktiska ämnesidéer (topics) med ett kort ”why”.
-- Ange specifika publiceringstider (timeslots) med ett kort ”why”.
-- Föreslå konkreta aktiviteter (actions) med ”why”.
-- Anpassa efter bransch, målgrupp, ton och veckans mål.
-- Ingen text utanför JSON, inga kodstaket, inga kommentarer.
+REGLER FÖR INNEHÅLLET
+- Svenska veckodagar och 24h‑format (t.ex. 09:00).
+- Topics: praktiska idéer med kort \"why\", tydligt kopplat till denna sajt.
+- Timeslots: specifika tider + kort \"why\".
+- Actions: konkreta att‑göra med \"why\".
 ");
     }
 
