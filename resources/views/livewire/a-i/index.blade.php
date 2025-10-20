@@ -307,6 +307,7 @@
                             'error' => 'Fel',
                             'queued' => 'Köad',
                             'published' => 'Publicerad',
+                            'failed' => 'Fel!'
                         ];
                     @endphp
 
@@ -342,27 +343,31 @@
                             </div>
 
                             @php
-                                $pubs = $c->relationLoaded('publications') ? $c->publications : ($c->publications ?? collect());
+                                // Säkerställ Collection
+                                $pubs = $c->relationLoaded('publications') ? ($c->publications ?? collect()) : collect();
                                 $pubs = $pubs instanceof \Illuminate\Support\Collection ? $pubs : collect($pubs);
 
                                 $byTarget = [
-                                    'wp'       => $pubs->where('target','wp'),
-                                    'shopify'  => $pubs->where('target','shopify'),
-                                    'facebook' => $pubs->where('target','facebook'),
-                                    'instagram'=> $pubs->where('target','instagram'),
-                                    'linkedin' => $pubs->where('target','linkedin'),
+                                    'wp'        => $pubs->where('target','wp'),
+                                    'shopify'   => $pubs->where('target','shopify'),
+                                    'facebook'  => $pubs->where('target','facebook'),
+                                    'instagram' => $pubs->where('target','instagram'),
+                                    'linkedin'  => $pubs->where('target','linkedin'),
                                 ];
-                                $state = function($col) {
+
+                                // Beräkna status utan att läsa array-nycklar
+                                $state = function(\Illuminate\Support\Collection $col) {
                                     if ($col->where('status','published')->count() > 0) return 'ok';
                                     if ($col->whereIn('status',['queued','processing'])->count() > 0) return 'pending';
                                     if ($col->where('status','failed')->count() > 0) return 'failed';
                                     return 'none';
                                 };
+
                                 $statusToColor = fn($s) => match($s) {
-                                    'ok' => 'text-emerald-600',
+                                    'ok'      => 'text-emerald-600',
                                     'pending' => 'text-amber-500',
-                                    'failed' => 'text-red-600',
-                                    default => 'text-gray-400',
+                                    'failed'  => 'text-red-600',
+                                    default   => 'text-gray-400',
                                 };
                             @endphp
 
