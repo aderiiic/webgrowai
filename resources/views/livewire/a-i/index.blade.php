@@ -343,6 +343,8 @@
 
                             @php
                                 $pubs = $c->relationLoaded('publications') ? $c->publications : ($c->publications ?? collect());
+                                $pubs = $pubs instanceof \Illuminate\Support\Collection ? $pubs : collect($pubs);
+
                                 $byTarget = [
                                     'wp'       => $pubs->where('target','wp'),
                                     'shopify'  => $pubs->where('target','shopify'),
