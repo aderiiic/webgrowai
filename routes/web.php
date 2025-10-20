@@ -85,6 +85,16 @@ Route::get('/news', function () {
     return view('news.index', compact('posts'));
 })->name('news.index');
 
+Route::get('/webgrow', function() {
+    return view('landing-pages/webgrow');
+})->name('webgrow');
+Route::get('/ai-textgenerering', function() {
+   return view('landing-pages/ai-text');
+})->name('ai-text');
+Route::get('/innehallsmarknadsforing', function() {
+    return view('landing-pages/content-marketing');
+})->name('content-marketing');;
+
 Route::get('/news/{slug}', function (string $slug) {
     $post = Post::where('slug', $slug)->whereNotNull('published_at')->firstOrFail();
     return view('news.show', compact('post'));
