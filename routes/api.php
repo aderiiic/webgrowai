@@ -12,3 +12,6 @@ Route::middleware('throttle:60,1')->group(function () {
     Route::post('/track', [TrackController::class, 'store'])->name('track.store');
     Route::post('/wb/ingest', [TrackController::class, 'store'])->name('track.ingest'); // alternativ väg
 });
+
+Route::post('/stripe/webhook', [\App\Http\Controllers\StripeWebhookController::class, 'handle'])
+    ->name('stripe.webhook');

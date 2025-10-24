@@ -144,6 +144,16 @@
                                     </div>
                                 </x-dropdown-link>
 
+                                <div class="border-t border-gray-200"></div>
+                                <x-dropdown-link href="{{ route('account.plan') }}">
+                                    <div class="flex items-center">
+                                        <svg class="w-4 h-4 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l2 2 4-4M7 7h10a2 2 0 012 2v6a2 2 0 01-2 2H7a2 2 0 01-2-2V9a2 2 0 012-2z"/>
+                                        </svg>
+                                        {{ __('Min plan') }}
+                                    </div>
+                                </x-dropdown-link>
+
                                 @if (Laravel\Jetstream\Jetstream::hasApiFeatures())
                                     <x-dropdown-link href="{{ route('api-tokens.index') }}">
                                         <div class="flex items-center">
@@ -275,6 +285,15 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                             </svg>
                             {{ __('Profil') }}
+                        </div>
+                    </x-responsive-nav-link>
+
+                    <x-responsive-nav-link href="{{ route('account.plan') }}" :active="request()->routeIs('account.plan')">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 mr-3 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l2 2 4-4M7 7h10a2 2 0 012 2v6a2 2 0 01-2 2H7a2 2 0 01-2-2V9a2 2 0 012-2z"/>
+                            </svg>
+                            {{ __('Min plan') }}
                         </div>
                     </x-responsive-nav-link>
 

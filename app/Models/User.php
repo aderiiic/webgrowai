@@ -22,6 +22,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'onboarding_step',
         'contact_phone',
         'email_verified_at',
+        'stripe_id',
     ];
 
     protected $hidden = ['password','remember_token'];

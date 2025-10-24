@@ -159,6 +159,10 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
     Route::get('/account/usage', AccountUsage::class)->name('account.usage');
     Route::get('/account/upgrade', AccountUpgrade::class)->name('account.upgrade');
 
+    Route::get('/account/plan', function () {
+        return 'Hello';
+    })->name('account.plan');
+
     Route::get('/sites', SitesIndex::class)->name('sites.index');
     Route::get('/sites/create', SitesCreate::class)->name('sites.create');
     Route::get('/sites/{site}/edit', SitesEdit::class)->name('sites.edit')->whereNumber('site');
@@ -559,8 +563,8 @@ Route::get('/robots.txt', [SeoController::class, 'robots'])->name('robots');
 
 Route::post('/contact', [App\Http\Controllers\ContactController::class, 'store'])->name('contact.store');
 
-Route::post('/stripe/webhook', [WebhookController::class, 'handleWebhook'])
-    ->name('cashier.webhook');
+//Route::post('/stripe/webhook', [WebhookController::class, 'handleWebhook'])
+//    ->name('cashier.webhook');
 
 // Billing: pricing/checkout/success/portal
 Route::middleware(['auth','verified'])->group(function () {
