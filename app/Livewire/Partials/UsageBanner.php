@@ -10,13 +10,6 @@ class UsageBanner extends Component
 {
     public array $alerts = []; // [{type: warn|stop, label, used, quota, pct}]
 
-    private array $featureMap = [
-        'ai.generate'   => 'AI‑genereringar',
-        'ai.publish.wp' => 'WP‑publiceringar',
-        'seo.audit'     => 'SEO‑audits',
-        'leads.events'  => 'Lead events',
-    ];
-
     public function mount(PlanService $plans): void
     {
         $customer = app(\App\Support\CurrentCustomer::class)->get();
@@ -25,44 +18,37 @@ class UsageBanner extends Component
         $period = now()->format('Y-m');
         $alerts = [];
 
-        foreach ($this->featureMap as $key => $label) {
-            $quota = $plans->getQuota($customer, $key);
-            if ($quota === null) continue;
-
+        // 1) Credits – huvudindikator
+        $quota = $plans->getQuota($customer, 'credits.monthly'); // null = obegränsat
+        if ($quota !== null && $quota > 0) {
             $used = (int) (DB::table('usage_metrics')
                 ->where('customer_id', $customer->id)
                 ->where('period', $period)
-                ->where('metric_key', $key)
+                ->where('metric_key', 'credits.used')
                 ->value('used_value') ?? 0);
 
-            if ($quota <= 0) continue;
-
-            $pct = min(100, (int) round(($used / $quota) * 100));
+            $pct = (int) round(($used / max(1, $quota)) * 100);
             if ($pct >= 80) {
                 $alerts[] = [
                     'type'  => $pct >= 100 ? 'stop' : 'warn',
-                    'label' => $label,
+                    'label' => 'Krediter denna månad',
                     'used'  => $used,
                     'quota' => $quota,
-                    'pct'   => $pct,
+                    'pct'   => min(100, $pct),
                 ];
             }
         }
 
-        // Sites/users – visa endast på 100% (hård gräns)
-        foreach (['sites' => 'Sajter', 'users' => 'Användare'] as $key => $label) {
-            $quota = $plans->getQuota($customer, $key);
-            if ($quota === null) continue;
-            $used = $key === 'sites'
-                ? DB::table('sites')->where('customer_id', $customer->id)->count()
-                : DB::table('customer_user')->where('customer_id', $customer->id)->count();
-
-            if ($quota > 0 && $used >= $quota) {
+        // 2) Sites – hård gräns
+        $sitesQuota = $plans->getQuota($customer, 'sites');
+        if ($sitesQuota !== null) {
+            $sitesUsed = DB::table('sites')->where('customer_id', $customer->id)->count();
+            if ($sitesQuota > 0 && $sitesUsed >= $sitesQuota) {
                 $alerts[] = [
                     'type'  => 'stop',
-                    'label' => $label,
-                    'used'  => $used,
-                    'quota' => $quota,
+                    'label' => 'Sajter',
+                    'used'  => $sitesUsed,
+                    'quota' => $sitesQuota,
                     'pct'   => 100,
                 ];
             }

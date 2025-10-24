@@ -49,4 +49,37 @@ class Usage
             return 0;
         }
     }
+
+    // Hjälpare för dag/timme anropad av QuotaGuard
+    public function countToday(int $customerId, string $keyBase): int
+    {
+        $period = now()->format('Y-m');
+        $key = $keyBase . '.day.' . now()->format('Y-m-d');
+
+        try {
+            return (int) DB::table('usage_metrics')
+                ->where('customer_id', $customerId)
+                ->where('period', $period)
+                ->where('metric_key', $key)
+                ->sum('used_value');
+        } catch (\Throwable $e) {
+            return 0;
+        }
+    }
+
+    public function countThisHour(int $customerId, string $keyBase): int
+    {
+        $period = now()->format('Y-m');
+        $key = $keyBase . '.hour.' . now()->format('Y-m-d-H');
+
+        try {
+            return (int) DB::table('usage_metrics')
+                ->where('customer_id', $customerId)
+                ->where('period', $period)
+                ->where('metric_key', $key)
+                ->sum('used_value');
+        } catch (\Throwable $e) {
+            return 0;
+        }
+    }
 }

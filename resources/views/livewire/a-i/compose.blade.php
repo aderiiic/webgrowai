@@ -52,6 +52,12 @@
                 </div>
             </div>
 
+            @if($errors->has('general'))
+                <div class="rounded-md bg-red-50 border border-red-200 p-3 text-red-800 text-sm">
+                    {{ $errors->first('general') }}
+                </div>
+            @endif
+
             @if($insights)
                 @php $p = $insights->payload ?? []; @endphp
                 <div class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200/50 rounded-2xl lg:rounded-3xl shadow-lg overflow-hidden" x-show="showInsights" x-collapse>

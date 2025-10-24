@@ -454,9 +454,10 @@
 
 
         <!-- Pricing -->
+        <!-- Pricing -->
         <section id="pricing" class="py-20 bg-gradient-to-br from-slate-900 via-indigo-900 to-purple-900 relative overflow-hidden" x-data="{ annual: false }">
             <!-- Animated background pattern -->
-            <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.03"%3E%3Ccircle cx="7" cy="7" r="1"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-50"></div>
+            <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=&quot;60&quot; height=&quot;60&quot; viewBox=&quot;0 0 60 60&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;%3E%3Cg fill=&quot;none&quot; fill-rule=&quot;evenodd&quot;%3E%3Cg fill=&quot;%23ffffff&quot; fill-opacity=&quot;0.03&quot;%3E%3Ccircle cx=&quot;7&quot; cy=&quot;7&quot; r=&quot;1&quot;/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-50"></div>
 
             <div class="relative max-w-7xl mx-auto px-4">
                 <!-- Header -->
@@ -507,25 +508,24 @@
                                     </svg>
                                 </div>
 
-                                <h3 class="text-2xl font-bold text-white mb-2">{{ __('homepage.pricing_starter_title') }}</h3>
-                                <p class="text-slate-400 text-sm">{{ __('homepage.pricing_starter_highlight') }}</p>
+                                <h3 class="text-2xl font-bold text-white mb-2">Starter</h3>
+                                <p class="text-slate-400 text-sm">Perfekt för småföretag</p>
                             </div>
 
                             <!-- Price -->
                             <div class="text-center mb-8 pb-8 border-b border-white/10">
-                                <div class="flex items-end justify-center gap-2 mb-2">
-                                    <span class="text-slate-500 line-through text-lg">{{ __('homepage.pricing_starter_price_ordinary') }}</span>
-                                </div>
                                 <div class="flex items-baseline justify-center gap-1">
-                                    <span class="text-5xl font-bold text-white" x-text="annual ? '332' : '390'"></span>
+                                    <span class="text-5xl font-bold text-white" x-text="annual ? '212' : '249'"></span>
                                     <span class="text-slate-400 text-lg">kr</span>
                                 </div>
                                 <div class="text-slate-400 text-sm mt-2">
-                                    <span x-show="!annual">{{ __('homepage.pricing_per_month') }}</span>
-                                    <span x-show="annual">{{ __('homepage.pricing_per_month') }} ({{ __('homepage.pricing_starter_annual') }})</span>
+                                    <span x-show="!annual">per månad</span>
+                                    <span x-show="annual">per månad (faktureras årligen)</span>
                                 </div>
-                                <div class="inline-block mt-3 px-3 py-1 bg-orange-500/20 text-orange-300 text-xs font-semibold rounded-full border border-orange-500/30">
-                                    {{ __('homepage.pricing_early_bird') }}
+                                <div class="text-center mt-3">
+                                    <span class="inline-block px-3 py-1 bg-blue-500/20 text-blue-300 text-xs font-semibold rounded-full border border-blue-500/30">
+                                        5 000 credits/månad
+                                    </span>
                                 </div>
                             </div>
 
@@ -535,37 +535,31 @@
                                     <svg class="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                     </svg>
-                                    <span>{{ __('homepage.pricing_starter_ai') }}</span>
+                                    <span>AI skriver texter och skapar bilder åt dig</span>
                                 </li>
                                 <li class="flex items-start gap-3 text-slate-300">
                                     <svg class="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                     </svg>
-                                    <span>{{ __('homepage.pricing_starter_images') }}</span>
+                                    <span>Publicera direkt på Facebook & Instagram</span>
                                 </li>
                                 <li class="flex items-start gap-3 text-slate-300">
                                     <svg class="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                     </svg>
-                                    <span>{{ __('homepage.pricing_starter_posts') }}</span>
+                                    <span>Koppla WordPress och publicera automatiskt</span>
                                 </li>
                                 <li class="flex items-start gap-3 text-slate-300">
                                     <svg class="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                     </svg>
-                                    <span>{{ __('homepage.pricing_starter_social') }}</span>
-                                </li>
-                                <li class="flex items-start gap-3 text-slate-300">
-                                    <svg class="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                    </svg>
-                                    <span>{{ __('homepage.pricing_starter_website') }}</span>
+                                    <span><strong>1 webbplats</strong> (max 500 credits/dag)</span>
                                 </li>
                             </ul>
 
                             <!-- CTA Button -->
                             <a href="{{ route('register') }}" class="block w-full py-4 px-6 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-xl border border-white/20 hover:bg-white/20 hover:border-white/40 transition-all duration-300 text-center group-hover:scale-105">
-                                {{ __('homepage.pricing_cta_start_trial') }}
+                                Prova gratis i 14 dagar
                             </a>
                         </div>
                     </div>
@@ -578,7 +572,7 @@
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
                                 </svg>
-                                <span class="mt-1">{{ __('homepage.pricing_most_popular') }}</span>
+                                <span class="mt-1">Mest populär</span>
                             </div>
                         </div>
 
@@ -594,25 +588,24 @@
                                     </svg>
                                 </div>
 
-                                <h3 class="text-3xl font-bold text-white mb-2">{{ __('homepage.pricing_growth_title') }}</h3>
-                                <p class="text-indigo-100 text-sm">{{ __('homepage.pricing_growth_highlight') }}</p>
+                                <h3 class="text-3xl font-bold text-white mb-2">Growth</h3>
+                                <p class="text-indigo-100 text-sm">För växande företag</p>
                             </div>
 
                             <!-- Price -->
                             <div class="text-center mb-8 pb-8 border-b border-white/20">
-                                <div class="flex items-end justify-center gap-2 mb-2">
-                                    <span class="text-indigo-200 line-through text-lg">{{ __('homepage.pricing_growth_price_ordinary') }}</span>
-                                </div>
                                 <div class="flex items-baseline justify-center gap-1">
-                                    <span class="text-6xl font-bold text-white" x-text="annual ? '842' : '990'"></span>
+                                    <span class="text-6xl font-bold text-white" x-text="annual ? '424' : '499'"></span>
                                     <span class="text-indigo-200 text-xl">kr</span>
                                 </div>
                                 <div class="text-indigo-100 text-sm mt-2">
-                                    <span x-show="!annual">{{ __('homepage.pricing_per_month') }}</span>
-                                    <span x-show="annual">{{ __('homepage.pricing_per_month') }} ({{ __('homepage.pricing_growth_annual') }})</span>
+                                    <span x-show="!annual">per månad</span>
+                                    <span x-show="annual">per månad (faktureras årligen)</span>
                                 </div>
-                                <div class="inline-block mt-3 px-3 py-1 bg-orange-500/30 text-orange-100 text-xs font-semibold rounded-full border border-orange-400/50">
-                                    {{ __('homepage.pricing_early_bird') }}
+                                <div class="text-center mt-3">
+                                    <span class="inline-block px-3 py-1 bg-white/20 text-white text-xs font-semibold rounded-full border border-white/30">
+                                        15 000 credits/månad
+                                    </span>
                                 </div>
                             </div>
 
@@ -622,43 +615,37 @@
                                     <svg class="w-5 h-5 text-emerald-300 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                     </svg>
-                                    <span class="font-medium">{{ __('homepage.pricing_growth_ai') }}</span>
-                                </li>
-                                <li class="flex items-start gap-3 text-white">
-                                    <svg class="w-5 h-5 text-emerald-300 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                    </svg>
-                                    <span class="font-medium">{{ __('homepage.pricing_growth_image') }}</span>
-                                </li>
-                                <li class="flex items-start gap-3 text-white">
-                                    <svg class="w-5 h-5 text-emerald-300 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                    </svg>
-                                    <span class="font-medium">{{ __('homepage.pricing_growth_posts') }}</span>
-                                </li>
-                                <li class="flex items-start gap-3 text-white">
-                                    <svg class="w-5 h-5 text-emerald-300 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                    </svg>
-                                    <span class="font-medium">{{ __('homepage.pricing_option_for') }} <a class="underline hover:text-emerald-200" href="{{ route('free-website') }}">{{ __('homepage.pricing_a_free_website') }}</a></span>
-                                </li>
-                                <li class="flex items-start gap-3 text-white">
-                                    <svg class="w-5 h-5 text-emerald-300 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                    </svg>
-                                    <span class="font-medium">{{ __('homepage.pricing_growth_website_count') }}</span>
+                                    <span class="font-medium">Allt från Starter +</span>
                                 </li>
                                 <li class="flex items-start gap-3 text-white">
                                     <svg class="w-5 h-5 text-yellow-300 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                     </svg>
-                                    <span class="font-bold">{{ __('homepage.pricing_growth_seo') }}</span>
+                                    <span class="font-medium"><strong>SEO-optimering</strong> för bättre Google-ranking</span>
+                                </li>
+                                <li class="flex items-start gap-3 text-white">
+                                    <svg class="w-5 h-5 text-yellow-300 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <span class="font-medium"><strong>Nyckelordsanalys</strong> och sökordstips</span>
+                                </li>
+                                <li class="flex items-start gap-3 text-white">
+                                    <svg class="w-5 h-5 text-yellow-300 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <span class="font-medium"><strong>Konverteringsoptimering</strong> för fler kunder</span>
+                                </li>
+                                <li class="flex items-start gap-3 text-white">
+                                    <svg class="w-5 h-5 text-emerald-300 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <span class="font-medium"><strong>3 webbplatser</strong> (max 1 500 credits/dag)</span>
                                 </li>
                             </ul>
 
                             <!-- CTA Button -->
                             <a href="{{ route('register') }}" class="block w-full py-4 px-6 bg-white text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition-all duration-300 text-center group-hover:scale-105 shadow-xl hover:shadow-2xl">
-                                {{ __('homepage.pricing_cta_start_trial') }}
+                                Prova gratis i 14 dagar
                             </a>
                         </div>
                     </div>
@@ -677,25 +664,24 @@
                                     </svg>
                                 </div>
 
-                                <h3 class="text-2xl font-bold text-white mb-2">{{ __('homepage.pricing_pro_title') }}</h3>
-                                <p class="text-slate-400 text-sm">{{ __('homepage.pricing_pro_highlight') }}</p>
+                                <h3 class="text-2xl font-bold text-white mb-2">Pro</h3>
+                                <p class="text-slate-400 text-sm">För stora företag och byråer</p>
                             </div>
 
                             <!-- Price -->
                             <div class="text-center mb-8 pb-8 border-b border-white/10">
-                                <div class="flex items-end justify-center gap-2 mb-2">
-                                    <span class="text-slate-500 line-through text-lg">{{ __('homepage.pricing_pro_price_ordinary') }}</span>
-                                </div>
                                 <div class="flex items-baseline justify-center gap-1">
-                                    <span class="text-5xl font-bold text-white" x-text="annual ? '2542' : '2990'"></span>
+                                    <span class="text-5xl font-bold text-white" x-text="annual ? '849' : '999'"></span>
                                     <span class="text-slate-400 text-lg">kr</span>
                                 </div>
                                 <div class="text-slate-400 text-sm mt-2">
-                                    <span x-show="!annual">{{ __('homepage.pricing_per_month') }}</span>
-                                    <span x-show="annual">{{ __('homepage.pricing_per_month') }} ({{ __('homepage.pricing_pro_annual') }})</span>
+                                    <span x-show="!annual">per månad</span>
+                                    <span x-show="annual">per månad (faktureras årligen)</span>
                                 </div>
-                                <div class="inline-block mt-3 px-3 py-1 bg-orange-500/20 text-orange-300 text-xs font-semibold rounded-full border border-orange-500/30">
-                                    {{ __('homepage.pricing_early_bird') }}
+                                <div class="text-center mt-3">
+                                    <span class="inline-block px-3 py-1 bg-purple-500/20 text-purple-300 text-xs font-semibold rounded-full border border-purple-500/30">
+                                        50 000 credits/månad
+                                    </span>
                                 </div>
                             </div>
 
@@ -705,38 +691,62 @@
                                     <svg class="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                     </svg>
-                                    <span>{{ __('homepage.pricing_pro_ai') }}</span>
-                                </li>
-                                <li class="flex items-start gap-3 text-slate-300">
-                                    <svg class="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                    </svg>
-                                    <span>{{ __('homepage.pricing_pro_images') }}</span>
-                                </li>
-                                <li class="flex items-start gap-3 text-slate-300">
-                                    <svg class="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                    </svg>
-                                    <span>{{ __('homepage.pricing_pro_posts') }}</span>
-                                </li>
-                                <li class="flex items-start gap-3 text-slate-300">
-                                    <svg class="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                    </svg>
-                                    <span>{{ __('homepage.pricing_pro_website') }}</span>
+                                    <span>Allt från Growth +</span>
                                 </li>
                                 <li class="flex items-start gap-3 text-slate-300">
                                     <svg class="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                     </svg>
-                                    <span class="font-semibold">{{ __('homepage.pricing_pro_analytics') }}</span>
+                                    <span class="font-semibold"><strong>Avancerad analys</strong> och rapporter</span>
+                                </li>
+                                <li class="flex items-start gap-3 text-slate-300">
+                                    <svg class="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <span class="font-semibold">Prioriterad support</span>
+                                </li>
+                                <li class="flex items-start gap-3 text-slate-300">
+                                    <svg class="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <span><strong>10 webbplatser</strong> (max 5 000 credits/dag)</span>
                                 </li>
                             </ul>
 
                             <!-- CTA Button -->
-                            <button @click="demoOpen = true" class="block w-full py-4 px-6 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-xl border border-white/20 hover:bg-white/20 hover:border-white/40 transition-all duration-300 text-center group-hover:scale-105">
-                                {{ __('homepage.pricing_contact_title') }}
-                            </button>
+                            <a href="{{ route('register') }}" class="block w-full py-4 px-6 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-xl border border-white/20 hover:bg-white/20 hover:border-white/40 transition-all duration-300 text-center group-hover:scale-105">
+                                Prova gratis i 14 dagar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- What credits include -->
+                <div class="max-w-4xl mx-auto text-center mb-12">
+                    <div class="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-8">
+                        <h3 class="text-2xl font-bold text-white mb-6">Vad ingår i dina credits?</h3>
+                        <div class="grid md:grid-cols-3 gap-6 text-slate-300">
+                            <div class="text-center">
+                                <svg class="w-8 h-8 text-blue-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                                <h4 class="font-semibold text-white mb-2">AI-texter</h4>
+                                <p class="text-sm">Blogginlägg, produktbeskrivningar, sociala medie-inlägg</p>
+                            </div>
+                            <div class="text-center">
+                                <svg class="w-8 h-8 text-purple-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m2-2l1.586-1.586a2 2 0 012.828 0L22 14M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                                <h4 class="font-semibold text-white mb-2">AI-bilder</h4>
+                                <p class="text-sm">Unika bilder skapade specifikt för ditt innehåll</p>
+                            </div>
+                            <div class="text-center">
+                                <svg class="w-8 h-8 text-green-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
+                                </svg>
+                                <h4 class="font-semibold text-white mb-2">Publicering</h4>
+                                <p class="text-sm">Automatisk publicering till alla dina kanaler</p>
+                            </div>
                         </div>
                     </div>
                 </div>

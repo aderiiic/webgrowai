@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\AiContent;
 use App\Models\Site;
 use App\Services\AI\AiProviderManager;
+use App\Services\Billing\QuotaGuard;
 use App\Support\Usage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -21,7 +22,7 @@ class GenerateContentJob implements ShouldQueue
         $this->onQueue('ai');
     }
 
-    public function handle(AiProviderManager $manager, Usage $usage): void
+    public function handle(AiProviderManager $manager, Usage $usage, QuotaGuard $quotaGuard): void
     {
         $content = AiContent::with('template')->findOrFail($this->aiContentId);
 
@@ -287,6 +288,14 @@ class GenerateContentJob implements ShouldQueue
         $provider = $manager->choose($content->template, $tone);
 
         try {
+            $cost = ($tone === 'short') ? 10 : 50;
+            // Kontrollera innan API‑anrop
+            $customerId = (int) $content->customer_id;
+            $customer = \App\Models\Customer::find($customerId);
+            if ($customer) {
+                $quotaGuard->checkCreditsOrFail($customer, $cost, 'credits');
+            }
+
             $output = $provider->generate($finalPrompt, [
                 'temperature' => (float) ($content->template->temperature ?? 0.7),
                 'max_tokens'  => (int) ($content->template->max_tokens ?? 1500),
@@ -313,6 +322,10 @@ class GenerateContentJob implements ShouldQueue
             ]);
 
             $usage->increment($content->customer_id, 'ai.generate');
+
+            if ($customer) {
+                $quotaGuard->chargeCredits($customer, $cost, 'credits');
+            }
         } catch (\Throwable $e) {
             $content->update([
                 'status' => 'failed',

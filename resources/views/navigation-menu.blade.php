@@ -5,8 +5,9 @@
             <div class="flex justify-end h-16">
                 <div class="hidden sm:flex sm:items-center sm:space-x-4">
                     @auth
-                        @php($activeCustomer = app(\App\Support\CurrentCustomer::class)->get())
-
+                        @php
+                            $activeCustomer = app(\App\Support\CurrentCustomer::class)->get();
+                        @endphp
                         <!-- Aktiv kund badge -->
                         @if($activeCustomer)
                             <div class="flex items-center px-3 py-1.5 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-200/50">
@@ -15,6 +16,35 @@
                                     {{ Str::limit($activeCustomer->name, 24) }}
                                 </span>
                             </div>
+
+                            @php
+                                $plans = app(\App\Services\Billing\PlanService::class);
+                                $period = now()->format('Y-m');
+                                $monthlyQuota = $plans->getQuota($activeCustomer, 'credits.monthly');
+
+                                $usedValue = \Illuminate\Support\Facades\DB::table('usage_metrics')
+                                    ->where('customer_id', $activeCustomer->id)
+                                    ->where('period', $period)
+                                    ->where('metric_key', 'credits.used')
+                                    ->value('used_value');
+
+                                $creditsUsed = (int) ($usedValue ?? 0);
+
+                                $badgeText = is_null($monthlyQuota) ? $creditsUsed.' / ∞' : ($creditsUsed.' / '.$monthlyQuota);
+                                $pct = ($monthlyQuota && $monthlyQuota > 0) ? (int) round(($creditsUsed / max(1,$monthlyQuota))*100) : 0;
+                                $warn = $monthlyQuota && $pct >= 80 && $pct < 100;
+                                $stop = $monthlyQuota && $pct >= 100;
+                                $bg = $stop ? 'from-red-50 to-rose-50 border-red-200/60 text-red-800'
+                                            : ($warn ? 'from-amber-50 to-yellow-50 border-amber-200/60 text-amber-800'
+                                                     : 'from-indigo-50 to-blue-50 border-indigo-200/60 text-indigo-800');
+                            @endphp
+                            <a href="{{ route('account.usage') }}"
+                               class="inline-flex items-center px-3 py-1.5 bg-gradient-to-r {{ $bg }} rounded-xl border text-xs font-semibold">
+                                <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V4m0 12v4M4 12c0 4.418 3.582 8 8 8s8-3.582 8-8-3.582-8-8-8-8 3.582-8 8z"/>
+                                </svg>
+                                <span class="truncate">Krediter: {{ $badgeText }}</span>
+                            </a>
                         @endif
 
                         <!-- Kundväxlare (Livewire) -->
@@ -170,6 +200,34 @@
                         {{ __('Dashboard') }}
                     </div>
                 </x-responsive-nav-link>
+
+                @auth
+                    @php
+                        $activeCustomer = app(\App\Support\CurrentCustomer::class)->get();
+                    @endphp
+                    @if($activeCustomer)
+                        @php
+                            $plans = app(\App\Services\Billing\PlanService::class);
+                            $period = now()->format('Y-m');
+                            $monthlyQuota = $plans->getQuota($activeCustomer, 'credits.monthly');
+                            $creditsUsed = (int) \Illuminate\Support\Facades\DB::table('usage_metrics')
+                                ->where('customer_id', $activeCustomer->id)
+                                ->where('period', $period)
+                                ->where('metric_key', 'credits.used')
+                                ->value('used_value') ?? 0;
+                            $badgeText = is_null($monthlyQuota) ? $creditsUsed.' / ∞' : ($creditsUsed.' / '.$monthlyQuota);
+                        @endphp
+                        <div class="px-4">
+                            <a href="{{ route('account.usage') }}"
+                               class="mt-2 inline-flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-800 rounded-lg border border-indigo-200 text-xs font-semibold">
+                                <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V4m0 12v4M4 12c0 4.418 3.582 8 8 8s8-3.582 8-8-3.582-8-8-8-8 3.582-8 8z"/>
+                                </svg>
+                                Krediter: {{ $badgeText }}
+                            </a>
+                        </div>
+                    @endif
+                @endauth
             </div>
 
             <!-- Responsive Settings Options -->
