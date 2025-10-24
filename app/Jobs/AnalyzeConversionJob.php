@@ -85,7 +85,7 @@ class AnalyzeConversionJob implements ShouldQueue
 
         foreach ($pages as $p) {
             try {
-                $quota->checkOrFail($customer, 'ai.generate');
+                $quota->checkCreditsOrFail($customer, 50, 'credits');
             } catch (\Throwable $e) {
                 Log::warning('[AnalyzeConversion] blocked by quota', [
                     'customer_id' => $customer->id,
@@ -157,6 +157,7 @@ class AnalyzeConversionJob implements ShouldQueue
 
             try {
                 $usage->increment($customer->id, 'ai.generate', now()->format('Y-m'), 1);
+                $quota->chargeCredits($customer, 50, 'credits');
             } catch (\Throwable $e) {
                 Log::warning('[Usage] increment ai.generate failed', ['site_id' => $site->id, 'error' => $e->getMessage()]);
             }

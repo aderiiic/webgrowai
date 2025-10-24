@@ -23,6 +23,10 @@ class Edit extends Component
     // Feature-fält
     public array $features = []; // key => ['is_enabled'=>bool, 'limit_value'=>string|null, 'id'=>int|null]
 
+    public string $new_feature_key = '';
+    public bool $new_feature_enabled = true;
+    public ?string $new_feature_limit = null;
+
     public function mount(Plan $plan): void
     {
         $this->plan = $plan;
@@ -38,13 +42,18 @@ class Edit extends Component
         $this->features = $plan->features()
             ->orderBy('key')
             ->get()
-            ->mapWithKeys(fn(PlanFeature $f) => [
-                $f->key => [
-                    'id' => $f->id,
-                    'is_enabled' => (bool) $f->is_enabled,
-                    'limit_value' => $f->limit_value,
-                ]
-            ])->toArray();
+            ->mapWithKeys(function (PlanFeature $f) {
+                $val = $f->limit_value;
+                // behåll 0 som "0", annars null
+                $normalized = ($val === null || $val === '') ? null : (string)$val;
+                return [
+                    $f->key => [
+                        'id' => $f->id,
+                        'is_enabled' => (bool) $f->is_enabled,
+                        'limit_value' => $normalized,
+                    ],
+                ];
+            })->toArray();
     }
 
     public function savePlan(): void
@@ -70,11 +79,6 @@ class Edit extends Component
         session()->flash('success', 'Plan uppdaterad.');
     }
 
-    public function addFeatureRow(): void
-    {
-        $this->features[''] = ['id' => null, 'is_enabled' => true, 'limit_value' => null];
-    }
-
     public function saveFeatures(): void
     {
         foreach ($this->features as $key => $data) {
@@ -85,20 +89,43 @@ class Edit extends Component
             PlanFeature::updateOrCreate(
                 ['id' => $data['id'] ?? null, 'plan_id' => $this->plan->id, 'key' => $cleanKey],
                 [
-                    'plan_id' => $this->plan->id,
-                    'key' => $cleanKey,
                     'is_enabled' => (bool) ($data['is_enabled'] ?? false),
-                    'limit_value' => $data['limit_value'] !== '' ? (string) $data['limit_value'] : null,
+                    'limit_value' => isset($data['limit_value']) && $data['limit_value'] !== '' ? (string) $data['limit_value'] : null,
                 ]
             );
         }
 
-        $existingKeys = collect($this->features)->keys()->map(fn($k) => trim($k))->filter()->values();
+        $existingKeys = collect(array_keys($this->features))
+            ->map(fn($k) => trim((string)$k))
+            ->filter()
+            ->values();
+
         $this->plan->features()->whereNotIn('key', $existingKeys)->delete();
 
         $this->mount($this->plan->fresh('features'));
 
         session()->flash('success', 'Features sparade.');
+    }
+
+    public function addFeatureRow(): void
+    {
+        $this->validate([
+            'new_feature_key' => 'required|string|max:190',
+            'new_feature_limit' => 'nullable|string|max:190',
+        ]);
+
+        $key = trim($this->new_feature_key);
+        if ($key === '') return;
+
+        $this->features[$key] = [
+            'id' => null,
+            'is_enabled' => (bool) $this->new_feature_enabled,
+            'limit_value' => $this->new_feature_limit !== '' ? (string) $this->new_feature_limit : null,
+        ];
+
+        $this->new_feature_key = '';
+        $this->new_feature_enabled = true;
+        $this->new_feature_limit = null;
     }
 
     public function deleteFeature(string $key): void

@@ -112,7 +112,7 @@ class RunSeoAuditJob implements ShouldQueue
         $customer = $site->customer;
 
         try {
-            $quota->checkOrFail($customer, 'seo.audit');
+            $quota->checkCreditsOrFail($customer, 50, 'credits');
         } catch (\Throwable $e) {
             Log::warning('[SEO Audit] blocked by quota', [
                 'customer_id' => $customer->id,
@@ -363,6 +363,7 @@ class RunSeoAuditJob implements ShouldQueue
 
         try {
             $usage->increment($customer->id, 'seo.audit', now()->format('Y-m'), 1);
+            $quota->chargeCredits($customer, 50, 'credits');
         } catch (\Throwable $e) {
             Log::warning('[Usage] increment seo.audit failed', ['site_id' => $site->id, 'error' => $e->getMessage()]);
         }

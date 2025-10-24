@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\ImageAsset;
 use App\Models\Site;
+use App\Services\Billing\QuotaGuard;
 use App\Support\Usage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -40,7 +41,7 @@ class GenerateAiImageJob implements ShouldQueue
         $this->afterCommit();
     }
 
-    public function handle(Usage $usage): void
+    public function handle(Usage $usage, QuotaGuard $quotaGuard): void
     {
         Log::info('[AI Image] Startar generering', [
             'customer_id' => $this->customerId,
@@ -69,6 +70,11 @@ class GenerateAiImageJob implements ShouldQueue
         $openAiSize = $this->toOpenAiSize($size['w'], $size['h']);
 
         try {
+            $customer = \App\Models\Customer::find($this->customerId);
+            if ($customer) {
+                $quotaGuard->checkCreditsOrFail($customer, 50, 'credits');
+            }
+
             // Förbättrad HTTP-klient med längre timeout specifikt för DALL-E
             $response = Http::withToken($openAiKey)
                 ->timeout(120) // 2 minuters timeout för API-anrop
@@ -165,6 +171,10 @@ class GenerateAiImageJob implements ShouldQueue
 
             // Logga förbrukning
             $usage->increment($this->customerId, 'ai.images');
+
+            if (isset($customer) && $customer) {
+                $quotaGuard->chargeCredits($customer, 50, 'credits');
+            }
 
         } catch (Throwable $e) {
             Log::error('[AI Image] Fel vid bildbearbetning', [

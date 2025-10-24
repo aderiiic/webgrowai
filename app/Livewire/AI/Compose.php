@@ -183,6 +183,14 @@ class Compose extends Component
             ],
         ];
 
+        $cost = $this->tone === 'short' ? 10 : 50;
+        try {
+            app(\App\Services\Billing\QuotaGuard::class)->checkCreditsOrFail($customer, $cost, 'credits');
+        } catch (\Throwable $e) {
+            $this->addError('general', $e->getMessage());
+            return;
+        }
+
         $content = AiContent::create([
             'customer_id' => $customer->id,
             'site_id'     => $this->site_id,

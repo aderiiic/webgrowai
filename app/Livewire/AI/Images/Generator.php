@@ -187,6 +187,13 @@ class Generator extends Component
         $this->busy = true;
         $this->queued = true;
 
+        try {
+            app(\App\Services\Billing\QuotaGuard::class)->checkCreditsOrFail($customer, 50, 'credits');
+        } catch (\Throwable $e) {
+            $this->error = $e->getMessage();
+            return;
+        }
+
         dispatch(new \App\Jobs\GenerateAiImageJob(
             customerId: (int) $customer->id,
             siteId: $site->id,

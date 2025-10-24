@@ -48,6 +48,14 @@ class KeywordSuggestionsIndex extends Component
             return;
         }
 
+        try {
+            $customer = $current->get();
+            app(\App\Services\Billing\QuotaGuard::class)->checkCreditsOrFail($customer, 50, 'credits');
+        } catch (\Throwable $e) {
+            session()->flash('error', $e->getMessage());
+            return;
+        }
+
         $siteId = $current->getSiteId();
         if (!$customer || !$siteId || !$customer->sites()->whereKey($siteId)->exists()) {
             session()->flash('error', 'Ingen giltig sajt vald.');

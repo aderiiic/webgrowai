@@ -81,6 +81,16 @@ class Index extends Component
         $this->pollAttemptsLeft = 18;
 
         try {
+            $customer = app(\App\Support\CurrentCustomer::class)->get();
+            app(\App\Services\Billing\QuotaGuard::class)->checkCreditsOrFail($customer, 50, 'credits');
+        } catch (\Throwable $e) {
+            $this->loading = false;
+            $this->polling = false;
+            session()->flash('error', $e->getMessage());
+            return;
+        }
+
+        try {
             $weekStart = Carbon::now()->startOfWeek(Carbon::MONDAY)->toDateString();
             dispatch(new GenerateWeeklySiteInsightsJob($this->siteId, $weekStart, $force))->onQueue('ai');
 

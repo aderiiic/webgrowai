@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\AiContent;
 use App\Models\NewsletterProduct;
 use App\Services\AI\AiProviderManager;
+use App\Services\Billing\QuotaGuard;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Mail;
@@ -44,7 +45,7 @@ class SendTestEmailJob implements ShouldQueue
         return trim($text);
     }
 
-    public function handle(AiProviderManager $manager): void
+    public function handle(AiProviderManager $manager, QuotaGuard $quotaGuard): void
     {
         try {
             if ($this->isCustom) {
@@ -57,6 +58,7 @@ class SendTestEmailJob implements ShouldQueue
             }
 
             $customer = Customer::findOrFail($this->customerId);
+            $quotaGuard->checkCreditsOrFail($customer, 10, 'credits');
             $site = $customer->sites()->whereKey($this->siteId)->first();
 
             // Hämta AI-innehåll
@@ -120,6 +122,7 @@ class SendTestEmailJob implements ShouldQueue
 
             $this->sendEmail("[TEST] " . $this->subject, $html);
 
+            $quotaGuard->chargeCredits($customer, 10, 'credits');
         } catch (\Exception $e) {
             \Log::error('SendTestEmailJob failed', [
                 'error' => $e->getMessage(),
