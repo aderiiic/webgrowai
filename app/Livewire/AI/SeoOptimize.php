@@ -5,6 +5,7 @@ namespace App\Livewire\AI;
 use App\Jobs\GenerateContentJob;
 use App\Models\AiContent;
 use App\Models\ContentTemplate;
+use App\Services\Billing\FeatureGuard;
 use App\Support\CurrentCustomer;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
@@ -38,6 +39,15 @@ class SeoOptimize extends Component
 
     public function mount(CurrentCustomer $current): void
     {
+        $customer = $current->get();
+        abort_unless($customer, 403);
+
+        // Kontrollera feature-access och redirecta om nekad
+        if (!app(FeatureGuard::class)->canUseFeature($customer, FeatureGuard::FEATURE_SEO_OPTIMIZE)) {
+            $this->redirect(route('feature.locked', ['feature' => FeatureGuard::FEATURE_SEO_OPTIMIZE]), navigate: false);
+            return;
+        }
+
         if ($this->site_id === null) {
             $activeSiteId = $current->getSiteId() ?? session('active_site_id') ?? session('site_id');
             $this->site_id = $activeSiteId ? (int)$activeSiteId : $current->get()?->sites()->orderBy('name')->value('id');

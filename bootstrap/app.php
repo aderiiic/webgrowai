@@ -25,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'paidOrTrial'   => \App\Http\Middleware\PaidOrTrial::class,
             'premium'       => App\Http\Middleware\CheckPremiumPlan::class,
             'setLocale'     => App\Http\Middleware\SetLocale::class,
+            'feature.access'=> App\Http\Middleware\CheckFeatureAccess::class,
         ]);
         $middleware->appendToGroup('web', [
             LoadCurrentCustomer::class,

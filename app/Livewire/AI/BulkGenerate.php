@@ -4,6 +4,7 @@ namespace App\Livewire\AI;
 
 use App\Jobs\ProcessBulkGenerationJob;
 use App\Models\BulkGeneration;
+use App\Services\Billing\FeatureGuard;
 use App\Support\CurrentCustomer;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
@@ -29,6 +30,15 @@ class BulkGenerate extends Component
 
     public function mount(CurrentCustomer $current): void
     {
+        $customer = $current->get();
+        abort_unless($customer, 403);
+
+        // Kontrollera feature-access och redirecta om nekad
+        if (!app(FeatureGuard::class)->canUseFeature($customer, FeatureGuard::FEATURE_BULK_GENERATE)) {
+            $this->redirect(route('feature.locked', ['feature' => FeatureGuard::FEATURE_BULK_GENERATE]), navigate: false);
+            return;
+        }
+
         // Set default site
         $activeSiteId = $current->getSiteId() ?? session('active_site_id');
         if ($activeSiteId) {
@@ -196,19 +206,23 @@ class BulkGenerate extends Component
 
     private function getMaxTextsForPlan($customer): int
     {
-        $planService = app(\App\Services\Billing\PlanService::class);
-        $plan = $customer->subscription?->plan;
+        $featureGuard = app(FeatureGuard::class);
 
-        if (!$plan) {
-            return 10;
+        // Hämta limit från plan_features
+        $limit = $featureGuard->getFeatureLimit($customer, FeatureGuard::FEATURE_BULK_LIMIT);
+
+        // Fallback om inte konfigurerat
+        if ($limit === null) {
+            $plan = $customer->subscription?->plan;
+
+            return match ($plan?->slug ?? '') {
+                'growth' => 25,
+                'pro', 'enterprise' => 50,
+                default => 10,
+            };
         }
 
-        return match ($plan->slug) {
-            'starter' => 10,
-            'growth' => 100,
-            'pro', 'enterprise' => 200,
-            default => 10,
-        };
+        return $limit;
     }
 
     public function render(CurrentCustomer $current): View

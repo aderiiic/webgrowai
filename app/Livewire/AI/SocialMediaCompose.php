@@ -5,6 +5,7 @@ namespace App\Livewire\AI;
 use App\Jobs\GenerateContentJob;
 use App\Models\AiContent;
 use App\Models\ContentTemplate;
+use App\Services\Billing\FeatureGuard;
 use App\Support\CurrentCustomer;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
@@ -65,6 +66,15 @@ class SocialMediaCompose extends Component
 
     public function mount(CurrentCustomer $current): void
     {
+        $customer = $current->get();
+        abort_unless($customer, 403);
+
+        // Kontrollera feature-access och redirecta om nekad
+        if (!app(FeatureGuard::class)->canUseFeature($customer, FeatureGuard::FEATURE_SOCIAL_MEDIA)) {
+            $this->redirect(route('feature.locked', ['feature' => FeatureGuard::FEATURE_SOCIAL_MEDIA]), navigate: false);
+            return;
+        }
+
         // Set default site
         if ($this->site_id === null) {
             $activeSiteId = $current->getSiteId() ?? session('active_site_id') ?? session('site_id');
