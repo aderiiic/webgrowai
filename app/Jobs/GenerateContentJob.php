@@ -3,263 +3,271 @@
 namespace App\Jobs;
 
 use App\Models\AiContent;
+use App\Models\Customer;
 use App\Models\Site;
 use App\Services\AI\AiProviderManager;
 use App\Services\Billing\QuotaGuard;
 use App\Support\Usage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
+use Throwable;
 
+/**
+ * Job for generating AI content based on templates and user inputs.
+ *
+ * Handles content generation for various channels (blog, social media, SEO, etc.)
+ * with support for multiple languages, tones, and custom guidelines.
+ */
 class GenerateContentJob implements ShouldQueue
 {
     use Queueable;
+
+    // Cost constants
+    private const COST_SHORT = 10;
+    private const COST_LONG = 50;
+
+    // Supported languages
+    private const SUPPORTED_LANGUAGES = ['sv', 'en', 'de'];
+    private const DEFAULT_LANGUAGE = 'sv';
+
+    // Channel types
+    private const CHANNEL_FACEBOOK = 'facebook';
+    private const CHANNEL_INSTAGRAM = 'instagram';
+    private const CHANNEL_LINKEDIN = 'linkedin';
+    private const CHANNEL_BLOG = 'blog';
+    private const CHANNEL_CAMPAIGN = 'campaign';
+    private const CHANNEL_SEO = 'seo';
+    private const CHANNEL_PRODUCT = 'product';
+
+    // Blog length presets
+    private const BLOG_LENGTH_SHORT = 'short';
+    private const BLOG_LENGTH_LONG = 'long';
+    private const BLOG_CHAR_TARGET = [
+        self::BLOG_LENGTH_SHORT => '≈ 4 000–5 000 tecken',
+        self::BLOG_LENGTH_LONG => '≈ 8 000–12 000 tecken',
+        'default' => '≈ 5 000–8 000 tecken',
+    ];
+
+    // Token limits
+    private const TOKEN_BASE_MAX = 1500;
+    private const TOKEN_SOCIAL_SHORT = 700;
+    private const TOKEN_SOCIAL_LONG = 1200;
+    private const TOKEN_BLOG = [
+        self::BLOG_LENGTH_SHORT => 2000,
+        self::BLOG_LENGTH_LONG => 4000,
+        'default' => 3000,
+    ];
 
     public function __construct(public int $aiContentId)
     {
         $this->onQueue('ai');
     }
 
-    public function handle(AiProviderManager $manager, Usage $usage, QuotaGuard $quotaGuard): void
-    {
-        $content = AiContent::with('template')->findOrFail($this->aiContentId);
+    /**
+     * Execute the job.
+     */
+    public function handle(
+        AiProviderManager $manager,
+        Usage $usage,
+        QuotaGuard $quotaGuard
+    ): void {
+        $content = AiContent::with(['template', 'customer', 'site'])->findOrFail($this->aiContentId);
 
-        $vars = [
-            'title'    => $content->title,
-            'audience' => $content->inputs['audience'] ?? null,
-            'goal'     => $content->inputs['goal'] ?? null,
-            'keywords' => $content->inputs['keywords'] ?? [],
-            'brand'    => $content->inputs['brand'] ?? [],
-        ];
+        try {
+            $this->generateContent($content, $manager, $usage, $quotaGuard);
+        } catch (Throwable $e) {
+            $this->handleFailure($content, $e);
+            throw $e;
+        }
+    }
 
-        $templateHint = view('prompts.' . $content->template->slug, $vars)->render();
+    /**
+     * Main content generation flow.
+     */
+    private function generateContent(
+        AiContent $content,
+        AiProviderManager $manager,
+        Usage $usage,
+        QuotaGuard $quotaGuard
+    ): void {
+        // Extract and prepare inputs
+        $inputs = $this->extractInputs($content);
+        $context = $this->buildBusinessContext($content);
 
-        $channel    = (string) ($content->inputs['channel'] ?? 'auto');
-        $guidelines = (array) ($content->inputs['guidelines'] ?? []);
-        $brandVoice = (string) ($vars['brand']['voice'] ?? '');
-        $tone       = (string) $content->tone;
-        $linkUrl    = trim((string) ($content->inputs['link_url'] ?? '')) ?: null;
-        $sourceUrl  = trim((string) ($content->inputs['source_url'] ?? '')) ?: null;
+        // Build the final prompt
+        $finalPrompt = $this->buildPrompt($content, $inputs, $context);
 
-        $bizContext = '';
-        if (!empty($content->site_id)) {
-            $site = Site::find($content->site_id);
-            if ($site) {
-                $summary = trim($site->aiContextSummary());
-                if ($summary !== '') {
-                    $bizContext = "KONCERN-/VERKSAMHETSKONTEXT: {$summary}\n";
-                }
-            }
+        // Choose provider and check quota
+        $provider = $manager->choose($content->template, $inputs['tone']);
+        $cost = $this->calculateCost($inputs['tone']);
+
+        if ($content->customer) {
+            $quotaGuard->checkCreditsOrFail($content->customer, $cost, 'credits');
         }
 
-        $gStyle  = $guidelines['style']  ?? null;
-        $gCta    = $guidelines['cta']    ?? null;
-        $gLength = $guidelines['length'] ?? null;
+        // Generate content via AI
+        $maxTokens = $this->calculateMaxTokens($content, $inputs);
+        $temperature = $this->getTemperature($content, $inputs['channel']);
 
-        $channelRules = match ($channel) {
-            'facebook'  => "- 0–3 hashtags. Max 1–2 emojis. 1–2 korta stycken.\n- Nämn inte LinkedIn eller andra konkurrenter.",
-            'instagram' => "- Hashtags i slutet: 5–10 relevanta. Radbrytningar för läsbarhet.\n- Nämn inte LinkedIn eller andra konkurrenter.",
-            'linkedin'  => "- Professionell och saklig. 1–3 hashtags. Ingen clickbait.\n- Nämn inte Facebook, Instagram eller andra konkurrenter.",
-            'blog'      => "- Börja med några inledningsstycken (vanlig text) som introducerar ämnet.\n- Använd sedan H2/H3 för underrubriker. Gärna punktlistor.\n- VIKTIGT: Inkludera INTE titeln som H1 i innehållet - titeln hanteras separat.\n- Nämn inte konkurrenter eller externa webbplatser.",
-            'campaign'  => "- Lista idéer kort och konkret (punktlista).\n- Nämn inte konkurrenter eller externa webbplatser.",
-            default     => "- Följ mallen, anpassa till målgrupp/mål.\n- Nämn inte konkurrenter eller externa webbplatser.",
-        };
-
-        // Förbättrad längdhantering med tydligare skillnader
-        $toneRule = $tone === 'short'
-            ? $this->getShortToneRules($channel)
-            : $this->getLongToneRules($channel);
-
-        $competitorProtection = "";
-        if ($content->site_id) {
-            $site = \App\Models\Site::find($content->site_id);
-            if ($site && $site->domain) {
-                $domain = parse_url($site->domain, PHP_URL_HOST) ?? $site->domain;
-                $allowedDomains = [$domain];
-                if ($linkUrl) {
-                    $linkHost = parse_url($linkUrl, PHP_URL_HOST) ?? null;
-                    if ($linkHost && !in_array($linkHost, $allowedDomains, true)) {
-                        $allowedDomains[] = $linkHost;
-                    }
-                }
-                $competitorProtection = "- Om du hänvisar till webbsidor: använd ENDAST följande domäner: " . implode(', ', $allowedDomains) . ".\n- Inkludera ALDRIG andra företags domäner, webbsidor eller konkurrenters länkar.\n";
-            }
-        }
-
-        // Determine language
-        $language = 'sv';
-        $langInput = null;
-        if (!empty($content->inputs['language'])) {
-            $langInput = (string) $content->inputs['language'];
-        } elseif (!empty($content->inputs['locale'])) {
-            $langInput = (string) $content->inputs['locale'];
-        }
-
-        if ($langInput) {
-            $lc = strtolower($langInput);
-            // Accept both locale codes (sv_SE) and language codes (sv)
-            if (str_contains($lc, '_') || str_contains($lc, '-')) {
-                $lc = substr($lc, 0, 2);
-            }
-            $language = in_array($lc, ['sv','en','de'], true) ? $lc : 'sv';
-
-            Log::info("Language input: {$langInput} -> {$language}");
-        } elseif (!empty($content->site_id)) {
-            // Fall back to the site's locale/language
-            $siteForLang = Site::find($content->site_id);
-            if ($siteForLang) {
-                $siteLocale = (string) ($siteForLang->locale ?: 'sv_SE');
-                $lc = strtolower($siteLocale);
-                $lc = (str_contains($lc, '_') || str_contains($lc, '-')) ? substr($lc, 0, 2) : $lc;
-                $language = in_array($lc, ['sv','en','de'], true) ? $lc : 'sv';
-            }
-        }
-        $writeRule = match ($language) {
-            'en' => "- Write in English.",
-            'de' => "- Schreibe auf Deutsch.",
-            default => "- Skriv på svenska.",
-        };
-
-        // Extra enforcement to avoid language bleed from Swedish prompt text
-        $langEnforcement = match ($language) {
-            'en' => "- IMPORTANT: Output must be 100% in English. Some instructions below may appear in Swedish — interpret them, but your final response must be entirely in English with no Swedish words.",
-            'de' => "- WICHTIG: Die Ausgabe muss zu 100 % auf Deutsch sein. Einige Anweisungen unten können auf Schwedisch sein — interpretiere sie, aber die endgültige Antwort muss vollständig auf Deutsch sein (keine schwedischen Wörter).",
-            default => null,
-        };
-
-        Log::info($writeRule);
-
-        $hardRules = implode("\n", [
-            $writeRule,
-            $langEnforcement,
-            "- Inget försnack (inga 'Självklart!' etc.).",
-            "- Inga kodblock (inga ```).",
-            "- Leverera exakt 1 komplett version.",
-            "- För blog/WordPress: Börja INTE med titeln som H1 - den sätts automatiskt.",
-            "- För blog/WordPress: Börja med vanlig text (inledning), sedan använd H2/H3 för rubriker.",
-            "- Inkludera INGA bildreferenser i texten - bilder hanteras separat.",
-            $competitorProtection, // Lägg till säkerhetsregeln här
-            "- Fokusera på allmänna tips och bästa praxis istället för specifika företag/domäner.",
-            ($linkUrl ? "- Avsluta texten med följande länk som sista rad (utan extra kommentar): {$linkUrl}" : null),
-            ($sourceUrl ? "- Använd källmaterialet endast som underlag. Skriv om med egna ord och plagiera inte." : null),
+        $output = $provider->generate($finalPrompt, [
+            'temperature' => $temperature,
+            'max_tokens' => $maxTokens,
         ]);
-        // Rensa bort tomma regler
-        $hardRules = trim(implode("\n", array_values(array_filter(explode("\n", $hardRules)))));
 
-        $context = [];
-        if ($bizContext !== '') {
-            $context[] = rtrim($bizContext);
-        }
-        $context[] = "Titel/ämne: " . ($content->title ?: '-');
-        if (!empty($vars['audience'])) $context[] = "Målgrupp: {$vars['audience']}";
-        if (!empty($vars['goal']))     $context[] = "Affärsmål: {$vars['goal']}";
-        if (!empty($vars['keywords'])) $context[] = "Nyckelord: " . implode(', ', (array) $vars['keywords']);
-        if (!empty($brandVoice))       $context[] = "Varumärkesröst: {$brandVoice}";
+        // Post-process output
+        $output = $this->cleanOutput($output);
+        $output = $this->ensureLinkPresence($output, $inputs['linkUrl'], $inputs['channel']);
 
-        // Optional source URL content extraction
-        $sourceMaterial = '';
-        if ($sourceUrl) {
-            try {
-                $resp = Http::timeout(8)->get($sourceUrl);
-                if ($resp->successful()) {
-                    $html = (string) $resp->body();
-                    // Extract meta title/description quickly
-                    $title = '';
-                    if (preg_match('/<title[^>]*>(.*?)<\/title>/is', $html, $m)) {
-                        $title = trim(Str::of($m[1])->stripTags()->squish());
-                    }
-                    $metaDesc = '';
-                    if (preg_match('/<meta[^>]+name=["\']description["\'][^>]*content=["\']([^"\']+)["\']/i', $html, $m)) {
-                        $metaDesc = trim($m[1]);
-                    } elseif (preg_match('/<meta[^>]+property=["\']og:description["\'][^>]*content=["\']([^"\']+)["\']/i', $html, $m)) {
-                        $metaDesc = trim($m[1]);
-                    }
-                    // Rough text extraction: keep headings and paragraphs
-                    $clean = $html;
-                    // Remove scripts/styles
-                    $clean = preg_replace('/<script[\s\S]*?<\/script>/i', ' ', $clean);
-                    $clean = preg_replace('/<style[\s\S]*?<\/style>/i', ' ', $clean);
-                    // Keep h1-h3 and p by replacing tags with newlines
-                    $clean = preg_replace('/<(\/?h[1-3]|\/?p|br\s*\/?)>/i', "\n", $clean);
-                    $clean = strip_tags($clean);
-                    $clean = Str::of($clean)->replace(["\r"], '')->squish();
-                    $text = (string) $clean;
-                    // Limit length
-                    $snippet = Str::limit($text, 1200, '...');
-                    $parts = [];
-                    $host = parse_url($sourceUrl, PHP_URL_HOST) ?? $sourceUrl;
-                    if ($title) $parts[] = "Titel: {$title}";
-                    if ($metaDesc) $parts[] = "Beskrivning: {$metaDesc}";
-                    if ($snippet) $parts[] = "Textutdrag: {$snippet}";
-                    if (!empty($parts)) {
-                        $sourceMaterial = "KÄLLMATERIAL (från {$host}):\n- " . implode("\n- ", $parts);
-                    }
-                }
-            } catch (\Throwable $e) {
-                // Ignore fetch errors silently
-            }
-        }
-        if ($sourceMaterial !== '') {
-            $context[] = $sourceMaterial;
+        // Save results
+        $content->update([
+            'provider' => $provider->name(),
+            'body_md' => $output,
+            'status' => 'ready',
+            'error' => null,
+        ]);
+
+        // Track usage and charge
+        $usage->increment($content->customer_id, 'ai.generate');
+
+        if ($content->customer) {
+            $quotaGuard->chargeCredits($content->customer, $cost, 'credits');
         }
 
-        $guides = [];
-        if ($gStyle)  $guides[] = "Stil: {$gStyle}";
-        if ($gCta)    $guides[] = "CTA: {$gCta}";
-        if ($gLength) $guides[] = "Längd: {$gLength}";
+        // Generate image if requested
+        $this->dispatchImageGenerationIfNeeded($content, $inputs);
+    }
 
-        // Särskild instruktion för blog-format
-        $blogStructure = '';
-        if ($channel === 'blog') {
-            $blogStructure = "\n\nSTRUKTUR FÖR BLOG:\n1. Börja med några inledande stycken (vanlig text utan rubriker)\n2. Fortsätt med H2-rubriker för huvudavsnitt\n3. Använd H3 för underavsnitt\n4. Avsluta med en slutsats eller sammanfattning\n\nExempel:\n[Inledningstext som förklarar ämnet...]\n\n[Mer inledande text som sätter upp problemet...]\n\n## Första huvudrubriken\n[Innehåll...]\n\n## Andra huvudrubriken\n[Innehåll...]\n";
+    /**
+     * Extract and normalize all inputs from content.
+     */
+    private function extractInputs(AiContent $content): array
+    {
+        $inputs = $content->inputs ?? [];
+
+        return [
+            // Basic inputs
+            'title' => $content->title,
+            'audience' => $inputs['audience'] ?? null,
+            'goal' => $inputs['goal'] ?? null,
+            'keywords' => $inputs['keywords'] ?? [],
+            'brand' => $inputs['brand'] ?? [],
+            'tone' => (string) $content->tone,
+
+            // Channel and guidelines
+            'channel' => (string) ($inputs['channel'] ?? 'auto'),
+            'guidelines' => (array) ($inputs['guidelines'] ?? []),
+            'brandVoice' => (string) ($inputs['brand']['voice'] ?? ''),
+
+            // URLs
+            'linkUrl' => trim((string) ($inputs['link_url'] ?? '')) ?: null,
+            'sourceUrl' => trim((string) ($inputs['source_url'] ?? '')) ?: null,
+
+            // Social settings
+            'socialSettings' => (array) ($inputs['social_settings'] ?? []),
+            'includeHashtags' => (bool) ($inputs['social_settings']['include_hashtags'] ?? false),
+            'lengthChars' => trim((string) ($inputs['social_settings']['length_chars'] ?? '')),
+
+            // Image settings
+            'imageInput' => (array) ($inputs['image'] ?? []),
+            'shouldGenImg' => (bool) ($inputs['image']['generate'] ?? false),
+            'imageMode' => (string) ($inputs['image']['mode'] ?? 'auto'),
+            'imagePrompt' => (string) ($inputs['image']['prompt'] ?? ''),
+
+            // Blog settings
+            'blogSettings' => (array) ($inputs['blog_settings'] ?? []),
+            'blogWordLength' => (string) ($inputs['blog_settings']['word_length'] ?? ''),
+
+            // SEO settings
+            'seoOptimize' => (array) ($inputs['seo_optimize'] ?? []),
+
+            // Language
+            'language' => $this->determineLanguage($inputs),
+        ];
+    }
+
+    /**
+     * Determine the language to use for content generation.
+     */
+    private function determineLanguage(array $inputs): string
+    {
+        $langInput = $inputs['language'] ?? $inputs['locale'] ?? null;
+
+        if (!$langInput) {
+            return self::DEFAULT_LANGUAGE;
         }
 
-        // Localize section headers to reduce language bias
-        $labels = match ($language) {
-            'en' => [
-                'role'        => "You are a copywriter. Create content tailored for the channel: {$channel}.",
-                'context'     => 'CONTEXT',
-                'guidelines'  => 'GUIDELINES',
-                'channel'     => 'CHANNEL-SPECIFIC RULES',
-                'lengthTone'  => 'LENGTH AND TONE',
-                'hard'        => 'HARD RULES',
-                'delivery'    => 'DELIVERY FORMAT',
-                'template'    => 'TEMPLATE HINT (FOLLOW RULES ABOVE FIRST):',
-                'deliveryBul1'=> '- Write plain text (Markdown only in blog mode for headings/lists).',
-                'deliveryBul2'=> '- Exactly 1 version (no variant separator).',
-                'bestPractice'=> '- Use sound best practices for the channel',
-            ],
-            'de' => [
-                'role'        => "Du bist Copywriter. Erstelle Inhalte, angepasst an den Kanal: {$channel}.",
-                'context'     => 'KONTEXT',
-                'guidelines'  => 'RICHTLINIEN',
-                'channel'     => 'KANALSPEZIFISCHE REGELN',
-                'lengthTone'  => 'LÄNGE UND TON',
-                'hard'        => 'HARTE REGELN',
-                'delivery'    => 'LIEFERFORMAT',
-                'template'    => 'VORLAGENHINWEIS (REGELN OBEN ZUERST BEFOLGEN):',
-                'deliveryBul1'=> '- Schreibe Klartext (Markdown nur im Blogmodus für Überschriften/Listen).',
-                'deliveryBul2'=> '- Genau 1 Version (kein Variantentrenner).',
-                'bestPractice'=> '- Verwende bewährte Praktiken für den Kanal',
-            ],
-            default => [
-                'role'        => "Du är copywriter. Skapa innehåll anpassat för kanalen: {$channel}.",
-                'context'     => 'KONTEXT',
-                'guidelines'  => 'RIKTLINJER',
-                'channel'     => 'KANALSPECIFIKA REGLER',
-                'lengthTone'  => 'LÄNGD OCH TON',
-                'hard'        => 'HÅRDA REGLER',
-                'delivery'    => 'LEVERANSFORMAT',
-                'template'    => 'INNEHÅLLSMALL (HINT – FÖLJ REGLERNA OVAN FÖRST):',
-                'deliveryBul1'=> '- Skriv ren text (Markdown endast i bloggläge för rubriker/listor).',
-                'deliveryBul2'=> '- Exakt 1 version (ingen variant-separator).',
-                'bestPractice'=> '- Använd sund bästa praxis för kanalen',
-            ],
-        };
+        $langCode = strtolower((string) $langInput);
 
-        $finalPrompt = trim("
+        // Extract language code from locale (sv_SE -> sv)
+        if (str_contains($langCode, '_') || str_contains($langCode, '-')) {
+            $langCode = substr($langCode, 0, 2);
+        }
+
+        $language = in_array($langCode, self::SUPPORTED_LANGUAGES, true)
+            ? $langCode
+            : self::DEFAULT_LANGUAGE;
+
+        Log::info("Language determined", ['input' => $langInput, 'output' => $language]);
+
+        return $language;
+    }
+
+    /**
+     * Build business context from site information.
+     */
+    private function buildBusinessContext(AiContent $content): string
+    {
+        if (empty($content->site_id) || !$content->site) {
+            return '';
+        }
+
+        $summary = trim($content->site->aiContextSummary());
+
+        return $summary !== ''
+            ? "KONCERN-/VERKSAMHETSKONTEXT: {$summary}\n"
+            : '';
+    }
+
+    /**
+     * Build the complete AI prompt.
+     */
+    private function buildPrompt(AiContent $content, array $inputs, string $bizContext): string
+    {
+        $language = $inputs['language'];
+
+        // Render template hint
+        $templateHint = view('prompts.' . $content->template->slug, [
+            'title' => $inputs['title'],
+            'audience' => $inputs['audience'],
+            'goal' => $inputs['goal'],
+            'keywords' => $inputs['keywords'],
+            'brand' => $inputs['brand'],
+        ])->render();
+
+        // Build context array
+        $context = $this->buildContextArray($inputs, $bizContext, $language);
+
+        // Build guidelines
+        $guides = $this->buildGuidelinesList($inputs, $language);
+
+        // Get channel rules
+        $channelRules = $this->getChannelRules($inputs, $language);
+
+        // Get tone rules
+        $toneRule = $this->getToneRules($inputs['tone'], $inputs['channel']);
+
+        // Build hard rules
+        $hardRules = $this->buildHardRules($content, $inputs, $language);
+
+        // Get blog structure note if applicable
+        $blogStructure = $this->getBlogStructureNote($inputs, $language);
+
+        // Get labels based on language
+        $labels = $this->getPromptLabels($language);
+
+        // Assemble final prompt
+        return trim("
 {$labels['role']}
 
 {$labels['context']}:
@@ -284,78 +292,457 @@ class GenerateContentJob implements ShouldQueue
 {$labels['template']}
 {$templateHint}
         ");
-
-        $provider = $manager->choose($content->template, $tone);
-
-        try {
-            $cost = ($tone === 'short') ? 10 : 50;
-            // Kontrollera innan API‑anrop
-            $customerId = (int) $content->customer_id;
-            $customer = \App\Models\Customer::find($customerId);
-            if ($customer) {
-                $quotaGuard->checkCreditsOrFail($customer, $cost, 'credits');
-            }
-
-            $output = $provider->generate($finalPrompt, [
-                'temperature' => (float) ($content->template->temperature ?? 0.7),
-                'max_tokens'  => (int) ($content->template->max_tokens ?? 1500),
-            ]);
-
-            $output = trim($output);
-            if (str_starts_with($output, '```')) {
-                $output = preg_replace('/^```[a-zA-Z0-9_-]*\n?/','', $output);
-                $output = preg_replace("/\n?```$/", '', $output);
-                $output = trim((string) $output);
-            }
-
-            // Ensure link is present if requested
-            if ($linkUrl && stripos($output, $linkUrl) === false && $channel !== 'campaign') {
-                $suffix = $channel === 'blog' ? "\n\nLäs mer: {$linkUrl}" : "\n\n{$linkUrl}";
-                $output .= $suffix;
-            }
-
-            $content->update([
-                'provider' => $provider->name(),
-                'body_md'  => $output,
-                'status'   => 'ready',
-                'error'    => null,
-            ]);
-
-            $usage->increment($content->customer_id, 'ai.generate');
-
-            if ($customer) {
-                $quotaGuard->chargeCredits($customer, $cost, 'credits');
-            }
-        } catch (\Throwable $e) {
-            $content->update([
-                'status' => 'failed',
-                'error'  => $e->getMessage(),
-            ]);
-            throw $e;
-        }
     }
 
+    /**
+     * Build the context array for the prompt.
+     */
+    private function buildContextArray(array $inputs, string $bizContext, string $language): array
+    {
+        $context = [];
+
+        if ($bizContext !== '') {
+            $context[] = $bizContext;
+        }
+
+        if ($inputs['audience']) {
+            $label = $language === 'en' ? 'Target audience' : 'Målgrupp';
+            $context[] = "{$label}: {$inputs['audience']}";
+        }
+
+        if ($inputs['goal']) {
+            $label = $language === 'en' ? 'Goal/Purpose' : 'Mål/Syfte';
+            $context[] = "{$label}: {$inputs['goal']}";
+        }
+
+        if (!empty($inputs['keywords'])) {
+            $label = $language === 'en' ? 'Keywords to include naturally' : 'Nyckelord att inkludera naturligt';
+            $context[] = "{$label}: " . implode(', ', (array) $inputs['keywords']);
+        }
+
+        if ($inputs['brandVoice']) {
+            $label = $language === 'en' ? 'Brand voice' : 'Varumärkesröst';
+            $context[] = "{$label}: {$inputs['brandVoice']}";
+        }
+
+        if ($inputs['sourceUrl']) {
+            $label = $language === 'en' ? 'Source material' : 'Källmaterial';
+            $context[] = "{$label}: {$inputs['sourceUrl']}";
+        }
+
+        return $context;
+    }
+
+    /**
+     * Build guidelines list.
+     */
+    private function buildGuidelinesList(array $inputs, string $language): array
+    {
+        $guides = [];
+        $guidelines = $inputs['guidelines'];
+
+        if (!empty($guidelines['style'])) {
+            $label = $language === 'en' ? 'Style' : 'Stil';
+            $guides[] = "{$label}: {$guidelines['style']}";
+        }
+
+        if (!empty($guidelines['cta'])) {
+            $label = $language === 'en' ? 'Call-to-Action' : 'Uppmaning';
+            $guides[] = "{$label}: {$guidelines['cta']}";
+        }
+
+        if (!empty($guidelines['length'])) {
+            $label = $language === 'en' ? 'Length guidance' : 'Längdvägledning';
+            $guides[] = "{$label}: {$guidelines['length']}";
+        }
+
+        return $guides;
+    }
+
+    /**
+     * Get channel-specific rules.
+     */
+    private function getChannelRules(array $inputs, string $language): string
+    {
+        $channel = $inputs['channel'];
+        $hashtagRule = $this->getHashtagRule($channel, $inputs['includeHashtags'], $language);
+
+        if ($language === 'en') {
+            return $this->getChannelRulesEnglish($channel, $hashtagRule);
+        }
+
+        return $this->getChannelRulesSwedish($channel, $hashtagRule);
+    }
+
+    /**
+     * Get Swedish channel rules.
+     */
+    private function getChannelRulesSwedish(string $channel, string $hashtagRule): string
+    {
+        return match ($channel) {
+            self::CHANNEL_FACEBOOK => "- Ton: vänlig och konversationell.\n- Emojis: max 0–2 där det stärker budskapet.\n- Struktur: 1–2 mycket korta stycken. Första meningen ska vara en hook.\n{$hashtagRule}\n- Undvik clickbait och vaga löften.",
+
+            self::CHANNEL_INSTAGRAM => "- Ton: berättande och emotionell.\n- Struktur: radbrytningar, 2–4 korta block. Första raden: stark hook.\n{$hashtagRule}\n- Använd emojis strategiskt, inte överdrivet.",
+
+            self::CHANNEL_LINKEDIN => "- Ton: professionell, insiktsfull, personlig utan att bli privat.\n- Struktur: 2–4 kompakta stycken, inled med konkret insikt eller fråga.\n{$hashtagRule}\n- Emojis: undvik eller max 1-2 i hela inlägget. Ska inte låta AI-genererat.",
+
+            self::CHANNEL_BLOG => "- Börja med några inledningsstycken (vanlig text) som introducerar ämnet.\n- Använd sedan H2/H3 för underrubriker. Gärna punktlistor.\n- VIKTIGT: Inkludera INTE titeln som H1 i innehållet - titeln hanteras separat.\n- Nämn inte konkurrenter eller externa webbplatser.",
+
+            self::CHANNEL_CAMPAIGN => "- Lista idéer kort och konkret (punktlista).\n- Nämn inte konkurrenter eller externa webbplatser.",
+
+            self::CHANNEL_SEO => "- UPPDRAG: Förbättra endast språket i ORIGINALTEXTEN nedan (mening för mening). Ändra inte betydelsen.\n- INGA NYA RUBRIKER, INGA LISTOR, INGA EXTRA STYCKEN.\n- Behåll exakt samma styckeindelning och meningsordning som originalet.\n- Gör små förbättringar: tydlighet, flyt, stavning/grammatik, naturlig inkl. av nyckelord (ingen keyword‑stuffing).\n- Ta bort upprepningar/fyllnad om det kan göras utan att ändra betydelsen.\n- INGEN intro/avslut/CTA om det inte finns i originalet.\n- LEVERANSFORMAT: Endast ren brödtext, rad för rad som originalet. Inga Markdown‑rubriker, inga punktlistor.",
+
+            self::CHANNEL_PRODUCT => "- UPPDRAG: Skapa en säljande, tydlig och SEO‑vänlig produktbeskrivning.\n- Struktur: Kort inledning (1–2 meningar) med värde, sedan punktlista med features, separat punktlista med fördelar/USPs, avsluta med CTA (köp/lägg i varukorg/kontakta).\n- Använd H2/H3 för sektioner: t.ex. 'Egenskaper', 'Fördelar', 'Specifikation'.\n- Undvik bloggartikel-ton; inga långa berättelser. Koncist och konkret.\n- Integrera ev. målgrupp/varumärkesröst om angivet.",
+
+            default => "- Följ mallen, anpassa till målgrupp/mål.\n- Nämn inte konkurrenter eller externa webbplatser.",
+        };
+    }
+
+    /**
+     * Get English channel rules.
+     */
+    private function getChannelRulesEnglish(string $channel, string $hashtagRule): string
+    {
+        return match ($channel) {
+            self::CHANNEL_FACEBOOK => "- Tone: friendly and conversational.\n- Emojis: max 0–2 where it strengthens the message.\n- Structure: 1–2 very short paragraphs. First sentence should be a hook.\n{$hashtagRule}\n- Avoid clickbait and vague promises.",
+
+            self::CHANNEL_INSTAGRAM => "- Tone: narrative and emotional.\n- Structure: line breaks, 2–4 short blocks. First line: strong hook.\n{$hashtagRule}\n- Use emojis strategically, not excessively.",
+
+            self::CHANNEL_LINKEDIN => "- Tone: professional, insightful, personal without being private.\n- Structure: 2–4 compact paragraphs, start with concrete insight or question.\n{$hashtagRule}\n- Emojis: avoid or max 1-2 in the entire post. Should not sound AI-generated.",
+
+            self::CHANNEL_BLOG => "- Start with a few introductory paragraphs (plain text) introducing the topic.\n- Then use H2/H3 for subheadings. Bullet lists are welcome.\n- IMPORTANT: Do NOT include the title as H1 in the content - the title is handled separately.\n- Do not mention competitors or external websites.",
+
+            self::CHANNEL_CAMPAIGN => "- List ideas briefly and concretely (bullet list).\n- Do not mention competitors or external websites.",
+
+            self::CHANNEL_SEO => "- MISSION: Only improve the language in the ORIGINAL TEXT below (sentence by sentence). Do not change the meaning.\n- NO NEW HEADINGS, NO LISTS, NO EXTRA PARAGRAPHS.\n- Keep exactly the same paragraph division and sentence order as the original.\n- Make small improvements: clarity, flow, spelling/grammar, natural inclusion of keywords (no keyword-stuffing).\n- Remove repetitions/filler if it can be done without changing the meaning.\n- NO intro/conclusion/CTA if it doesn't exist in the original.\n- DELIVERY FORMAT: Only plain body text, line by line as the original. No Markdown headings, no bullet lists.",
+
+            self::CHANNEL_PRODUCT => "- MISSION: Create a compelling, clear and SEO-friendly product description.\n- Structure: Short introduction (1–2 sentences) with value, then bullet list with features, separate bullet list with benefits/USPs, end with CTA (buy/add to cart/contact).\n- Use H2/H3 for sections: e.g. 'Features', 'Benefits', 'Specifications'.\n- Avoid blog article tone; no long stories. Concise and concrete.\n- Integrate audience/brand voice if specified.",
+
+            default => "- Follow the template, adapt to audience/goal.\n- Do not mention competitors or external websites.",
+        };
+    }
+
+    /**
+     * Get hashtag rule based on channel.
+     */
+    private function getHashtagRule(string $channel, bool $includeHashtags, string $language): string
+    {
+        if (!$includeHashtags) {
+            return $language === 'en' ? '- No hashtags.' : '- Inga hashtags.';
+        }
+
+        return match ($channel) {
+            self::CHANNEL_FACEBOOK => $language === 'en'
+                ? '- Hashtags: 0–3 relevant. Place last or integrate sparingly.'
+                : '- Hashtags: 0–3 relevanta. Placera sist eller integrera sparsamt.',
+
+            self::CHANNEL_INSTAGRAM => $language === 'en'
+                ? '- Hashtags: 5–10 relevant. ALWAYS place in a separate last block line (not in body text).'
+                : '- Hashtags: 5–10 relevanta. Placera ALLTID i en separat sista blockrad (inte i brödtexten).',
+
+            self::CHANNEL_LINKEDIN => $language === 'en'
+                ? '- Hashtags: 1–3 professional. Place last.'
+                : '- Hashtags: 1–3 professionella. Placera sist.',
+
+            default => '',
+        };
+    }
+
+    /**
+     * Get tone rules based on tone type and channel.
+     */
+    private function getToneRules(string $tone, string $channel): string
+    {
+        return $tone === 'short'
+            ? $this->getShortToneRules($channel)
+            : $this->getLongToneRules($channel);
+    }
+
+    /**
+     * Get short tone rules for different channels.
+     */
     private function getShortToneRules(string $channel): string
     {
         return match ($channel) {
-            'facebook' => "SNABB IMPACT: 50–80 ord. Börja med en fångande första mening (fråga, statistik eller starkt påstående). 1–2 korta stycken. Var direkt, engagerande och avsluta gärna med en fråga eller CTA. Använd emojis för känsla och engagemang.",
-            'instagram' => "SNABB IMPACT: 80–120 ord. 2–3 korta stycken med tydliga radbrytningar. Starta med en emotionell hook, förstärk med emojis där det passar. Fokusera på känsla, inspiration och visuell rytm. Avsluta med CTA (t.ex. 'Spara', 'Tagga en vän').",
-            'linkedin' => "SNABB IMPACT: 100–150 ord. 1–2 stycken. Börja med en fångande första mening som väcker intresse (statistik, fråga eller insikt). Förstärk med känsla och emojis men överdriv inte. Professionell men personlig ton, dela värde och erfarenhet. Avsluta med en fråga eller CTA för dialog.",
-            'blog' => "SNABB IMPACT: 300–500 ord. Max 1–2 H2-rubriker. Starta med ett värdeförslag i första meningen. Gå snabbt till poängen, använd konkreta exempel, avsluta med tydlig CTA.",
-            'campaign' => "SNABB IMPACT: 3 idéer, max 2–3 meningar per idé. Börja varje idé med en hook. Gör idéerna unika, konkreta och avsluta med tydlig CTA.",
+            self::CHANNEL_FACEBOOK => "SNABB IMPACT: 50–80 ord. Börja med en fångande första mening (fråga, statistik eller starkt påstående). 1–2 korta stycken. Var direkt, engagerande och avsluta gärna med en fråga eller CTA. Använd emojis för känsla och engagemang.",
+
+            self::CHANNEL_INSTAGRAM => "SNABB IMPACT: 80–120 ord. 2–3 korta stycken med tydliga radbrytningar. Starta med en emotionell hook, förstärk med emojis där det passar. Fokusera på känsla, inspiration och visuell rytm. Avsluta med CTA (t.ex. 'Spara', 'Tagga en vän').",
+
+            self::CHANNEL_LINKEDIN => "SNABB IMPACT: 100–150 ord. 1–2 stycken. Börja med en fångande första mening som väcker intresse (statistik, fråga eller insikt). Förstärk med känsla och emojis men överdriv inte. Professionell men personlig ton, dela värde och erfarenhet. Avsluta med en fråga eller CTA för dialog.",
+
+            self::CHANNEL_BLOG => "SNABB IMPACT: 300–500 ord. Max 1–2 H2-rubriker. Starta med ett värdeförslag i första meningen. Gå snabbt till poängen, använd konkreta exempel, avsluta med tydlig CTA.",
+
+            self::CHANNEL_CAMPAIGN => "SNABB IMPACT: 3 idéer, max 2–3 meningar per idé. Börja varje idé med en hook. Gör idéerna unika, konkreta och avsluta med tydlig CTA.",
+
             default => "SNABB IMPACT: Håll det mycket koncist – ungefär halva normal-längden för kanalen. Börja alltid med en hook och avsluta med CTA.",
         };
     }
 
+    /**
+     * Get long tone rules for different channels.
+     */
     private function getLongToneRules(string $channel): string
     {
         return match ($channel) {
-            'facebook' => "DJUP IMPACT: 150–250 ord. 3–4 stycken. Berätta en engagerande historia, börja med hook, förstärk med känsla och emojis. Bygg upp mot en tydlig CTA i slutet.",
-            'instagram' => "DJUP IMPACT: 300–500 ord. 4–6 stycken med tydliga radbrytningar. Satsa på storytelling, emotion och visuellt flöde. Använd emojis strategiskt för att förstärka poänger. Avsluta med CTA (t.ex. 'Spara', 'Tagga en vän').",
-            'linkedin' => "DJUP IMPACT: 400–800 ord. 4–6 stycken. Börja med en stark hook (statistik, fråga eller påstående). Förstärk med känsla och emojis men överdriv inte. Utveckla insikter och lärdomar professionellt men personligt. Avsluta med en fråga eller CTA för engagemang och diskussion.",
-            'blog' => "DJUP IMPACT: 800–1500 ord. 4–8 H2-rubriker. Börja med ett värdeförslag i första stycket. Bygg upp ämnet logiskt med exempel och detaljer, inkludera storytelling. Avrunda med tydlig CTA (kontakt, nedladdning, köp).",
-            'campaign' => "DJUP IMPACT: 5–8 koncept. Börja varje koncept med en hook, beskriv värde och nytta detaljerat, avsluta med tydlig call-to-action. Använd gärna visuella inslag eller emojis för att förstärka idéerna.",
+            self::CHANNEL_FACEBOOK => "DJUP IMPACT: 150–250 ord. 3–4 stycken. Berätta en engagerande historia, börja med hook, förstärk med känsla och emojis. Bygg upp mot en tydlig CTA i slutet.",
+
+            self::CHANNEL_INSTAGRAM => "DJUP IMPACT: 300–500 ord. 4–6 stycken med tydliga radbrytningar. Satsa på storytelling, emotion och visuellt flöde. Använd emojis strategiskt för att förstärka poänger. Avsluta med CTA (t.ex. 'Spara', 'Tagga en vän').",
+
+            self::CHANNEL_LINKEDIN => "DJUP IMPACT: 400–800 ord. 4–6 stycken. Börja med en stark hook (statistik, fråga eller påstående). Förstärk med känsla och emojis men överdriv inte. Utveckla insikter och lärdomar professionellt men personligt. Avsluta med en fråga eller CTA för engagemang och diskussion.",
+
+            self::CHANNEL_BLOG => "DJUP IMPACT: 800–1500 ord. 4–8 H2-rubriker. Börja med ett värdeförslag i första stycket. Bygg upp ämnet logiskt med exempel och detaljer, inkludera storytelling. Avrunda med tydlig CTA (kontakt, nedladdning, köp).",
+
+            self::CHANNEL_CAMPAIGN => "DJUP IMPACT: 5–8 koncept. Börja varje koncept med en hook, beskriv värde och nytta detaljerat, avsluta med tydlig call-to-action. Använd gärna visuella inslag eller emojis för att förstärka idéerna.",
+
             default => "DJUP IMPACT: Utveckla ämnet grundligt med storytelling, konkreta exempel och tydliga CTA. Börja alltid med hook för att fånga uppmärksamhet.",
         };
+    }
+
+    /**
+     * Build hard rules section.
+     */
+    private function buildHardRules(AiContent $content, array $inputs, string $language): string
+    {
+        $rules = [];
+
+        // Length enforcement
+        $lengthRule = $this->getLengthEnforcementRule($inputs);
+        if ($lengthRule) {
+            $rules[] = $lengthRule;
+        }
+
+        // Competitor protection
+        $competitorRule = $this->getCompetitorProtectionRule($content, $inputs['linkUrl']);
+        if ($competitorRule) {
+            $rules[] = $competitorRule;
+        }
+
+        return implode("\n", $rules);
+    }
+
+    /**
+     * Get length enforcement rule.
+     */
+    private function getLengthEnforcementRule(array $inputs): ?string
+    {
+        $lengthChars = $inputs['lengthChars'];
+        $channel = $inputs['channel'];
+        $blogWordLength = $inputs['blogWordLength'];
+
+        if ($lengthChars !== '') {
+            return "- Längdmål: {$lengthChars}. Justera texten så den landar där (±10%).";
+        }
+
+        if ($channel === self::CHANNEL_BLOG && isset(self::BLOG_CHAR_TARGET[$blogWordLength])) {
+            $target = self::BLOG_CHAR_TARGET[$blogWordLength];
+            return "- Längdmål: {$target}. Justera texten så den landar där (±10%).";
+        }
+
+        if ($channel === self::CHANNEL_BLOG) {
+            $target = self::BLOG_CHAR_TARGET['default'];
+            return "- Längdmål: {$target}. Justera texten så den landar där (±10%).";
+        }
+
+        return null;
+    }
+
+    /**
+     * Get competitor protection rule.
+     */
+    private function getCompetitorProtectionRule(AiContent $content, ?string $linkUrl): string
+    {
+        if (!$content->site_id || !$content->site || !$content->site->domain) {
+            return '';
+        }
+
+        $domain = parse_url($content->site->domain, PHP_URL_HOST) ?? $content->site->domain;
+        $allowedDomains = [$domain];
+
+        if ($linkUrl) {
+            $linkHost = parse_url($linkUrl, PHP_URL_HOST);
+            if ($linkHost && !in_array($linkHost, $allowedDomains, true)) {
+                $allowedDomains[] = $linkHost;
+            }
+        }
+
+        $domainList = implode(', ', $allowedDomains);
+        return "- Om du hänvisar till webbsidor: använd ENDAST följande domäner: {$domainList}.\n- Inkludera ALDRIG andra företags domäner, webbsidor eller konkurrenters länkar.";
+    }
+
+    /**
+     * Get blog structure note for blog channel.
+     */
+    private function getBlogStructureNote(array $inputs, string $language): string
+    {
+        if ($inputs['channel'] !== self::CHANNEL_BLOG) {
+            return '';
+        }
+
+        return $language === 'en'
+            ? "\nREMINDER: The title is handled separately. Start with intro paragraphs, then use H2/H3 subheadings."
+            : "\nPÅMINNELSE: Titeln hanteras separat. Börja med introstycken, använd sedan H2/H3-underrubriker.";
+    }
+
+    /**
+     * Get prompt labels based on language.
+     */
+    private function getPromptLabels(string $language): array
+    {
+        if ($language === 'en') {
+            return [
+                'role' => 'You are a professional content creator and copywriter with extensive experience in digital communication and marketing.',
+                'context' => 'CONTEXT & BACKGROUND',
+                'guidelines' => 'CUSTOM GUIDELINES',
+                'channel' => 'CHANNEL-SPECIFIC RULES',
+                'lengthTone' => 'LENGTH & TONE',
+                'hard' => 'HARD RULES',
+                'delivery' => 'DELIVERY FORMAT',
+                'template' => 'CONTENT TEMPLATE (HINT – FOLLOW THE RULES ABOVE FIRST):',
+                'deliveryBul1' => '- Write plain text (Markdown only in blog mode for headings/lists).',
+                'deliveryBul2' => '- Exactly 1 version (no variant separator).',
+                'bestPractice' => '- Use sound best practices for the channel',
+            ];
+        }
+
+        return [
+            'role' => 'Du är en professionell contentkraaatör och copywriter med stor erfarenhet av digital kommunikation och marknadsföring.',
+            'context' => 'KONTEXT & BAKGRUND',
+            'guidelines' => 'ANPASSADE RIKTLINJER',
+            'channel' => 'KANALSPECIFIKA REGLER',
+            'lengthTone' => 'LÄNGD OCH TON',
+            'hard' => 'HÅRDA REGLER',
+            'delivery' => 'LEVERANSFORMAT',
+            'template' => 'INNEHÅLLSMALL (HINT – FÖLJ REGLERNA OVAN FÖRST):',
+            'deliveryBul1' => '- Skriv ren text (Markdown endast i bloggläge för rubriker/listor).',
+            'deliveryBul2' => '- Exakt 1 version (ingen variant-separator).',
+            'bestPractice' => '- Använd sund bästa praxis för kanalen',
+        ];
+    }
+
+    /**
+     * Calculate cost based on tone.
+     */
+    private function calculateCost(string $tone): int
+    {
+        return $tone === 'short' ? self::COST_SHORT : self::COST_LONG;
+    }
+
+    /**
+     * Calculate max tokens for generation.
+     */
+    private function calculateMaxTokens(AiContent $content, array $inputs): int
+    {
+        $baseMax = (int) ($content->template->max_tokens ?? self::TOKEN_BASE_MAX);
+        $channel = $inputs['channel'];
+        $tone = $inputs['tone'];
+
+        // SEO channel: calculate based on original text length
+        if ($channel === self::CHANNEL_SEO) {
+            $origLen = mb_strlen((string) ($inputs['seoOptimize']['original_text'] ?? ''));
+            if ($origLen > 0) {
+                $calculated = max(200, (int) ceil(($origLen / 4) * 1.05));
+                return min($baseMax, $calculated);
+            }
+        }
+
+        // Blog channel: use presets
+        if ($channel === self::CHANNEL_BLOG) {
+            $blogLength = $inputs['blogWordLength'];
+            $preset = self::TOKEN_BLOG[$blogLength] ?? self::TOKEN_BLOG['default'];
+            return max($baseMax, $preset);
+        }
+
+        // Social channels
+        if (in_array($channel, [self::CHANNEL_FACEBOOK, self::CHANNEL_INSTAGRAM, self::CHANNEL_LINKEDIN], true)) {
+            $socialMax = $tone === 'short' ? self::TOKEN_SOCIAL_SHORT : self::TOKEN_SOCIAL_LONG;
+            return max($baseMax, $socialMax);
+        }
+
+        return $baseMax;
+    }
+
+    /**
+     * Get temperature setting for generation.
+     */
+    private function getTemperature(AiContent $content, string $channel): float
+    {
+        // Use lower temperature for SEO to maintain consistency
+        if ($channel === self::CHANNEL_SEO) {
+            return 0.2;
+        }
+
+        return (float) ($content->template->temperature ?? 0.7);
+    }
+
+    /**
+     * Clean and normalize the AI output.
+     */
+    private function cleanOutput(string $output): string
+    {
+        $output = trim($output);
+
+        // Remove markdown code blocks if present
+        if (str_starts_with($output, '```')) {
+            $output = preg_replace('/^```[a-zA-Z0-9_-]*\n?/', '', $output);
+            $output = preg_replace("/\n?```$/", '', $output);
+            $output = trim($output);
+        }
+
+        return $output;
+    }
+
+    /**
+     * Ensure link is present in output if requested.
+     */
+    private function ensureLinkPresence(string $output, ?string $linkUrl, string $channel): string
+    {
+        if (!$linkUrl || $channel === self::CHANNEL_CAMPAIGN) {
+            return $output;
+        }
+
+        if (stripos($output, $linkUrl) !== false) {
+            return $output;
+        }
+
+        $suffix = $channel === self::CHANNEL_BLOG
+            ? "\n\nLäs mer: {$linkUrl}"
+            : "\n\n{$linkUrl}";
+
+        return $output . $suffix;
+    }
+
+    /**
+     * Dispatch image generation job if needed.
+     */
+    private function dispatchImageGenerationIfNeeded(AiContent $content, array $inputs): void
+    {
+        if (!$inputs['shouldGenImg'] || !$content->customer) {
+            return;
+        }
+
+        $imagePrompt = $inputs['imagePrompt'] !== ''
+            ? $inputs['imagePrompt']
+            : ($content->title
+                ? "Hero/illustration relaterad till: {$content->title}"
+                : "Hero/illustration relaterad till innehållet");
+
+        dispatch(new GenerateAiImageJob(
+            (int) $content->customer->id,
+            (int) $content->id,
+            $imagePrompt,
+            'blog',
+            'photo'
+        ))->onQueue('ai');
+    }
+
+    /**
+     * Handle job failure.
+     */
+    private function handleFailure(AiContent $content, Throwable $e): void
+    {
+        $content->update([
+            'status' => 'failed',
+            'error' => $e->getMessage(),
+        ]);
     }
 }

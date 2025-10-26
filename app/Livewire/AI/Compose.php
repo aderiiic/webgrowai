@@ -98,8 +98,8 @@ class Compose extends Component
             }
         }
 
-        if (is_string($qChannel) && in_array($qChannel, ['auto','blog','facebook','instagram','linkedin','campaign'], true)) {
-            $this->channel = $qChannel;
+        if (is_string($qChannel) && in_array($qChannel, ['auto','blog','facebook','instagram','linkedin','campaign', 'social'], true)) {
+            $this->channel = $qChannel === 'social' ? 'auto' : $qChannel;;
         }
 
         // Preselect template when provided or when channel suggests one

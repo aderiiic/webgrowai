@@ -237,6 +237,11 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
     Route::get('/seo/audits/{auditId}', AuditDetail::class)->name('seo.audit.detail')->whereNumber('auditId')->middleware('premium');
 
     Route::get('/ai', AiIndex::class)->name('ai.list');
+    Route::get('/ai/select-type', \App\Livewire\AI\ContentTypeSelector::class)->name('ai.select-type');
+    Route::get('/ai/social-media', \App\Livewire\AI\SocialMediaCompose::class)->name('ai.social-media');
+    Route::get('/ai/blog', \App\Livewire\AI\BlogCompose::class)->name('ai.blog');
+    Route::get('/ai/seo-product', \App\Livewire\AI\ProductCompose::class)->name('ai.seo.product');
+    Route::get('/ai/seo-optimize', \App\Livewire\AI\SeoOptimize::class)->name('ai.seo.optimize');
     Route::get('/ai/compose', AiCompose::class)->name('ai.compose');
     Route::get('/ai/{id}', AiDetail::class)->name('ai.detail')->whereNumber('id');
     Route::get('/content/weekly', \App\Livewire\Content\WeeklyPlanning::class)->name('content.weekly');
