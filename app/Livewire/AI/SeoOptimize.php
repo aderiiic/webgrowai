@@ -113,6 +113,7 @@ class SeoOptimize extends Component
             'template_id' => $template->id,
             'title'       => $this->title,
             'tone'        => $tone,
+            'type'        => 'seo',
             'status'      => 'queued',
             'inputs'      => $inputs,
         ]);

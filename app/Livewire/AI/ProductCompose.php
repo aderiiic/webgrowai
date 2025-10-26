@@ -117,6 +117,7 @@ class ProductCompose extends Component
             'template_id' => $template->id,
             'title'       => $this->product_title,
             'tone'        => $tone,
+            'type'        => 'product',
             'status'      => 'queued',
             'inputs'      => $inputs,
         ]);

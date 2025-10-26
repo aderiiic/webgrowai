@@ -184,6 +184,7 @@ class SocialMediaCompose extends Component
             'template_id' => $template->id,
             'title' => $this->title,
             'tone' => $tone,
+            'type' => 'social',
             'status' => 'queued',
             'inputs' => $inputs,
         ]);

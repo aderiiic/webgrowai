@@ -191,12 +191,20 @@ class Compose extends Component
             return;
         }
 
+        $contentType = match ($finalChannel) {
+            'facebook', 'instagram', 'linkedin' => 'social',
+            'blog' => 'blog',
+            'campaign' => 'newsletter',
+            default => 'generic',
+        };
+
         $content = AiContent::create([
             'customer_id' => $customer->id,
             'site_id'     => $this->site_id,
             'template_id' => $this->template_id,
             'title'       => $this->title,
             'tone'        => $this->tone,
+            'type'        => $contentType,
             'status'      => 'queued',
             'inputs'      => $inputs,
         ]);

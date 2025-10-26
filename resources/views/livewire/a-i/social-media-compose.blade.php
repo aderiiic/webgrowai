@@ -344,7 +344,7 @@
                                             <div class="text-center">
                                                 <div class="font-medium text-gray-900">{{ $option['label'] }}</div>
                                                 <div class="text-xs text-gray-600 mt-1">{{ $option['desc'] }}</div>
-                                                <div class="text-xs text-emerald-600 mt-2 font-medium" x-text="getLengthText(currentPlatform, '{{ $value }}')"></div>
+                                                <!--<div class="text-xs text-emerald-600 mt-2 font-medium" x-text="getLengthText(currentPlatform, '{{ $value }}')"></div>-->
                                             </div>
                                         </div>
                                     </label>

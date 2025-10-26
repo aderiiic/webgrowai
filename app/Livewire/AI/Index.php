@@ -3,9 +3,12 @@
 namespace App\Livewire\AI;
 
 use App\Models\AiContent;
-use App\Models\UsageMetric;
+use App\Models\BulkGeneration;
 use App\Support\CurrentCustomer;
+use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -14,62 +17,194 @@ class Index extends Component
 {
     use WithPagination;
 
-    public int $monthGenerateTotal = 0;
-    public int $monthPublishTotal = 0;
+    public string $filterType = 'all'; // all, social, blog, seo, product, multi
+    public bool $showArchived = false;
+    public ?int $activeSiteId = null;
 
-    // Uppdelning per kanal
-    public array $monthPublishBy = [
-        'wp'        => 0,
-        'shopify'   => 0,
-        'facebook'  => 0,
-        'instagram' => 0,
-        'linkedin'  => 0,
-    ];
+    public function mount(CurrentCustomer $current): void
+    {
+        $this->activeSiteId = $current->getSiteId();
+    }
 
-    public function render(CurrentCustomer $current)
+    #[On('active-site-updated')]
+    public function onActiveSiteUpdated(?int $siteId): void
+    {
+        $this->activeSiteId = $siteId;
+        $this->resetPage();
+    }
+
+    public function updatedFilterType(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedShowArchived(): void
+    {
+        $this->resetPage();
+    }
+
+    public function toggleArchive(int $contentId): void
+    {
+        $customer = app(CurrentCustomer::class)->get();
+        abort_unless($customer, 403);
+
+        $content = AiContent::where('customer_id', $customer->id)
+            ->findOrFail($contentId);
+
+        $content->update(['archived' => !$content->archived]);
+
+        $this->dispatch('content-archived');
+    }
+
+    public function render(CurrentCustomer $current): View
     {
         $customer = $current->get();
         abort_unless($customer, 403);
 
-        $activeSiteId = (int) ($current->getSiteId() ?: 0);
+        $now = now();
+        $startOfMonth = $now->copy()->startOfMonth();
+        $period = $now->format('Y-m');
+        $activeSiteId = $this->activeSiteId; // Spara i lokal variabel
 
-        $q = AiContent::query()
-            ->with('publications')
-            ->where('customer_id', $customer->id);
+        // Get regular AI contents - FILTRERA PÅ SITE
+        $query = AiContent::where('customer_id', $customer->id)
+            ->whereNull('bulk_generation_id') // Exclude bulk items from main list
+            ->with(['template', 'site', 'publications']);
 
-        if ($activeSiteId > 0) {
-            $q->where('site_id', $activeSiteId);
+        // VIKTIGT: Filtrera på vald site
+        if ($activeSiteId) {
+            $query->where('site_id', $activeSiteId);
         }
 
-        $items = $q->latest()->paginate(12);
+        // Apply archive filter
+        if ($this->showArchived) {
+            $query->archived();
+        } else {
+            $query->active();
+        }
 
-        // Statistik (kundnivå – oförändrat)
-        $period = now()->format('Y-m');
+        // Apply type filter
+        if ($this->filterType !== 'all') {
+            $query->where('type', $this->filterType);
+        }
 
-        $this->monthGenerateTotal = (int) (UsageMetric::query()
+        $items = $query->orderBy('created_at', 'desc')->paginate(12);
+
+        // Get bulk generations separately - OCKSÅ FILTRERA PÅ SITE
+        $bulkQuery = BulkGeneration::where('customer_id', $customer->id)
+            ->with(['contents' => function ($q) {
+                $q->orderBy('batch_index')->limit(3);
+            }])
+            ->orderBy('created_at', 'desc')
+            ->limit(10);
+
+        if ($activeSiteId) {
+            $bulkQuery->where('site_id', $activeSiteId);
+        }
+
+        $bulkGenerations = $bulkQuery->get();
+
+        // Monthly stats - FILTRERA PÅ SITE för mer exakt statistik
+        $monthGenerateQuery = DB::table('usage_metrics')
             ->where('customer_id', $customer->id)
-            ->where('period', $period)
             ->where('metric_key', 'ai.generate')
-            ->value('used_value') ?? 0);
+            ->where('period', $period);
 
-        $this->monthPublishTotal = (int) (UsageMetric::query()
+        $monthPublishQuery = DB::table('usage_metrics')
             ->where('customer_id', $customer->id)
-            ->where('period', $period)
-            ->where('metric_key', 'like', 'ai.publish.%')
-            ->sum('used_value') ?? 0);
+            ->where('metric_key', 'ai.publish')
+            ->where('period', $period);
 
-        $this->monthPublishBy['wp']        = (int) (UsageMetric::query()->where('customer_id', $customer->id)->where('period', $period)->where('metric_key', 'ai.publish.wp')->value('used_value') ?? 0);
-        $this->monthPublishBy['shopify']   = (int) (UsageMetric::query()->where('customer_id', $customer->id)->where('period', $period)->where('metric_key', 'ai.publish.shopify')->value('used_value') ?? 0);
-        $this->monthPublishBy['facebook']  = (int) (UsageMetric::query()->where('customer_id', $customer->id)->where('period', $period)->where('metric_key', 'ai.publish.facebook')->value('used_value') ?? 0);
-        $this->monthPublishBy['instagram'] = (int) (UsageMetric::query()->where('customer_id', $customer->id)->where('period', $period)->where('metric_key', 'ai.publish.instagram')->value('used_value') ?? 0);
-        $this->monthPublishBy['linkedin']  = (int) (UsageMetric::query()->where('customer_id', $customer->id)->where('period', $period)->where('metric_key', 'ai.publish.linkedin')->value('used_value') ?? 0);
+        // Om site är vald, räkna bara den sitens innehåll
+        if ($activeSiteId) {
+            // Räkna genererade texter för denna site
+            $monthGenerateTotal = AiContent::where('customer_id', $customer->id)
+                ->where('site_id', $activeSiteId)
+                ->whereMonth('created_at', $now->month)
+                ->whereYear('created_at', $now->year)
+                ->count();
 
-        return view('livewire.a-i.index', [
-            'items'             => $items,
-            'monthGenerateTotal'=> $this->monthGenerateTotal,
-            'monthPublishTotal' => $this->monthPublishTotal,
-            'monthPublishBy'    => $this->monthPublishBy,
-            'activeSiteId'      => $activeSiteId > 0 ? $activeSiteId : null,
-        ]);
+            $monthPublishTotal = DB::table('content_publications')
+                ->whereIn('ai_content_id', function ($q) use ($customer, $activeSiteId) {
+                    $q->select('id')
+                        ->from('ai_contents')
+                        ->where('customer_id', $customer->id)
+                        ->where('site_id', $activeSiteId);
+                })
+                ->where('status', 'published')
+                ->whereMonth('created_at', $now->month)
+                ->whereYear('created_at', $now->year)
+                ->count();
+        } else {
+            // Visa alla sites för kunden
+            $monthGenerateTotal = $monthGenerateQuery->sum('used_value');
+            $monthPublishTotal = $monthPublishQuery->sum('used_value');
+        }
+
+        $monthPublishBy = [
+            'wp' => DB::table('content_publications')
+                ->whereIn('ai_content_id', function ($q) use ($customer, $activeSiteId) {
+                    $subQ = $q->select('id')->from('ai_contents')->where('customer_id', $customer->id);
+                    if ($activeSiteId) {
+                        $subQ->where('site_id', $activeSiteId);
+                    }
+                })
+                ->where('target', 'wp')
+                ->where('status', 'published')
+                ->where('created_at', '>=', $startOfMonth)
+                ->count(),
+            'shopify' => DB::table('content_publications')
+                ->whereIn('ai_content_id', function ($q) use ($customer, $activeSiteId) {
+                    $subQ = $q->select('id')->from('ai_contents')->where('customer_id', $customer->id);
+                    if ($activeSiteId) {
+                        $subQ->where('site_id', $activeSiteId);
+                    }
+                })
+                ->where('target', 'shopify')
+                ->where('status', 'published')
+                ->where('created_at', '>=', $startOfMonth)
+                ->count(),
+            'facebook' => DB::table('content_publications')
+                ->whereIn('ai_content_id', function ($q) use ($customer, $activeSiteId) {
+                    $subQ = $q->select('id')->from('ai_contents')->where('customer_id', $customer->id);
+                    if ($activeSiteId) {
+                        $subQ->where('site_id', $activeSiteId);
+                    }
+                })
+                ->where('target', 'facebook')
+                ->where('status', 'published')
+                ->where('created_at', '>=', $startOfMonth)
+                ->count(),
+            'instagram' => DB::table('content_publications')
+                ->whereIn('ai_content_id', function ($q) use ($customer, $activeSiteId) {
+                    $subQ = $q->select('id')->from('ai_contents')->where('customer_id', $customer->id);
+                    if ($activeSiteId) {
+                        $subQ->where('site_id', $activeSiteId);
+                    }
+                })
+                ->where('target', 'instagram')
+                ->where('status', 'published')
+                ->where('created_at', '>=', $startOfMonth)
+                ->count(),
+            'linkedin' => DB::table('content_publications')
+                ->whereIn('ai_content_id', function ($q) use ($customer, $activeSiteId) {
+                    $subQ = $q->select('id')->from('ai_contents')->where('customer_id', $customer->id);
+                    if ($activeSiteId) {
+                        $subQ->where('site_id', $activeSiteId);
+                    }
+                })
+                ->where('target', 'linkedin')
+                ->where('status', 'published')
+                ->where('created_at', '>=', $startOfMonth)
+                ->count(),
+        ];
+
+        return view('livewire.a-i.index', compact(
+            'items',
+            'bulkGenerations',
+            'monthGenerateTotal',
+            'monthPublishTotal',
+            'monthPublishBy'
+        ));
     }
 }
