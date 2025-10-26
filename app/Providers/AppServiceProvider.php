@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\AiContent;
+use App\Observers\AiContentObserver;
 use App\Policies\AiContentPolicy;
 use App\Support\CurrentCustomer;
 use App\Support\Usage;
@@ -25,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        AiContent::observe(AiContentObserver::class);
         Gate::define('admin', fn($user) => $user->isAdmin());
         Gate::policy(AiContent::class, AiContentPolicy::class);
     }

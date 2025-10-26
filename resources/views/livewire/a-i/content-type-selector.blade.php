@@ -71,22 +71,19 @@
                 </div>
 
                 <!-- Multi-text Generation -->
-                <div class="group bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 opacity-60 cursor-not-allowed">
+                <a href="{{ route('ai.bulk.generate') }}" class="group bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 hover:shadow-xl hover:bg-white/90 transition-all duration-300 transform hover:-translate-y-1 hover:border-orange-300">
                     <div class="text-center space-y-4">
-                        <div class="w-14 h-14 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center mx-auto">
+                        <div class="w-14 h-14 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300">
                             <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 00-2 2v2a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2"/>
                             </svg>
                         </div>
                         <div>
-                            <h3 class="text-lg font-bold text-gray-900 mb-2">Multi-text generering</h3>
-                            <p class="text-sm text-gray-600">Flera varianter av samma text</p>
-                        </div>
-                        <div class="pt-2">
-                            <span class="inline-block px-3 py-1 bg-gray-100 text-gray-600 text-xs rounded-full font-medium">Kommer snart</span>
+                            <h3 class="text-lg font-bold text-gray-900 mb-2">Massgenerering</h3>
+                            <p class="text-sm text-gray-600">Flera varianter av samma text med variabler</p>
                         </div>
                     </div>
-                </div>
+                </a>
             </div>
 
             <!-- Bottom actions -->

@@ -242,6 +242,8 @@ Route::middleware(['auth','verified','onboarded', 'paidOrTrial'])->group(functio
     Route::get('/ai/blog', \App\Livewire\AI\BlogCompose::class)->name('ai.blog');
     Route::get('/ai/seo-product', \App\Livewire\AI\ProductCompose::class)->name('ai.seo.product');
     Route::get('/ai/seo-optimize', \App\Livewire\AI\SeoOptimize::class)->name('ai.seo.optimize');
+    Route::get('/ai/bulk', \App\Livewire\AI\BulkGenerate::class)->name('ai.bulk.generate');
+    Route::get('/ai/bulk/{id}', \App\Livewire\AI\BulkDetail::class)->name('ai.bulk.detail');
     Route::get('/ai/compose', AiCompose::class)->name('ai.compose');
     Route::get('/ai/{id}', AiDetail::class)->name('ai.detail')->whereNumber('id');
     Route::get('/content/weekly', \App\Livewire\Content\WeeklyPlanning::class)->name('content.weekly');
