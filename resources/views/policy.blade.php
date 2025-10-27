@@ -75,10 +75,10 @@
                                     SEO & CRO-verktyg
                                 </h3>
                                 <ul class="text-sm text-emerald-800 space-y-1">
-                                    <li>• AI-förslag på nyckelord och meta-taggar</li>
-                                    <li>• SerpAPI-baserad rankingkoll</li>
-                                    <li>• Konverteringsoptimering av sidor</li>
-                                    <li>• Prestandamätning och insikter</li>
+                                    <li> AI-förslag på nyckelord och meta-taggar</li>
+                                    <li> SerpAPI-baserad rankingkoll</li>
+                                    <li> Konverteringsoptimering av sidor</li>
+                                    <li> Prestandamätning och insikter</li>
                                 </ul>
                             </div>
                             <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-200/50 p-6">
@@ -89,10 +89,10 @@
                                     AI-publicering
                                 </h3>
                                 <ul class="text-sm text-purple-800 space-y-1">
-                                    <li>• Automatisk contentgenerering</li>
-                                    <li>• WordPress-integration</li>
-                                    <li>• Sociala kanaler (Facebook, Instagram, LinkedIn)</li>
-                                    <li>• Schemaläggning och automation</li>
+                                    <li> Automatisk contentgenerering</li>
+                                    <li> WordPress-integration</li>
+                                    <li> Sociala kanaler (Facebook, Instagram, LinkedIn)</li>
+                                    <li> Schemaläggning och automation</li>
                                 </ul>
                             </div>
                         </div>
@@ -109,9 +109,9 @@
                                     <h4 class="font-semibold text-blue-900">Facebook</h4>
                                 </div>
                                 <ul class="text-xs text-blue-800 space-y-1">
-                                    <li>• Sidhantering och publicering</li>
-                                    <li>• Insights och engagement-data</li>
-                                    <li>• Automatiska inlägg</li>
+                                    <li> Sidhantering och publicering</li>
+                                    <li> Insights och engagement-data</li>
+                                    <li> Automatiska inlägg</li>
                                 </ul>
                             </div>
 
@@ -123,9 +123,9 @@
                                     <h4 class="font-semibold text-pink-900">Instagram</h4>
                                 </div>
                                 <ul class="text-xs text-pink-800 space-y-1">
-                                    <li>• Business-konto integration</li>
-                                    <li>• Bildpublicering och Stories</li>
-                                    <li>• Hashtag-optimering</li>
+                                    <li> Business-konto integration</li>
+                                    <li> Bildpublicering och Stories</li>
+                                    <li> Hashtag-optimering</li>
                                 </ul>
                             </div>
 
@@ -137,9 +137,9 @@
                                     <h4 class="font-semibold text-blue-900">LinkedIn</h4>
                                 </div>
                                 <ul class="text-xs text-blue-800 space-y-1">
-                                    <li>• Företagssidor</li>
-                                    <li>• Professionellt nätverk</li>
-                                    <li>• B2B-contenthantering</li>
+                                    <li> Företagssidor</li>
+                                    <li> Professionellt nätverk</li>
+                                    <li> B2B-contenthantering</li>
                                 </ul>
                             </div>
                         </div>
@@ -156,9 +156,9 @@
                                     <h4 class="font-semibold text-blue-900">WordPress</h4>
                                 </div>
                                 <ul class="text-xs text-blue-800 space-y-1">
-                                    <li>• Direkt API-integration</li>
-                                    <li>• SEO-plugineroptimering</li>
-                                    <li>• Contentautomation</li>
+                                    <li> Direkt API-integration</li>
+                                    <li> SEO-plugineroptimering</li>
+                                    <li> Contentautomation</li>
                                 </ul>
                             </div>
 
@@ -170,9 +170,9 @@
                                     <h4 class="font-semibold text-green-900">Shopify</h4>
                                 </div>
                                 <ul class="text-xs text-green-800 space-y-1">
-                                    <li>• Produktsidoptimering</li>
-                                    <li>• Konverteringsförbättringar</li>
-                                    <li>• E-handelsSEO</li>
+                                    <li> Produktsidoptimering</li>
+                                    <li> Konverteringsförbättringar</li>
+                                    <li> E-handelsSEO</li>
                                 </ul>
                             </div>
                         </div>
@@ -244,19 +244,19 @@
                                 <div>
                                     <h5 class="font-medium mb-2">Tekniska skyddsåtgärder:</h5>
                                     <ul class="space-y-1 text-xs">
-                                        <li>• TLS 1.3-kryptering för alla dataöverföringar</li>
-                                        <li>• Säker databashashing av känslig information</li>
-                                        <li>• Regelbundna säkerhetsuppdateringar</li>
-                                        <li>• Inträdesloggning och aktivitetsövervakning</li>
+                                        <li> TLS 1.3-kryptering för alla dataöverföringar</li>
+                                        <li> Säker databashashing av känslig information</li>
+                                        <li> Regelbundna säkerhetsuppdateringar</li>
+                                        <li> Inträdesloggning och aktivitetsövervakning</li>
                                     </ul>
                                 </div>
                                 <div>
                                     <h5 class="font-medium mb-2">Organisatoriska åtgärder:</h5>
                                     <ul class="space-y-1 text-xs">
-                                        <li>• Begränsad personalåtkomst på need-to-know-basis</li>
-                                        <li>• Regelbunden säkerhetsutbildning</li>
-                                        <li>• Incidentresponsplan</li>
-                                        <li>• Dataskyddskonsekvensanalys</li>
+                                        <li> Begränsad personalåtkomst på need-to-know-basis</li>
+                                        <li> Regelbunden säkerhetsutbildning</li>
+                                        <li> Incidentresponsplan</li>
+                                        <li> Dataskyddskonsekvensanalys</li>
                                     </ul>
                                 </div>
                             </div>
@@ -276,6 +276,12 @@
                                 </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-200 text-sm">
+                                <tr class="bg-blue-50">
+                                    <td class="px-4 py-2 font-medium">Stripe, Inc.</td>
+                                    <td class="px-4 py-2">Betalningshantering</td>
+                                    <td class="px-4 py-2">Betalkortsuppgifter, faktureringsadress, e-post</td>
+                                    <td class="px-4 py-2">USA/EU (ISO 27001, PCI DSS Level 1)</td>
+                                </tr>
                                 <tr>
                                     <td class="px-4 py-2 font-medium">Meta (Facebook/Instagram)</td>
                                     <td class="px-4 py-2">Autentisering, publicering</td>
@@ -306,31 +312,129 @@
                                     <td class="px-4 py-2">Söktermer, webbplats-URL</td>
                                     <td class="px-4 py-2">USA</td>
                                 </tr>
+                                <tr>
+                                    <td class="px-4 py-2 font-medium">Amazon Web Services (AWS)</td>
+                                    <td class="px-4 py-2">Hosting och datalagring</td>
+                                    <td class="px-4 py-2">All systemdata</td>
+                                    <td class="px-4 py-2">EU (Stockholm)</td>
+                                </tr>
                                 </tbody>
                             </table>
+                        </div>
+
+                        <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 my-6">
+                            <h4 class="font-semibold text-blue-900 mb-3">Om Stripe-betalningar</h4>
+                            <p class="text-sm text-blue-800 mb-2">
+                                Vi använder Stripe för säker betalningshantering. Stripe är en PCI DSS Level 1 certifierad betalningsleverantör –
+                                den högsta säkerhetsstandarden i betalningsindustrin.
+                            </p>
+                            <ul class="text-sm text-blue-800 space-y-1">
+                                <li> Dina kortuppgifter sparas aldrig på våra servrar</li>
+                                <li> All kommunikation med Stripe är krypterad (TLS 1.3)</li>
+                                <li> Stripe följer GDPR och svensk dataskyddslagstiftning</li>
+                                <li> Läs mer om Stripes datasäkerhet: <a href="https://stripe.com/se/privacy" class="underline hover:text-blue-600" target="_blank" rel="noopener">stripe.com/se/privacy</a></li>
+                            </ul>
+                        </div>
+
+                        <h2>Lagring och bevarandetider</h2>
+                        <div class="overflow-x-auto my-6">
+                            <table class="min-w-full border border-gray-200 rounded-lg">
+                                <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Typ av data</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Bevarandetid</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Anledning</th>
+                                </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200 text-sm">
+                                <tr>
+                                    <td class="px-4 py-2 font-medium">Kontouppgifter</td>
+                                    <td class="px-4 py-2">Under avtalsperioden + 3 år</td>
+                                    <td class="px-4 py-2">Avtalsuppfyllelse, bokföring</td>
+                                </tr>
+                                <tr class="bg-amber-50">
+                                    <td class="px-4 py-2 font-medium">Fakturor och betalningsdata</td>
+                                    <td class="px-4 py-2">7 år efter räkenskapsårets slut</td>
+                                    <td class="px-4 py-2">Bokföringslag (1999:1078)</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2 font-medium">Stripe betalningsreferenser</td>
+                                    <td class="px-4 py-2">7 år</td>
+                                    <td class="px-4 py-2">Bokföring, reklamationer</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2 font-medium">Användningsdata</td>
+                                    <td class="px-4 py-2">24 månader</td>
+                                    <td class="px-4 py-2">Tjänsteförbättringar, support</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2 font-medium">API-token</td>
+                                    <td class="px-4 py-2">Tills återkallat</td>
+                                    <td class="px-4 py-2">Funktionalitet</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2 font-medium">Säkerhetsloggar</td>
+                                    <td class="px-4 py-2">12 månader</td>
+                                    <td class="px-4 py-2">Säkerhet, incidenthantering</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2 font-medium">Support-ärenden</td>
+                                    <td class="px-4 py-2">3 år efter stängning</td>
+                                    <td class="px-4 py-2">Kvalitetsförbättringar</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2 font-medium">AI-genererat innehåll</td>
+                                    <td class="px-4 py-2">Tills radering eller kontoavslut + 30 dagar</td>
+                                    <td class="px-4 py-2">Tjänsteleverans, återställning</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 my-6">
+                            <p class="text-sm text-amber-900">
+                                <strong>OBS:</strong> Betalningsdata som fakturor och transaktionsreferenser måste enligt svensk bokföringslag
+                                behållas i 7 år räknat från utgången av det räkenskapsår då transaktionen genomfördes, oavsett om du avslutar ditt konto tidigare.
+                            </p>
                         </div>
 
                         <h2>Cookies och spårning</h2>
                         <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 my-6">
                             <h4 class="font-semibold text-blue-900 mb-3">Vi använder minimalt med cookies</h4>
+                            <p class="text-sm text-blue-800 mb-4">
+                                Enligt EU:s e-integritetsdirektiv (Cookie-lagen) och svensk lag (2003:389) om elektronisk kommunikation
+                                måste vi informera dig om cookies. Vi använder endast nödvändiga cookies för att tjänsten ska fungera.
+                            </p>
                             <div class="grid md:grid-cols-2 gap-4 text-sm text-blue-800">
                                 <div>
-                                    <h5 class="font-medium mb-2">Nödvändiga cookies:</h5>
+                                    <h5 class="font-medium mb-2">Nödvändiga cookies (inget samtycke krävs):</h5>
                                     <ul class="space-y-1 text-xs">
-                                        <li>• Sessionscookies för inloggning</li>
-                                        <li>• CSRF-skydd för säkerhet</li>
-                                        <li>• Språk- och regionalinställningar</li>
+                                        <li> <strong>laravel_session</strong> - Sessionscookies för inloggning (2 timmar)</li>
+                                        <li> <strong>XSRF-TOKEN</strong> - CSRF-skydd för säkerhet (2 timmar)</li>
+                                        <li> <strong>remember_token</strong> - "Kom ihåg mig"-funktion (400 dagar)</li>
+                                        <li> Språk- och regionalinställningar (1 år)</li>
                                     </ul>
                                 </div>
                                 <div>
                                     <h5 class="font-medium mb-2">Funktionella cookies (frivilligt):</h5>
                                     <ul class="space-y-1 text-xs">
-                                        <li>• Användarpreferenser</li>
-                                        <li>• Dashboard-inställningar</li>
-                                        <li>• Pausade arbetsflöden</li>
+                                        <li> Användarpreferenser (1 år)</li>
+                                        <li> Dashboard-inställningar (1 år)</li>
+                                        <li> Pausade arbetsflöden (30 dagar)</li>
                                     </ul>
+                                    <p class="text-xs mt-2 italic">Du kan när som helst rensa dessa via webbläsarinställningar</p>
                                 </div>
                             </div>
+                        </div>
+
+                        <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 my-4">
+                            <h5 class="font-semibold text-slate-900 mb-2 text-sm">Vi använder INTE:</h5>
+                            <ul class="text-xs text-slate-700 space-y-1">
+                                <li> Google Analytics eller liknande spårningsverktyg</li>
+                                <li> Marknadsföringscookies från tredje part</li>
+                                <li> Social media tracking pixels (utom när du själv integrerar)</li>
+                                <li> Beteendespårning för annonsering</li>
+                            </ul>
                         </div>
 
                         <h2>Dina rättigheter enligt GDPR</h2>
@@ -507,15 +611,20 @@
                                         </svg>
                                         info@webbi.se
                                     </a>
-                                    <a href="mailto:info@webbi.se" class="flex items-center px-4 py-2 bg-green-100 text-green-800 rounded-lg hover:bg-green-200 transition-colors text-sm">
+                                    <a href="mailto:privacy@webbi.se" class="flex items-center px-4 py-2 bg-green-100 text-green-800 rounded-lg hover:bg-green-200 transition-colors text-sm">
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                                         </svg>
-                                        privacy@webgrowai.com
+                                        info@webbi.se (GDPR-frågor)
                                     </a>
                                     <div class="pt-2 text-xs text-slate-600">
                                         <p><strong>Svarstid:</strong> Vi svarar på GDPR-förfrågningar inom 30 dagar</p>
-                                        <p><strong>Klagomålsrätt:</strong> Du har rätt att lämna klagomål till Integritetsskyddsmyndigheten</p>
+                                        <p class="mt-1"><strong>Klagomålsrätt:</strong> Du har rätt att lämna klagomål till:</p>
+                                        <ul class="ml-4 mt-1 space-y-1">
+                                            <li> <a href="https://www.imy.se" class="text-blue-600 hover:underline" target="_blank" rel="noopener">Integritetsskyddsmyndigheten (IMY)</a></li>
+                                            <li> <a href="https://www.konsumentverket.se" class="text-blue-600 hover:underline" target="_blank" rel="noopener">Konsumentverket</a> (för konsumenttvister)</li>
+                                            <li> <a href="https://www.arn.se" class="text-blue-600 hover:underline" target="_blank" rel="noopener">Allmänna reklamationsnämnden (ARN)</a></li>
+                                        </ul>
                                     </div>
                                 </div>
                             </div>

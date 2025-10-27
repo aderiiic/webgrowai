@@ -109,7 +109,7 @@ return [
     'brand_why_card_3_title' => 'Beprövad teknologi',
     'brand_why_card_3_desc' => 'Tusentals genererade texter och nöjda kunder',
     'brand_why_card_4_title' => 'Transparent prissättning',
-    'brand_why_card_4_desc' => 'Från 390 kr/mån – ingen bindningstid',
+    'brand_why_card_4_desc' => 'Från 249 kr/mån – ingen bindningstid',
 
     'brand_customers_title' => 'Vad säger kunderna?',
     'brand_testimonial_1' => 'WebGrow AI har revolutionerat vår innehållsproduktion. Vi sparar massor med tid och får bättre resultat.',

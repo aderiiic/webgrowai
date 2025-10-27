@@ -1,4 +1,4 @@
-<?php
+f<?php
 
 return [
     'nav_functions' => 'Features',
@@ -27,7 +27,7 @@ return [
     'hero_cta_see_demo' => 'See demo',
     'hero_info_1'   => 'No credit card required',
     'hero_info_2'   => 'Global support',
-    'hero_info_3'   => 'From $39/month →',
+    'hero_info_3'   => 'From €25/month →',
 
     'target_title'  => 'Works for all types of businesses',
     'target_subtitle'   => 'Our AI is trained on business content and understands different industries and audiences',
@@ -72,7 +72,7 @@ return [
     'why_card_1_p2'     => 'Industry-specific knowledge',
     'why_card_1_p3'     => 'Measures and optimizes',
     'why_card_2_title'  =>  'Better pricing',
-    'why_card_2_p1'     => 'From $39/month',
+    'why_card_2_p1'     => 'From €25/month',
     'why_card_2_p2'     => 'Cheaper than hiring staff',
     'why_card_2_p3'     => 'No commitment',
     'why_card_3_title'  => 'Security & trust',
@@ -97,7 +97,7 @@ return [
     'pricing_starter_price_ordinary'    =>  '$59',
     'pricing_starter_price_extra'       =>  '$39',
     'pricing_per_month' => '/month',
-    'pricing_starter_annual'    => 'Annual: $35/month',
+    'pricing_starter_annual'    => 'Annual: €25/month',
     'pricing_early_bird' => 'Early bird pricing',
     'pricing_starter_highlight' => 'Perfect for small businesses',
     'pricing_starter_ai'    => '500 AI texts/month',

@@ -530,30 +530,48 @@
                             </div>
 
                             <!-- Features -->
-                            <ul class="space-y-4 mb-8">
+                            <ul class="space-y-3 mb-8">
                                 <li class="flex items-start gap-3 text-slate-300">
                                     <svg class="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                     </svg>
-                                    <span>AI skriver texter och skapar bilder åt dig</span>
+                                    <div>
+                                        <span class="font-medium">Sociala medier-texter</span>
+                                        <p class="text-xs text-slate-400 mt-0.5">Facebook, Instagram & LinkedIn</p>
+                                    </div>
                                 </li>
                                 <li class="flex items-start gap-3 text-slate-300">
                                     <svg class="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                     </svg>
-                                    <span>Publicera direkt på Facebook & Instagram</span>
+                                    <div>
+                                        <span class="font-medium">Bloggtexter & produktbeskrivningar</span>
+                                        <p class="text-xs text-slate-400 mt-0.5">SEO-optimerat innehåll som säljer</p>
+                                    </div>
                                 </li>
                                 <li class="flex items-start gap-3 text-slate-300">
                                     <svg class="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                     </svg>
-                                    <span>Koppla WordPress och publicera automatiskt</span>
+                                    <div>
+                                        <span class="font-medium">AI-bildgenerering</span>
+                                        <p class="text-xs text-slate-400 mt-0.5">Unika bilder till dina inlägg</p>
+                                    </div>
                                 </li>
                                 <li class="flex items-start gap-3 text-slate-300">
                                     <svg class="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                     </svg>
-                                    <span><strong>1 webbplats</strong> (max 500 credits/dag)</span>
+                                    <div>
+                                        <span class="font-medium">Automatisk publicering</span>
+                                        <p class="text-xs text-slate-400 mt-0.5">WordPress & sociala medier</p>
+                                    </div>
+                                </li>
+                                <li class="flex items-start gap-3 text-slate-300">
+                                    <svg class="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <span><strong>1 webbplats</strong>, 1 användare</span>
                                 </li>
                             </ul>
 
@@ -610,7 +628,7 @@
                             </div>
 
                             <!-- Features -->
-                            <ul class="space-y-4 mb-8">
+                            <ul class="space-y-3 mb-8">
                                 <li class="flex items-start gap-3 text-white">
                                     <svg class="w-5 h-5 text-emerald-300 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
@@ -621,25 +639,34 @@
                                     <svg class="w-5 h-5 text-yellow-300 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                     </svg>
-                                    <span class="font-medium"><strong>SEO-optimering</strong> för bättre Google-ranking</span>
+                                    <div>
+                                        <span class="font-semibold">Multi-text</span>
+                                        <p class="text-xs text-indigo-100 mt-0.5">Skapa 25 texter samtidigt – perfekt för kampanjer</p>
+                                    </div>
                                 </li>
                                 <li class="flex items-start gap-3 text-white">
                                     <svg class="w-5 h-5 text-yellow-300 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                     </svg>
-                                    <span class="font-medium"><strong>Nyckelordsanalys</strong> och sökordstips</span>
+                                    <div>
+                                        <span class="font-semibold">SEO-optimering & nyckelordsanalys</span>
+                                        <p class="text-xs text-indigo-100 mt-0.5">Rankningsbooost i Google</p>
+                                    </div>
                                 </li>
                                 <li class="flex items-start gap-3 text-white">
                                     <svg class="w-5 h-5 text-yellow-300 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                     </svg>
-                                    <span class="font-medium"><strong>Konverteringsoptimering</strong> för fler kunder</span>
+                                    <div>
+                                        <span class="font-semibold">Konverteringsanalys & lead tracking</span>
+                                        <p class="text-xs text-indigo-100 mt-0.5">Förstå dina besökare – öka försäljningen</p>
+                                    </div>
                                 </li>
                                 <li class="flex items-start gap-3 text-white">
                                     <svg class="w-5 h-5 text-emerald-300 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                     </svg>
-                                    <span class="font-medium"><strong>3 webbplatser</strong> (max 1 500 credits/dag)</span>
+                                    <span class="font-medium"><strong>3 webbplatser</strong>, 2 användare</span>
                                 </li>
                             </ul>
 
@@ -686,7 +713,7 @@
                             </div>
 
                             <!-- Features -->
-                            <ul class="space-y-4 mb-8">
+                            <ul class="space-y-3 mb-8">
                                 <li class="flex items-start gap-3 text-slate-300">
                                     <svg class="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
@@ -697,19 +724,34 @@
                                     <svg class="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                     </svg>
-                                    <span class="font-semibold"><strong>Avancerad analys</strong> och rapporter</span>
+                                    <div>
+                                        <span class="font-semibold">Multi-text PRO</span>
+                                        <p class="text-xs text-slate-400 mt-0.5">Skapa 50 texter samtidigt – skala snabbt</p>
+                                    </div>
                                 </li>
                                 <li class="flex items-start gap-3 text-slate-300">
                                     <svg class="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                     </svg>
-                                    <span class="font-semibold">Prioriterad support</span>
+                                    <div>
+                                        <span class="font-semibold">Avancerad analys & rapporter</span>
+                                        <p class="text-xs text-slate-400 mt-0.5">Djup insikt i vad som fungerar</p>
+                                    </div>
+                                </li>
+                                <li class="flex items-start gap-3 text-slate-300">
+                                    <svg class="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <div>
+                                        <span class="font-semibold">Prioriterad support & dedikerad kontakt</span>
+                                        <p class="text-xs text-slate-400 mt-0.5">Få hjälp direkt när du behöver det</p>
+                                    </div>
                                 </li>
                                 <li class="flex items-start gap-3 text-slate-300">
                                     <svg class="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                     </svg>
-                                    <span><strong>10 webbplatser</strong> (max 5 000 credits/dag)</span>
+                                    <span><strong>10 webbplatser</strong>, 3 användare</span>
                                 </li>
                             </ul>
 

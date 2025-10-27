@@ -193,6 +193,198 @@
             @endforeach
         </div>
 
+        <div class="mt-12">
+            <h2 class="text-2xl font-semibold mb-3 text-center">Vad ingår i varje plan?</h2>
+            <p class="text-center text-gray-600 mb-8">Allt du behöver för att växa din digitala närvaro</p>
+
+            <div class="bg-white rounded-lg border overflow-hidden">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Funktion</th>
+                        <th class="px-6 py-4 text-center text-sm font-semibold text-gray-900">Starter</th>
+                        <th class="px-6 py-4 text-center text-sm font-semibold text-gray-900 bg-indigo-50">Growth</th>
+                        <th class="px-6 py-4 text-center text-sm font-semibold text-gray-900">Pro</th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y">
+                    {{-- Krediter --}}
+                    <tr>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900">AI-krediter/månad</div>
+                            <div class="text-xs text-gray-500">Förbrukas vid generering av innehåll</div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-center text-gray-700">5 000</td>
+                        <td class="px-6 py-4 text-sm text-center text-gray-700 bg-indigo-50">15 000</td>
+                        <td class="px-6 py-4 text-sm text-center text-gray-700">50 000</td>
+                    </tr>
+
+                    {{-- Webbplatser & Användare --}}
+                    <tr class="bg-gray-50">
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900">Webbplatser</div>
+                            <div class="text-xs text-gray-500">Hantera innehåll för flera sajter</div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-center text-gray-700">1 sajt</td>
+                        <td class="px-6 py-4 text-sm text-center text-gray-700 bg-indigo-50">3 sajter</td>
+                        <td class="px-6 py-4 text-sm text-center text-gray-700">10 sajter</td>
+                    </tr>
+                    <tr class="bg-gray-50">
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900">Teammedlemmar</div>
+                            <div class="text-xs text-gray-500">Samarbeta med ditt team</div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-center text-gray-700">1 användare</td>
+                        <td class="px-6 py-4 text-sm text-center text-gray-700 bg-indigo-50">2 användare</td>
+                        <td class="px-6 py-4 text-sm text-center text-gray-700">3 användare</td>
+                    </tr>
+
+                    {{-- Innehållsskapande --}}
+                    <tr>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900">Sociala medier-texter</div>
+                            <div class="text-xs text-gray-500">Facebook, Instagram & LinkedIn</div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-center text-emerald-600">✓</td>
+                        <td class="px-6 py-4 text-sm text-center text-emerald-600 bg-indigo-50">✓</td>
+                        <td class="px-6 py-4 text-sm text-center text-emerald-600">✓</td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900">Bloggtexter</div>
+                            <div class="text-xs text-gray-500">SEO-optimerade artiklar & inlägg</div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-center text-emerald-600">✓</td>
+                        <td class="px-6 py-4 text-sm text-center text-emerald-600 bg-indigo-50">✓</td>
+                        <td class="px-6 py-4 text-sm text-center text-emerald-600">✓</td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900">Produkttexter</div>
+                            <div class="text-xs text-gray-500">Säljande beskrivningar för e-handel</div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-center text-emerald-600">✓</td>
+                        <td class="px-6 py-4 text-sm text-center text-emerald-600 bg-indigo-50">✓</td>
+                        <td class="px-6 py-4 text-sm text-center text-emerald-600">✓</td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900">Textoptimering (SEO)</div>
+                            <div class="text-xs text-gray-500">Förbättra befintligt innehåll</div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-center text-emerald-600">✓</td>
+                        <td class="px-6 py-4 text-sm text-center text-emerald-600 bg-indigo-50">✓</td>
+                        <td class="px-6 py-4 text-sm text-center text-emerald-600">✓</td>
+                    </tr>
+
+                    {{-- Multi-text --}}
+                    <tr class="bg-gray-50">
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900">Multi-text</div>
+                            <div class="text-xs text-gray-500">Skapa flera texter samtidigt</div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-center text-gray-400">–</td>
+                        <td class="px-6 py-4 text-sm text-center text-gray-700 bg-indigo-50">Max 25 åt gången</td>
+                        <td class="px-6 py-4 text-sm text-center text-gray-700">Max 50 åt gången</td>
+                    </tr>
+
+                    {{-- Bildgenerering --}}
+                    <tr>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900">AI-bildgenerering</div>
+                            <div class="text-xs text-gray-500">Skapa unika bilder med AI</div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-center text-emerald-600">✓</td>
+                        <td class="px-6 py-4 text-sm text-center text-emerald-600 bg-indigo-50">✓</td>
+                        <td class="px-6 py-4 text-sm text-center text-emerald-600">✓</td>
+                    </tr>
+
+                    {{-- Publicering --}}
+                    <tr class="bg-gray-50">
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900">Publicering</div>
+                            <div class="text-xs text-gray-500">Publicera direkt till sociala medier & WordPress</div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-center text-emerald-600">✓</td>
+                        <td class="px-6 py-4 text-sm text-center text-emerald-600 bg-indigo-50">✓</td>
+                        <td class="px-6 py-4 text-sm text-center text-emerald-600">✓</td>
+                    </tr>
+
+                    {{-- Analytics & Insikter --}}
+                    <tr>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900">Insikter</div>
+                            <div class="text-xs text-gray-500">Följ prestanda & resultat</div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-center text-gray-700">Grundläggande</td>
+                        <td class="px-6 py-4 text-sm text-center text-gray-700 bg-indigo-50">Utökade</td>
+                        <td class="px-6 py-4 text-sm text-center text-gray-700">Avancerade</td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900">SEO Audit</div>
+                            <div class="text-xs text-gray-500">Teknisk analys av din webbplats</div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-center text-gray-400">–</td>
+                        <td class="px-6 py-4 text-sm text-center text-emerald-600 bg-indigo-50">✓</td>
+                        <td class="px-6 py-4 text-sm text-center text-emerald-600">✓</td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900">Nyckelordsanalys</div>
+                            <div class="text-xs text-gray-500">Hitta rätt sökord för din nisch</div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-center text-gray-400">–</td>
+                        <td class="px-6 py-4 text-sm text-center text-emerald-600 bg-indigo-50">✓</td>
+                        <td class="px-6 py-4 text-sm text-center text-emerald-600">✓</td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900">Konverteringsanalys</div>
+                            <div class="text-xs text-gray-500">Optimera för fler leads & försäljning</div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-center text-gray-400">–</td>
+                        <td class="px-6 py-4 text-sm text-center text-emerald-600 bg-indigo-50">✓</td>
+                        <td class="px-6 py-4 text-sm text-center text-emerald-600">✓</td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900">Lead tracking</div>
+                            <div class="text-xs text-gray-500">Spåra besökare & potentiella kunder</div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-center text-gray-400">–</td>
+                        <td class="px-6 py-4 text-sm text-center text-emerald-600 bg-indigo-50">✓</td>
+                        <td class="px-6 py-4 text-sm text-center text-emerald-600">✓</td>
+                    </tr>
+
+                    {{-- Kommande funktioner --}}
+                    <tr class="bg-gray-50">
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900">TikTok & Pinterest</div>
+                            <div class="text-xs text-gray-500 italic">Kommer snart</div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-center text-gray-400">–</td>
+                        <td class="px-6 py-4 text-sm text-center text-indigo-600 bg-indigo-50">Snart</td>
+                        <td class="px-6 py-4 text-sm text-center text-indigo-600">Snart</td>
+                    </tr>
+                    <tr class="bg-gray-50">
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900">Videogenerering</div>
+                            <div class="text-xs text-gray-500 italic">Under utveckling</div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-center text-gray-400">–</td>
+                        <td class="px-6 py-4 text-sm text-center text-gray-400 bg-indigo-50">–</td>
+                        <td class="px-6 py-4 text-sm text-center text-indigo-600">Planerad</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-4 text-center text-xs text-gray-500">
+                Alla priser exkl. moms
+            </div>
+        </div>
+
         <!-- Footer Info -->
         <div class="text-center mt-12 bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg">
             <div class="max-w-3xl mx-auto">

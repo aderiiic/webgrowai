@@ -66,10 +66,10 @@
                                 SEO & CRO-verktyg
                             </h4>
                             <ul class="text-sm text-emerald-800 space-y-1">
-                                <li>• AI-genererade nyckelord och meta-taggar</li>
-                                <li>• SerpAPI-baserad rankinganalys</li>
-                                <li>• Konverteringsoptimering av webbsidor</li>
-                                <li>• Prestandamätning och SEO-audits</li>
+                                <li> AI-genererade nyckelord och meta-taggar</li>
+                                <li> SerpAPI-baserad rankinganalys</li>
+                                <li> Konverteringsoptimering av webbsidor</li>
+                                <li> Prestandamätning och SEO-audits</li>
                             </ul>
                         </div>
 
@@ -81,10 +81,10 @@
                                 AI-publicering & automation
                             </h4>
                             <ul class="text-sm text-purple-800 space-y-1">
-                                <li>• Automatisk contentgenerering</li>
-                                <li>• WordPress-integration</li>
-                                <li>• Sociala medier (Facebook, Instagram, LinkedIn)</li>
-                                <li>• Schemaläggning och publicering</li>
+                                <li> Automatisk contentgenerering</li>
+                                <li> WordPress-integration</li>
+                                <li> Sociala medier (Facebook, Instagram, LinkedIn)</li>
+                                <li> Schemaläggning och publicering</li>
                             </ul>
                         </div>
                     </div>
@@ -98,11 +98,11 @@
                             14 dagars gratis provperiod
                         </h4>
                         <ul class="text-sm text-emerald-800 space-y-2">
-                            <li>• <strong>Längd:</strong> 14 kalenderdagar från registrering</li>
-                            <li>• <strong>Tillgång:</strong> Full funktionalitet enligt Starter plan</li>
-                            <li>• <strong>Betalning:</strong> Ingen betalning krävs under provperioden</li>
-                            <li>• <strong>Avslut:</strong> Avsluta när som helst utan kostnad</li>
-                            <li>• <strong>Manuell övergång:</strong> Efter 14 dagar kan du påbörja en prenumeration</li>
+                            <li> <strong>Längd:</strong> 14 kalenderdagar från registrering</li>
+                            <li> <strong>Tillgång:</strong> Full funktionalitet enligt Starter plan</li>
+                            <li> <strong>Betalning:</strong> Ingen betalning krävs under provperioden</li>
+                            <li> <strong>Avslut:</strong> Avsluta när som helst utan kostnad</li>
+                            <li> <strong>Manuell övergång:</strong> Efter 14 dagar kan du påbörja en prenumeration</li>
                         </ul>
                     </div>
 
@@ -114,7 +114,6 @@
                             <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Plan</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Founders-pris</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ordinarie pris</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Årspris (15% rabatt)</th>
                             </tr>
@@ -122,25 +121,22 @@
                             <tbody class="divide-y divide-gray-200 text-sm">
                             <tr>
                                 <td class="px-4 py-3 font-medium">Starter</td>
-                                <td class="px-4 py-3">390 kr/mån*</td>
-                                <td class="px-4 py-3">590 kr/mån</td>
-                                <td class="px-4 py-3">3 984 kr/mån*</td>
+                                <td class="px-4 py-3">249 kr/mån*</td>
+                                <td class="px-4 py-3">212 kr/mån*</td>
                             </tr>
                             <tr class="bg-blue-50">
                                 <td class="px-4 py-3 font-medium text-blue-800">Growth (Mest populär)</td>
-                                <td class="px-4 py-3">990 kr/mån*</td>
-                                <td class="px-4 py-3">1 490 kr/mån</td>
-                                <td class="px-4 py-3"> 10 104kr/mån*</td>
+                                <td class="px-4 py-3">499 kr/mån*</td>
+                                <td class="px-4 py-3"> 424 kr/mån*</td>
                             </tr>
                             <tr>
                                 <td class="px-4 py-3 font-medium">Pro</td>
-                                <td class="px-4 py-3">2 990 kr/mån*</td>
-                                <td class="px-4 py-3">3 990 kr/mån</td>
-                                <td class="px-4 py-3">30 504 kr/mån*</td>
+                                <td class="px-4 py-3">999 kr/mån*</td>
+                                <td class="px-4 py-3">849 kr/mån*</td>
                             </tr>
                             </tbody>
                         </table>
-                        <p class="text-xs text-gray-500 mt-2">* Founders-pris gäller första året för early adopters</p>
+                        <p class="text-xs text-gray-500 mt-2">* Samtliga priser angivna utan moms.</p>
                     </div>
 
                     <h3>Tilläggspriser vid överskridande av kvoter:</h3>
@@ -152,6 +148,20 @@
                     </ul>
 
                     <h2>5. Betalning och fakturering</h2>
+                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 my-6">
+                        <h4 class="font-semibold text-blue-900 mb-3">Betalningslösning via Stripe</h4>
+                        <p class="text-sm text-blue-800 mb-3">
+                            Alla kortbetalningar hanteras säkert av vår betalningspartner <strong>Stripe, Inc.</strong>
+                            Vi lagrar aldrig dina fullständiga kortuppgifter på våra servrar.
+                        </p>
+                        <ul class="text-sm text-blue-800 space-y-1">
+                            <li> PCI DSS Level 1 certifierad (högsta säkerhetsstandarden)</li>
+                            <li> 3D Secure (bank-ID verifiering) för ökad säkerhet</li>
+                            <li> Stripe sparar korttoken för återkommande betalningar</li>
+                            <li> Du kan när som helst uppdatera eller ta bort ditt betalkort</li>
+                        </ul>
+                    </div>
+
                     <div class="grid md:grid-cols-2 gap-6 my-8">
                         <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
                             <h4 class="font-semibold text-blue-900 mb-3 flex items-center">
@@ -161,11 +171,11 @@
                                 Kortbetalning (Stripe)
                             </h4>
                             <ul class="text-sm text-blue-800 space-y-1">
-                                <li>• Automatisk månadsdebitering</li>
-                                <li>• Betalning senast sista vardagen i månaden</li>
-                                <li>• För nästkommande period</li>
-                                <li>• Säker hantering via Stripe</li>
-                                <li>• Visa, Mastercard, American Express</li>
+                                <li> Automatisk månadsdebitering</li>
+                                <li> Första betalning sker efter provperiodens slut</li>
+                                <li> Debitering första dagen i varje period</li>
+                                <li> Visa, Mastercard, American Express</li>
+                                <li> Kvitto skickas automatiskt via e-post</li>
                             </ul>
                         </div>
 
@@ -174,14 +184,14 @@
                                 <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                 </svg>
-                                Fakturabetalning (undantagsfall)
+                                Fakturabetalning (företag)
                             </h4>
                             <ul class="text-sm text-green-800 space-y-1">
-                                <li>• Månadsfaktura skickas senast den 14:e</li>
-                                <li>• 14 dagars betalningstid</li>
-                                <li>• Kan justeras efter överenskommelse</li>
-                                <li>• Årsfaktura skickas i början av perioden</li>
-                                <li>• Tillgängligt för företagskunder</li>
+                                <li> Tillgängligt för företagskunder efter godkännande</li>
+                                <li> Månadsfaktura skickas senast den 1:a</li>
+                                <li> 14 dagars betalningstid (netto 14)</li>
+                                <li> Faktura via e-post (PDF)</li>
+                                <li> Kan justeras efter överenskommelse</li>
                             </ul>
                         </div>
                     </div>
@@ -193,7 +203,122 @@
                         <li><strong>Första fakturan:</strong> Kan vara proportionerlig om registrering sker mitt i månaden</li>
                         <li><strong>Sista fakturan:</strong> Proportionerlig fram till uppsägningsdatum</li>
                         <li><strong>Planändringar:</strong> Träder i kraft omedelbart med justering av nästa faktura</li>
+                        <li><strong>Överskridande av kvot:</strong> Debiteras på nästkommande faktura enligt tilläggspriser</li>
                     </ul>
+
+                    <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 my-6">
+                        <h5 class="font-semibold text-amber-900 mb-2 text-sm">Vad är credits?</h5>
+                        <p class="text-sm text-amber-800 mb-2">
+                            Credits är vår enhet för att mäta användning. Olika funktioner kostar olika antal credits:
+                        </p>
+                        <ul class="text-xs text-amber-800 space-y-1">
+                            <li> <strong>AI-textgenerering:</strong> 10-100 credits beroende på längd</li>
+                            <li> <strong>AI-bildgenerering:</strong> 50 credits per bild</li>
+                            <li> <strong>WordPress-publicering:</strong> 20 credits per inlägg</li>
+                            <li> <strong>Social media-publicering:</strong> 15 credits per inlägg</li>
+                            <li> <strong>SEO-audit:</strong> 200 credits per audit</li>
+                        </ul>
+                    </div>
+
+                    <h2>5A. Ångerrätt för konsumenter – Digitala tjänster</h2>
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 my-6">
+                        <h4 class="font-semibold text-blue-900 mb-3 flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Särskilda regler för digitalt innehåll
+                        </h4>
+                        <p class="text-sm text-blue-800 mb-3">
+                            WebGrow AI är en <strong>digital tjänst</strong> enligt <strong>Distans- och hemförsäljningslagen (2005:59)</strong>
+                            och EU:s konsumenträttsdirektiv. För digitala tjänster gäller särskilda regler för ångerrätt.
+                        </p>
+
+                        <div class="bg-white rounded-lg p-4 mb-3 border-l-4 border-blue-500">
+                            <h5 class="font-semibold text-blue-900 mb-2 text-sm">Vad säger lagen?</h5>
+                            <p class="text-sm text-blue-800 mb-2">
+                                Enligt <strong>4 kap. 17 § Distans- och hemförsäljningslagen</strong> gäller <strong>INGEN ångerrätt</strong> för:
+                            </p>
+                            <ul class="text-sm text-blue-800 space-y-1">
+                                <li> Digitalt innehåll som <strong>inte levereras på fysisk bärare</strong></li>
+                                <li> Om prestationen har <strong>påbörjats med konsumentens uttryckliga förhandsgodkännande</strong></li>
+                                <li> Och konsumenten har fått <strong>bekräftelse</strong> på att ångerrätten därmed går förlorad</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-3">
+                            <h5 class="font-semibold text-amber-900 mb-2 text-sm">Detta innebär för WebGrow AI:</h5>
+                            <div class="space-y-3 text-sm text-amber-900">
+                                <div>
+                                    <strong>Under 14-dagars gratisperioden:</strong>
+                                    <ul class="ml-4 mt-1 space-y-1 text-xs">
+                                        <li> Du kan avsluta när som helst <strong>utan kostnad</strong></li>
+                                        <li> Ingen betalning görs under dessa 14 dagar</li>
+                                        <li> Ingen ångerrätt behövs eftersom ingen betalning skett</li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <strong>Efter gratisperioden (vid betalning):</strong>
+                                    <ul class="ml-4 mt-1 space-y-1 text-xs">
+                                        <li> När du godkänner betalning och börjar använda tjänsten <strong>upphör ångerrätten</strong></li>
+                                        <li> Du har uttryckligen godkänt att tjänsten påbörjas omedelbart</li>
+                                        <li> Detta överensstämmer med Konsumentverkets regler för digitala tjänster</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                            <h5 class="font-semibold text-green-900 mb-2 text-sm flex items-center">
+                                <svg class="w-4 h-4 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Din trygghet – ingen risk!
+                            </h5>
+                            <ul class="text-sm text-green-800 space-y-1">
+                                <li> <strong>14 dagars gratis provperiod</strong> – testa allt utan att betala</li>
+                                <li> <strong>Ingen bindningstid</strong> – avsluta när du vill efter provperioden</li>
+                                <li> <strong>Inget automatiskt abonnemang</strong> – du måste aktivt välja att fortsätta efter 14 dagar</li>
+                                <li> <strong>Månadsprenumeration</strong> – uppsägning med omedelbar verkan vid nästa faktureringsperiod</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 my-4">
+                        <h5 class="font-semibold text-slate-900 mb-2 text-sm">Årsprenumeration – specialregler</h5>
+                        <p class="text-sm text-slate-700 mb-2">
+                            Om du väljer <strong>årsprenumeration med 15% rabatt</strong> gäller följande:
+                        </p>
+                        <ul class="text-sm text-slate-700 space-y-1">
+                            <li> <strong>Ingen ångerrätt</strong> efter att tjänsten påbörjats (samma som månadsprenumeration)</li>
+                            <li> Du kan <strong>avsluta när som helst</strong> men får ingen återbetalning för resterande period</li>
+                            <li> Årsrabatten (15%) är kompensation för förskottsbetalning och engagemang</li>
+                            <li> Vid uppsägning fortsätter tjänsten till periodens slut</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 my-4">
+                        <h5 class="font-semibold text-blue-900 mb-2 text-sm">Kulans åtgärder – mer än lagen kräver</h5>
+                        <p class="text-sm text-blue-800 mb-2">
+                            Även om lagen inte kräver ångerrätt för digitala tjänster, erbjuder vi:
+                        </p>
+                        <ul class="text-sm text-blue-800 space-y-1">
+                            <li> <strong>14-dagars gratistest</strong> istället för ångerrätt – ännu bättre!</li>
+                            <li> <strong>Flexibel uppsägning</strong> utan bindningstid</li>
+                            <li> <strong>Kulansåterbetalning</strong> vid tekniska problem eller missnöje (kontakta support)</li>
+                            <li> <strong>Proraterad fakturering</strong> vid planändringar</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-slate-100 border border-slate-300 rounded-lg p-3 my-4">
+                        <p class="text-xs text-slate-700">
+                            <strong>Källa:</strong> <a href="https://www.konsumentverket.se/varor-och-tjanster/digitala-tjanster-och-digitalt-innehall/"
+                                                       class="text-blue-600 hover:underline" target="_blank" rel="noopener">
+                                Konsumentverket – Digitala tjänster och digitalt innehåll
+                            </a><br>
+                            <em>"När du handlar på nätet har du vanligtvis 14 dagars ångerrätt. Men digitalt innehåll som appar och spel kan du som regel inte ångra."</em>
+                        </p>
+                    </div>
 
                     <h2>6. Försenade betalningar</h2>
                     <div class="bg-amber-50 border border-amber-200 rounded-xl p-6 my-6">
@@ -274,12 +399,12 @@
                             Förbjuden användning
                         </h4>
                         <ul class="text-sm text-red-800 space-y-1">
-                            <li>• Spam eller massutskick av oönskat innehåll</li>
-                            <li>• Upphovsrättskränkande material</li>
-                            <li>• Skadligt, trakasserande eller olagligt innehåll</li>
-                            <li>• Försök att kringgå säkerhetssystem</li>
-                            <li>• Återförsäljning av tjänsten utan tillstånd</li>
-                            <li>• Reverse engineering eller kopiering av koden</li>
+                            <li> Spam eller massutskick av oönskat innehåll</li>
+                            <li> Upphovsrättskränkande material</li>
+                            <li> Skadligt, trakasserande eller olagligt innehåll</li>
+                            <li> Försök att kringgå säkerhetssystem</li>
+                            <li> Återförsäljning av tjänsten utan tillstånd</li>
+                            <li> Reverse engineering eller kopiering av koden</li>
                         </ul>
                     </div>
 
@@ -301,11 +426,28 @@
                     <h3>Dina data:</h3>
                     <ul>
                         <li>Du behåller äganderätten till allt innehåll du skapar</li>
-                        <li>Vi tar regelbundna säkerhetskopior</li>
-                        <li>Du kan när som helst exportera dina data</li>
+                        <li>Vi tar regelbundna säkerhetskopior (4 gånger dagligen)</li>
+                        <li>Säkerhetskopior lagras krypterat på AWS S3 (EU-region Stockholm)</li>
+                        <li>Du kan när som helst exportera dina data i strukturerat format (JSON/CSV)</li>
                         <li>Vid kontoavslut behålls data i 30 dagar för återställning</li>
                         <li>Vi delar aldrig dina data med tredje part utan ditt medgivande</li>
                     </ul>
+
+                    <div class="bg-purple-50 border border-purple-200 rounded-xl p-6 my-6">
+                        <h4 class="font-semibold text-purple-900 mb-3">AI-genererat innehåll och ansvar</h4>
+                        <p class="text-sm text-purple-800 mb-3">
+                            <strong>Viktigt:</strong> AI-genererat innehåll kan innehålla felaktigheter eller olämpligt material.
+                            Du har alltid ansvar för att granska och godkänna innehåll innan publicering.
+                        </p>
+                        <ul class="text-sm text-purple-800 space-y-2">
+                            <li> <strong>Äganderätt:</strong> Du äger AI-genererat innehåll när det skapats</li>
+                            <li> <strong>Kvalitetskontroll:</strong> Vi rekommenderar alltid manuell granskning</li>
+                            <li> <strong>Faktakontroll:</strong> Du ansvarar för att verifiera faktauppgifter</li>
+                            <li> <strong>Upphovsrätt:</strong> Du ansvarar för att innehållet inte kränker tredje parts rättigheter</li>
+                            <li> <strong>Etisk användning:</strong> Innehållet ska följa gällande lagar och god sed</li>
+                            <li> <strong>Ingen garanti:</strong> Vi garanterar inte att AI-innehåll är felfritt eller lämpligt för alla ändamål</li>
+                        </ul>
+                    </div>
 
                     <h2>10. Service Level Agreement (SLA)</h2>
                     <div class="grid md:grid-cols-3 gap-4 my-6">
@@ -337,11 +479,11 @@
                     <div class="bg-orange-50 border border-orange-200 rounded-xl p-6 my-6">
                         <h4 class="font-semibold text-orange-900 mb-3">Ingen bindningstid</h4>
                         <ul class="text-sm text-orange-800 space-y-2">
-                            <li>• Du kan avsluta kontot när som helst</li>
-                            <li>• Uppsägning sker via kontoinställningar eller e-post</li>
-                            <li>• Uppsägning träder i kraft vid nästa faktureringsperiod</li>
-                            <li>• Du har fortsatt åtkomst till betald period</li>
-                            <li>• Inga avgifter eller påföljder för tidig uppsägning</li>
+                            <li> Du kan avsluta kontot när som helst</li>
+                            <li> Uppsägning sker via kontoinställningar eller e-post</li>
+                            <li> Uppsägning träder i kraft vid nästa faktureringsperiod</li>
+                            <li> Du har fortsatt åtkomst till betald period</li>
+                            <li> Inga avgifter eller påföljder för tidig uppsägning</li>
                         </ul>
                     </div>
 
@@ -382,25 +524,50 @@
                     </ol>
 
                     <h2>13. Ansvarsbegränsning</h2>
+                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 my-6">
+                        <h4 class="font-semibold text-blue-900 mb-3">Konsumenträttigheter enligt svensk lag</h4>
+                        <p class="text-sm text-blue-800 mb-2">
+                            För konsumentavtal gäller <strong>Konsumenttjänstlagen (1985:716)</strong>.
+                            Detta innebär att du har rätt till:
+                        </p>
+                        <ul class="text-sm text-blue-800 space-y-1">
+                            <li> Avhjälpande av fel utan kostnad</li>
+                            <li> Prisavdrag vid väsentligt fel</li>
+                            <li> Hävning vid väsentligt fel som inte avhjälps</li>
+                            <li> Skadestånd vid vårdslöshet från vår sida</li>
+                        </ul>
+                    </div>
+
                     <p>
                         Vi strävar efter att leverera en pålitlig tjänst, men kan inte garantera 100% felfri drift.
                         Vårt ansvar är begränsat till:
                     </p>
                     <ul>
-                        <li>Återbetalning av betald avgift för perioden då fel uppstått</li>
-                        <li>Rättelse av fel inom rimlig tid</li>
+                        <li>Återbetalning av betald avgift för perioden då fel uppstått (max 1 månad)</li>
+                        <li>Rättelse av fel inom rimlig tid (normalt 48 timmar för kritiska fel)</li>
                         <li>Ersättning för dataförlust genom vårt återskapande från säkerhetskopior</li>
+                        <li>För företagskunder: Ansvar begränsat till 12 månadsprenumerationskostnaden</li>
                     </ul>
 
                     <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 my-6">
                         <h4 class="font-semibold text-gray-900 mb-2">Vi ansvarar inte för:</h4>
                         <ul class="text-sm text-gray-700 space-y-1">
-                            <li>• Indirekta skador eller utebliven vinst</li>
-                            <li>• Skador orsakade av tredje parts tjänster (Facebook, Google, etc.)</li>
-                            <li>• Force majeure (naturkatastrofer, krig, pandemier)</li>
-                            <li>• Skador orsakade av felaktig användning</li>
-                            <li>• Förlust av data på grund av användarfel</li>
+                            <li> Indirekta skador eller utebliven vinst (gäller endast företag, ej konsumenter)</li>
+                            <li> Skador orsakade av tredje parts tjänster (Facebook, Instagram, LinkedIn, WordPress, etc.)</li>
+                            <li> AI-genererat innehåll som innehåller felaktigheter eller kränkande material</li>
+                            <li> Publicerat innehåll som bryter mot tredje parts rättigheter</li>
+                            <li> Force majeure (naturkatastrofer, krig, pandemier, terrorattacker)</li>
+                            <li> Skador orsakade av felaktig användning eller brott mot dessa villkor</li>
+                            <li> Förlust av data på grund av användarfel eller utebliven säkerhetskopiering från användarens sida</li>
+                            <li> Driftstörningar hos tredjepartsleverantörer (AWS, Stripe, Meta, etc.)</li>
                         </ul>
+                    </div>
+
+                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 my-4">
+                        <p class="text-sm text-amber-900">
+                            <strong>OBS för konsumenter:</strong> Ansvarsbegränsningar enligt ovan gäller inte om skada uppstått genom vårdslöshet från vår sida.
+                            Konsumentskyddande lagstiftning går alltid före dessa villkor.
+                        </p>
                     </div>
 
                     <h2>14. Immaterialrätt</h2>
@@ -421,16 +588,53 @@
 
                     <h2>15. Tillämplig lag och tvister</h2>
                     <p>
-                        Dessa villkor regleras av svensk rätt. Vid tvister ska primärt medling försökas
-                        genom Allmänna reklamationsnämnden (ARN) för konsumenttvister.
+                        Dessa villkor regleras av <strong>svensk rätt</strong>. Vid tvister ska primärt medling försökas.
                     </p>
 
-                    <h3>Tvistlösning:</h3>
-                    <ol>
-                        <li><strong>Första steget:</strong> Kontakta vår support för lösning</li>
-                        <li><strong>Medling:</strong> ARN för konsumenter, branschorganisation för företag</li>
-                        <li><strong>Domstol:</strong> Uddevalla tingsrätt för företag, allmän domstol för konsumenter</li>
+                    <div class="grid md:grid-cols-2 gap-6 my-6">
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-6">
+                            <h4 class="font-semibold text-green-900 mb-3">För konsumenter</h4>
+                            <ul class="text-sm text-green-800 space-y-2">
+                                <li> <strong>Allmänna reklamationsnämnden (ARN)</strong><br>
+                                    <a href="https://www.arn.se" class="text-green-600 hover:underline text-xs" target="_blank" rel="noopener">www.arn.se</a>
+                                </li>
+                                <li> <strong>Konsumentverket</strong><br>
+                                    <a href="https://www.konsumentverket.se" class="text-green-600 hover:underline text-xs" target="_blank" rel="noopener">www.konsumentverket.se</a>
+                                </li>
+                                <li> <strong>Allmänna Konsumentombudsmannen (KO)</strong><br>
+                                    <a href="https://www.konsumentverket.se/for-foretag/konsumentombudsmannen-ko/" class="text-green-600 hover:underline text-xs" target="_blank" rel="noopener">Tillsyn och konsumentskydd</a>
+                                </li>
+                                <li> <strong>EU:s tvistlösningsplattform</strong><br>
+                                    <a href="https://ec.europa.eu/consumers/odr" class="text-green-600 hover:underline text-xs" target="_blank" rel="noopener">ec.europa.eu/consumers/odr</a>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                            <h4 class="font-semibold text-blue-900 mb-3">För företag</h4>
+                            <ul class="text-sm text-blue-800 space-y-2">
+                                <li> <strong>Första steget:</strong> Kontakta vår support för lösning (info@webbi.se)</li>
+                                <li> <strong>Medling:</strong> Relevantbranschorganisation eller extern medlare</li>
+                                <li> <strong>Skiljedomstol:</strong> Stockholms Handelskammares Skiljedomsinstitut (SCC)</li>
+                                <li> <strong>Allmän domstol:</strong> Uddevalla tingsrätt vid ordinär talan</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <h3>Tvistlösningsprocess:</h3>
+                    <ol class="space-y-2">
+                        <li><strong>Steg 1 - Intern lösning:</strong> Kontakta vår support inom rimlig tid från att problemet upptäcktes</li>
+                        <li><strong>Steg 2 - Medling:</strong> Om ingen lösning nås, föreslår vi medling via ARN (konsumenter) eller branschorganisation (företag)</li>
+                        <li><strong>Steg 3 - Domstol/Skiljedom:</strong> Som sista utväg kan tvist lösas via domstol eller skiljeförfarande</li>
                     </ol>
+
+                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 my-6">
+                        <h5 class="font-semibold text-blue-900 mb-2 text-sm">Preskriptionstid</h5>
+                        <p class="text-sm text-blue-800">
+                            Reklamation ska göras inom <strong>skälig tid</strong> (normalt 2-3 månader) från att fel upptäcktes.
+                            För konsumenter gäller enligt Konsumenttjänstlagen reklamation inom 3 år från köptillfället.
+                        </p>
+                    </div>
 
                     <!-- Contact Section -->
                     <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200/50 p-8 my-8">
@@ -465,9 +669,14 @@
                     </div>
 
                     <div class="text-center text-sm text-slate-500 border-t border-slate-200 pt-8 mt-8">
-                        <p>
+                        <p class="mb-2">
                             Dessa villkor träder i kraft {{ now()->format('j M Y') }} och ersätter alla tidigare versioner.<br>
                             Genom att använda WebGrow AI accepterar du dessa villkor i sin helhet.
+                        </p>
+                        <p class="text-xs mt-4">
+                            <strong>Lagstiftning som tillämpas:</strong> Avtalslagen (1915:218), Konsumenttjänstlagen (1985:716),
+                            Distans- och hemförsäljningslagen (2005:59), Personuppgiftslagen/GDPR (2018:218),
+                            Marknadsföringslagen (2008:486), Räntelagen (1975:635), Inkassolagen (1974:182)
                         </p>
                     </div>
                 </div>
