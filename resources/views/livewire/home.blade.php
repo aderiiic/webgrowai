@@ -35,7 +35,7 @@
         <!-- Primära åtgärdskort -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             <!-- Skapa texter -->
-            <a href="{{ route('ai.compose') }}" class="action-card group hover:scale-105 transform transition-all duration-300">
+            <a href="{{ route('ai.select-type') }}" class="action-card group hover:scale-105 transform transition-all duration-300">
                 <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-2xl p-8 shadow-xl hover:shadow-2xl">
                     <div class="flex flex-col items-center text-center">
                         <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-4 group-hover:bg-white/30 transition-colors">
