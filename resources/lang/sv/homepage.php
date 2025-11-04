@@ -10,6 +10,8 @@ return [
     'nav_login' => 'Logga in',
     'nav_register' => 'Prova gratis',
 
+    'scroll_down' => 'Scrolla ner',
+
     'hero_badge' => 'Perfekt för svenska små- & mellanstora bolag',
     'hero_headline_part1' => 'AI som skriver,',
     'hero_headline_part2' => 'publicerar & optimerar',
@@ -27,7 +29,8 @@ return [
     'hero_cta_see_demo' => 'Se demonstration',
     'hero_info_1'   => 'Inget kreditkort krävs',
     'hero_info_2'   => 'Svensk support',
-    'hero_info_3'   => 'Från 249 kr/mån →',
+    'hero_info_3'   => 'Gratis uppsättningshjälp',
+    'hero_info_4'   => 'Från 249 kr/mån →',
 
     'target_title'  => 'Fungerar för alla typer av svenska företag',
     'target_subtitle'   => 'Vår AI är tränad på svenska affärstexter och förstår olika branscher och målgrupper',
@@ -89,6 +92,17 @@ return [
     'why_card_banner_subtitle_4' => '1 inloggning',
     'why_card_banner_desc_4'    => 'Hantera allt från samma ställe',
     'why_card_cta'  => 'Se hur enkelt det är',
+
+    'honest_title'  => 'Ärlighet varar längst',
+    'honest_not_title'  => 'VI är INTE',
+    'honest_yes_title'  => 'Vi är',
+    'honest_not_1'  => 'En ersättning för erfaren copywriter med 10 års erfarenhet',
+    'honest_not_2'  => 'Ett verktyg där du aldrig behöver granska innehåll',
+    'honest_not_3'  => 'Lika djup som dedikerad SEO-byrå på 30k/mån',
+    'honest_yes_1'  => 'Din AI-assistent som gör 85% av jobbet',
+    'honest_yes_2'  => '10x snabbare än att göra allt manuellt',
+    'honest_yes_3'  => '20x billigare än att anlita byrå',
+    'honest_yes_4'  => 'Perfekt för SME som vill växa utan att anställa',
 
     'pricing_title' => 'Enkel prissättning',
     'pricing_subtitle'  => 'Välj det paket som passar ditt företag bäst. Inga dolda kostnader.',
@@ -157,6 +171,12 @@ return [
     'faq_a_3'       =>  'Ja. Vår AI är tränad specifikt på svenska affärstexter och förstår olika branscher.',
     'faq_q_4'       => 'Publiceras innehåll automatiskt?',
     'faq_a_4'       =>  'Nej. Du godkänner alltid innan publicering. Du har full kontroll.',
+    'faq_q_5'       => 'Kan jag verkligen "sätta och glömma"?',
+    'faq_a_5'       =>  'Nej. Du måste granska innan publicering. Men vi sparar dig 85% av tiden.',
+    'faq_q_6'       => 'Blir texterna perfekta direkt?',
+    'faq_a_6'       =>  'Nej. AI skriver första utkastet - du granskar och anpassar. Räkna med 5-10 min/text istället för 2-4 timmar.',
+    'faq_q_7'       => 'Är ni bäst på allt?',
+    'faq_a_7'       =>  'Nej. Vi är bäst på att vara bra nog på mycket - till en bråkdel av kostnaden för specialister.',
 
     'contact_title' => 'Redo att börja växa?',
     'contact_subtitle'  => 'Gå med hundratals svenska företag som redan använder WebGrow AI för att skapa bättre innehåll på mindre tid.',

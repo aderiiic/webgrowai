@@ -4,7 +4,7 @@
 @section('content')
     <main x-data="{ demoOpen: false }">
         <!-- Hero Section -->
-        <section class="relative h-[650px] md:h-[750px] overflow-hidden">
+        <section class="relative h-[850px] md:h-[750px] overflow-hidden">
             <!-- Background Image with Parallax Effect -->
             <div class="absolute inset-0 bg-cover bg-center bg-no-repeat"
                  style="background-image: url('https://images.unsplash.com/photo-1551434678-e076c223a692?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');">
@@ -79,16 +79,22 @@
                                 </svg>
                                 <span>{{ __('homepage.hero_info_2') }}</span>
                             </div>
+                            <div class="flex items-center gap-2 text-sm font-medium bg-white/5 backdrop-blur-sm px-4 py-2 rounded-full border border-white/10">
+                                <svg class="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+                                    <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+                                </svg>
+                                <span>{{ __('homepage.hero_info_3') }}</span>
+                            </div>
                             <a href="#pricing" class="text-sm font-semibold text-blue-300 hover:text-blue-200 transition-colors underline decoration-2 underline-offset-4">
-                                {{ __('homepage.hero_info_3') }}
+                                {{ __('homepage.hero_info_4') }}
                             </a>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Scroll indicator - Now with better positioning and visibility -->
-            <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20">
+            <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 hidden md:flex">
                 <a href="#features" class="flex flex-col items-center text-white/70 hover:text-white transition-all duration-300 group">
                     <span class="text-sm font-medium mb-3 tracking-wide uppercase">Scrolla ner</span>
                     <div class="w-8 h-12 border-2 border-white/30 rounded-full flex items-start justify-center pt-2 group-hover:border-white/50 transition-colors">
@@ -327,6 +333,81 @@
                     <p class="text-xl text-slate-600 max-w-3xl mx-auto">
                         {{ __('homepage.why_subtitle') }}
                     </p>
+                </div>
+
+                <!-- NEW: Honest expectations section -->
+                <div class="max-w-4xl mx-auto mb-16">
+                    <div class="bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl p-8 border border-slate-200">
+                        <h3 class="text-2xl font-bold text-slate-800 mb-6 text-center">{{ __('homepage.honest_title') }}</h3>
+
+                        <div class="grid md:grid-cols-2 gap-8">
+                            <!-- What we're NOT -->
+                            <div>
+                                <h4 class="font-semibold text-red-600 mb-4 flex items-center">
+                                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                    </svg>
+                                    {{ __('homepage.honest_not_title') }}
+                                </h4>
+                                <ul class="space-y-3 text-slate-700">
+                                    <li class="flex items-start">
+                                        <svg class="w-5 h-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                        </svg>
+                                        <span>{{ __('homepage.honest_not_1') }}</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <svg class="w-5 h-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                        </svg>
+                                        <span>{{ __('homepage.honest_not_2') }}</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <svg class="w-5 h-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                        </svg>
+                                        <span>{{ __('homepage.honest_not_3') }}</span>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <!-- What we ARE -->
+                            <div>
+                                <h4 class="font-semibold text-emerald-600 mb-4 flex items-center">
+                                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                    {{ __('homepage.honest_yes_title') }}
+                                </h4>
+                                <ul class="space-y-3 text-slate-700">
+                                    <li class="flex items-start">
+                                        <svg class="w-5 h-5 text-emerald-500 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                        </svg>
+                                        <span>{{ __('homepage.honest_yes_1') }}</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <svg class="w-5 h-5 text-emerald-500 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                        </svg>
+                                        <span>{{ __('homepage.honest_yes_2') }}</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <svg class="w-5 h-5 text-emerald-500 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                        </svg>
+                                        <span>{{ __('homepage.honest_yes_3') }}</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <svg class="w-5 h-5 text-emerald-500 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                        </svg>
+                                        <span>{{ __('homepage.honest_yes_4') }}</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="grid md:grid-cols-3 gap-8 mb-16">
@@ -1089,6 +1170,54 @@
                         </summary>
                         <div class="px-6 pb-6 text-slate-600">
                             {{ __('homepage.faq_a_4') }}
+                        </div>
+                    </details>
+
+                    <details class="group bg-white rounded-2xl shadow-lg overflow-hidden">
+                        <summary class="cursor-pointer p-6 font-semibold text-slate-800 flex items-center justify-between">
+                            <span>{{ __('homepage.faq_q_4') }}</span>
+                            <svg class="w-5 h-5 text-indigo-500 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </summary>
+                        <div class="px-6 pb-6 text-slate-600">
+                            {{ __('homepage.faq_a_4') }}
+                        </div>
+                    </details>
+
+                    <details class="group bg-white rounded-2xl shadow-lg overflow-hidden">
+                        <summary class="cursor-pointer p-6 font-semibold text-slate-800 flex items-center justify-between">
+                            <span>{{ __('homepage.faq_q_5') }}</span>
+                            <svg class="w-5 h-5 text-indigo-500 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </summary>
+                        <div class="px-6 pb-6 text-slate-600">
+                            {{ __('homepage.faq_a_5') }}
+                        </div>
+                    </details>
+
+                    <details class="group bg-white rounded-2xl shadow-lg overflow-hidden">
+                        <summary class="cursor-pointer p-6 font-semibold text-slate-800 flex items-center justify-between">
+                            <span>{{ __('homepage.faq_q_6') }}</span>
+                            <svg class="w-5 h-5 text-indigo-500 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </summary>
+                        <div class="px-6 pb-6 text-slate-600">
+                            {{ __('homepage.faq_a_6') }}
+                        </div>
+                    </details>
+
+                    <details class="group bg-white rounded-2xl shadow-lg overflow-hidden">
+                        <summary class="cursor-pointer p-6 font-semibold text-slate-800 flex items-center justify-between">
+                            <span>{{ __('homepage.faq_q_7') }}</span>
+                            <svg class="w-5 h-5 text-indigo-500 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </summary>
+                        <div class="px-6 pb-6 text-slate-600">
+                            {{ __('homepage.faq_a_7') }}
                         </div>
                     </details>
                 </div>

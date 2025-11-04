@@ -1,4 +1,4 @@
-f<?php
+<?php
 
 return [
     'nav_functions' => 'Features',
@@ -9,6 +9,8 @@ return [
     'nav_contact' => 'Contact',
     'nav_login' => 'Login',
     'nav_register' => 'Try for free',
+
+    'scroll_down' => 'Scroll down',
 
     'hero_badge' => 'Perfect for small & medium-sized businesses',
     'hero_headline_part1' => 'AI that writes,',
@@ -27,7 +29,8 @@ return [
     'hero_cta_see_demo' => 'See demo',
     'hero_info_1'   => 'No credit card required',
     'hero_info_2'   => 'Global support',
-    'hero_info_3'   => 'From €25/month →',
+    'hero_info_3'   => 'Free setup assistance',
+    'hero_info_4'   => 'From €25/month →',
 
     'target_title'  => 'Works for all types of businesses',
     'target_subtitle'   => 'Our AI is trained on business content and understands different industries and audiences',
@@ -90,6 +93,17 @@ return [
     'why_card_banner_desc_4'    => 'Manage everything from one place',
     'why_card_cta'  => 'See how easy it is',
 
+    'honest_title'  => 'Honesty lasts longest',
+    'honest_not_title'  => 'We are NOT',
+    'honest_yes_title'  => 'We are',
+    'honest_not_1'  => 'A replacement for experienced copywriter with 10 years of experience',
+    'honest_not_2'  => 'A tool where you never need to review content',
+    'honest_not_3'  => 'As in-depth as dedicated SEO agency at €3k/month',
+    'honest_yes_1'  => 'Your AI assistant that does 85% of the work',
+    'honest_yes_2'  => '10x faster than doing everything manually',
+    'honest_yes_3'  => '20x cheaper than hiring an agency',
+    'honest_yes_4'  => 'Perfect for SMEs who want to grow without hiring',
+
     'pricing_title' => 'Simple pricing',
     'pricing_subtitle'  => 'Choose the plan that suits your business best. No hidden fees.',
     'pricing_highlight' => '15% extra discount on annual plans',
@@ -149,13 +163,19 @@ return [
     'faq_title'     => 'Frequently asked questions',
     'faq_subtitle'  => 'Answers to what you want to know',
     'faq_q_1'       => 'Do I have to start with an expensive plan?',
-    'faq_a_1'       =>  'No. Most start on Starter ($39/month) and upgrade when needed.',
+    'faq_a_1'       =>  'No. Most start on Starter ($25/month) and upgrade when needed.',
     'faq_q_2'       => 'Can I cancel anytime?',
     'faq_a_2'       =>  'Yes. No contract. Cancel whenever you like.',
     'faq_q_3'       => 'Do AI texts sound natural?',
     'faq_a_3'       =>  'Yes. Our AI is trained specifically on business texts and understands different industries.',
     'faq_q_4'       => 'Is content published automatically?',
     'faq_a_4'       =>  'No. You always approve before publishing. You stay in full control.',
+    'faq_q_5'       => 'Can I really "set and forget"?',
+    'faq_a_5'       =>  'No. You must review before publishing. But we save you 85% of the time.',
+    'faq_q_6'       => 'Will the texts be perfect right away?',
+    'faq_a_6'       =>  'No. AI writes the first draft - you review and adjust. Expect 5-10 min/text instead of 2-4 hours.',
+    'faq_q_7'       => 'Are you the best at everything?',
+    'faq_a_7'       =>  'No. We’re best at being good enough at many things - at a fraction of the cost of specialists.',
 
     'contact_title' => 'Ready to grow?',
     'contact_subtitle'  => 'Join hundreds of businesses already using WebGrow AI to create better content in less time.',
