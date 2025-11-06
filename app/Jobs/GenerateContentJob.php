@@ -329,7 +329,7 @@ class GenerateContentJob implements ShouldQueue
     /**
      * Build prompt for bulk generation
      */
-    private function buildBulkPrompt(array $inputs, string $language): string
+    /*private function buildBulkPrompt(array $inputs, string $language): string
     {
         $template = $inputs['bulkTemplate'];
         $variables = $inputs['bulkVariables'];
@@ -356,6 +356,35 @@ class GenerateContentJob implements ShouldQueue
         }
 
         return "DITT UPPDRAG:\n{$instruction}\n\nNYCKELVARIABLER SOM MÅSTE FÖREKOMMA I TEXTEN:\n{$varsString}\n\nKRITISKA KRAV:\n- Du MÅSTE använda alla angivna variabler naturligt genom hela texten\n- Variabelvärdena (som '{$varsString}') måste förekomma MINST 3-5 gånger vardera fördelade genom innehållet\n- För lokal SEO är dessa exakta termer kritiska - se till att de förekommer naturligt i olika sammanhang\n- Låt det låta naturligt och engagerande, inte påtvingat eller repetitivt\n- Nämn dem INTE bara en gång och glöm bort - väv in dem genom hela texten\n- Börja ditt svar med en catchy, SEO-optimerad titel på första raden, lämna sedan en blank rad, och börja sedan det faktiska innehållet\n- Inkludera INTE titeln i brödtexten själv";
+    }*/
+
+    private function buildBulkPrompt(array $inputs, string $language): string
+    {
+        $template = $inputs['bulkTemplate'];
+        $variables = $inputs['bulkVariables'];
+
+        // Replace variables in template
+        $instruction = $template;
+        foreach ($variables as $key => $value) {
+            $instruction = str_replace('{{' . $key . '}}', $value, $instruction);
+        }
+
+        // Extract variable names and values for emphasis
+        $variableList = [];
+        foreach ($variables as $key => $value) {
+            $variableList[] = "{$key}: \"{$value}\"";
+        }
+        $varsString = implode(', ', $variableList);
+
+        if ($language === 'en') {
+            return "YOUR TASK:\n{$instruction}\n\nKEY VARIABLES THAT MUST APPEAR IN THE TEXT:\n{$varsString}\n\nCRITICAL REQUIREMENTS:\n- You MUST use all the provided variables naturally throughout the text\n- The variable values (like '{$varsString}') must appear AT LEAST 5-8 times each distributed throughout the content\n- For local SEO purposes, these exact terms are critical - ensure they appear naturally in different contexts\n- Make it sound natural and engaging, not forced or repetitive\n- DO NOT just mention them once and forget - weave them throughout the entire text\n- DO NOT add fictional claims like workshops, events, or services that were not mentioned in the task\n- Only write about what's explicitly requested - stay strictly on topic\n- Write as if you're a local business, but only state facts from the instruction\n- Start your response with a catchy, SEO-optimized title on the first line, then leave one blank line, then start the actual content\n- Do NOT include the title in the body text itself";
+        }
+
+        if ($language === 'de') {
+            return "DEINE AUFGABE:\n{$instruction}\n\nSCHLÜSSELVARIABLEN DIE IM TEXT ERSCHEINEN MÜSSEN:\n{$varsString}\n\nKRITISCHE ANFORDERUNGEN:\n- Du MUSST alle bereitgestellten Variablen natürlich im Text verwenden\n- Die Variablenwerte (wie '{$varsString}') müssen MINDESTENS 5-8 mal jeweils verteilt im Inhalt vorkommen\n- Für lokale SEO-Zwecke sind diese exakten Begriffe kritisch - stelle sicher dass sie natürlich in verschiedenen Kontexten erscheinen\n- Klinge natürlich und ansprechend, nicht forciert oder repetitiv\n- Erwähne sie NICHT nur einmal und vergiss sie - verwebe sie durch den gesamten Text\n- Füge KEINE fiktiven Behauptungen wie Workshops, Events oder Dienstleistungen hinzu die nicht in der Aufgabe erwähnt wurden\n- Schreibe nur über das was explizit angefordert wird - bleibe strikt beim Thema\n- Schreibe als wärst du ein lokales Unternehmen, aber nenne nur Fakten aus der Anweisung\n- Beginne deine Antwort mit einem eingängigen, SEO-optimierten Titel in der ersten Zeile, dann eine Leerzeile, dann beginne den eigentlichen Inhalt\n- Füge den Titel NICHT in den Fließtext selbst ein";
+        }
+
+        return "DITT UPPDRAG:\n{$instruction}\n\nNYCKELVARIABLER SOM MÅSTE FÖREKOMMA I TEXTEN:\n{$varsString}\n\nKRITISKA KRAV:\n- Du MÅSTE använda alla angivna variabler naturligt genom hela texten\n- Variabelvärdena (som '{$varsString}') måste förekomma MINST 5-8 gånger vardera fördelade genom innehållet\n- För lokal SEO är dessa exakta termer kritiska - se till att de förekommer naturligt i olika sammanhang\n- Låt det låta naturligt och engagerande, inte påtvingat eller repetitivt\n- Nämn dem INTE bara en gång och glöm bort - väv in dem genom hela texten\n- Lägg INTE till påhittade påståenden som workshops, evenemang eller tjänster som inte nämndes i uppdraget\n- Skriv endast om det som explicit efterfrågas - håll dig strikt till ämnet\n- Skriv som om du är ett lokalt företag, men ange endast fakta från instruktionen\n- Börja ditt svar med en catchy, SEO-optimerad titel på första raden, lämna sedan en blank rad, och börja sedan det faktiska innehållet\n- Inkludera INTE titeln i brödtexten själv";
     }
 
     /**
@@ -662,9 +691,15 @@ class GenerateContentJob implements ShouldQueue
             $valueList = implode(', ', $varValues);
 
             $rules[] = match($language) {
-                'en' => "MANDATORY: The exact terms {$valueList} MUST each appear AT LEAST 3-5 times naturally distributed throughout the text. This is critical for local SEO and user requirements. Do NOT just mention once in intro.",
-                'de' => "OBLIGATORISCH: Die exakten Begriffe {$valueList} MÜSSEN jeweils MINDESTENS 3-5 mal natürlich verteilt im Text vorkommen. Dies ist kritisch für lokales SEO und Benutzeranforderungen. NICHT nur einmal in Intro erwähnen.",
-                default => "OBLIGATORISKT: De exakta termerna {$valueList} MÅSTE vardera förekomma MINST 3-5 gånger naturligt fördelade genom hela texten. Detta är kritiskt för lokal SEO och användarens krav. Nämn dem INTE bara en gång i introt.",
+                'en' => "MANDATORY: The exact terms {$valueList} MUST each appear AT LEAST 5-8 times naturally distributed throughout the text. This is critical for local SEO and user requirements. Integrate them in headings, body text, and throughout the content - not just in the introduction.",
+                'de' => "OBLIGATORISCH: Die exakten Begriffe {$valueList} MÜSSEN jeweils MINDESTENS 5-8 mal natürlich verteilt im Text vorkommen. Dies ist kritisch für lokales SEO und Benutzeranforderungen. Integriere sie in Überschriften, Fließtext und durch den gesamten Inhalt - nicht nur in der Einleitung.",
+                default => "OBLIGATORISKT: De exakta termerna {$valueList} MÅSTE vardera förekomma MINST 5-8 gånger naturligt fördelade genom hela texten. Detta är kritiskt för lokal SEO och användarens krav. Integrera dem i rubriker, brödtext och genom hela innehållet - inte bara i introt.",
+            };
+
+            $rules[] = match($language) {
+                'en' => "DO NOT invent facts, services, events, or claims not mentioned in the template. Only write about what was explicitly requested.",
+                'de' => "Erfinde KEINE Fakten, Dienstleistungen, Events oder Behauptungen die nicht in der Vorlage erwähnt wurden. Schreibe nur über das was explizit angefordert wurde.",
+                default => "Hitta INTE på fakta, tjänster, evenemang eller påståenden som inte nämnts i mallen. Skriv endast om det som uttryckligen efterfrågats.",
             };
         }
 
