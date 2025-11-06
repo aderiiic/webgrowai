@@ -566,6 +566,10 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::get('/register', function () {
+    if (Auth::check()) {
+        return redirect()->route('dashboard');
+    }
+
    return view('auth.register');
 })->name('register');
 

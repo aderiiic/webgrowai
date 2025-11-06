@@ -11,7 +11,7 @@
             </div>
             <h1 class="text-3xl font-bold text-gray-900">Skapa konto</h1>
             <p class="mt-2 text-gray-600">Kom igång med modern SEO, publicering och konverteringsoptimering. Testa WebGrow AI
-            under hela 14 dagar utan kostnad. Ingen bindningstid.</p>
+                under hela 14 dagar utan kostnad. Ingen bindningstid.</p>
         </div>
 
         <!-- Error summary -->
@@ -33,12 +33,64 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('register') }}" class="space-y-6">
-            @csrf
+        <form method="POST" action="{{ route('register') }}" class="space-y-6" x-data="{ accountType: '{{ old('account_type', 'personal') }}' }">            @csrf
             <div class="hidden">
                 <label>Webbplats</label>
                 <input type="text" name="website" tabindex="-1" autocomplete="off">
                 <input type="hidden" name="form_started_at" value="{{ time() }}">
+            </div>
+
+            <!-- Account Type Selector -->
+            <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/60 p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center mr-3">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-900">Kontotyp</h2>
+                        <p class="text-sm text-gray-600">Välj om du registrerar som privatperson eller företag</p>
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-4">
+                    <!-- Company Option -->
+                    <label class="relative flex flex-col p-4 border-2 rounded-xl cursor-pointer transition-all"
+                           :class="accountType === 'company' ? 'border-indigo-600 bg-indigo-50/50' : 'border-gray-200 hover:border-gray-300'">
+                        <input type="radio" name="account_type" value="company" x-model="accountType" class="sr-only">
+                        <div class="flex items-center space-x-3">
+                            <div class="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
+                                 :class="accountType === 'company' ? 'bg-indigo-600' : 'bg-gray-200'">
+                                <svg class="w-5 h-5" :class="accountType === 'company' ? 'text-white' : 'text-gray-500'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-semibold text-gray-900">Företag</p>
+                                <p class="text-sm text-gray-600">Med org.nr och fakturering</p>
+                            </div>
+                        </div>
+                    </label>
+
+                    <!-- Personal Option -->
+                    <label class="relative flex flex-col p-4 border-2 rounded-xl cursor-pointer transition-all"
+                           :class="accountType === 'personal' ? 'border-indigo-600 bg-indigo-50/50' : 'border-gray-200 hover:border-gray-300'">
+                        <input type="radio" name="account_type" value="personal" x-model="accountType" class="sr-only">
+                        <div class="flex items-center space-x-3">
+                            <div class="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
+                                 :class="accountType === 'personal' ? 'bg-indigo-600' : 'bg-gray-200'">
+                                <svg class="w-5 h-5" :class="accountType === 'personal' ? 'text-white' : 'text-gray-500'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-semibold text-gray-900">Privatperson</p>
+                                <p class="text-sm text-gray-600">Enklare registrering</p>
+                            </div>
+                        </div>
+                    </label>
+                </div>
             </div>
 
             <!-- Konto -->
@@ -88,8 +140,12 @@
                 </div>
             </div>
 
-            <!-- Företag -->
-            <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/60 p-6">
+            <!-- Företag/Fakturering (conditional) -->
+            <div x-show="accountType === 'company'"
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 transform scale-95"
+                 x-transition:enter-end="opacity-100 transform scale-100"
+                 class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/60 p-6">
                 <div class="flex items-center mb-4">
                     <div class="w-10 h-10 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-lg flex items-center justify-center mr-3">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -105,7 +161,7 @@
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Företagsnamn *</label>
-                        <input name="company_name" type="text" value="{{ old('company_name') }}" required
+                        <input name="company_name" type="text" value="{{ old('company_name') }}" :required="accountType === 'company'"
                                class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white/70 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                         @error('company_name')<div class="mt-2 text-sm text-red-600">{{ $message }}</div>@enderror
                     </div>
@@ -113,7 +169,7 @@
                     <div class="grid md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Org.nr *</label>
-                            <input name="org_nr" type="text" value="{{ old('org_nr') }}" required
+                            <input name="org_nr" type="text" value="{{ old('org_nr') }}" :required="accountType === 'company'"
                                    class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white/70 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                             @error('org_nr')<div class="mt-2 text-sm text-red-600">{{ $message }}</div>@enderror
                         </div>
@@ -127,13 +183,13 @@
                     <div class="grid md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Kontaktperson *</label>
-                            <input name="contact_name" type="text" value="{{ old('contact_name') }}" required
+                            <input name="contact_name" type="text" value="{{ old('contact_name') }}" :required="accountType === 'company'"
                                    class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white/70 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                             @error('contact_name')<div class="mt-2 text-sm text-red-600">{{ $message }}</div>@enderror
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Faktura e‑post *</label>
-                            <input name="billing_email" type="email" value="{{ old('billing_email', old('email')) }}" required
+                            <input name="billing_email" type="email" value="{{ old('billing_email', old('email')) }}" :required="accountType === 'company'"
                                    class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white/70 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                             @error('billing_email')<div class="mt-2 text-sm text-red-600">{{ $message }}</div>@enderror
                         </div>
@@ -142,13 +198,13 @@
                     <div class="grid md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Fakturaadress *</label>
-                            <input name="billing_address" type="text" value="{{ old('billing_address') }}" required
+                            <input name="billing_address" type="text" value="{{ old('billing_address') }}" :required="accountType === 'company'"
                                    class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white/70 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                             @error('billing_address')<div class="mt-2 text-sm text-red-600">{{ $message }}</div>@enderror
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Postnummer *</label>
-                            <input name="billing_zip" type="text" value="{{ old('billing_zip') }}" required
+                            <input name="billing_zip" type="text" value="{{ old('billing_zip') }}" :required="accountType === 'company'"
                                    class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white/70 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                             @error('billing_zip')<div class="mt-2 text-sm text-red-600">{{ $message }}</div>@enderror
                         </div>
@@ -157,13 +213,13 @@
                     <div class="grid md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Ort *</label>
-                            <input name="billing_city" type="text" value="{{ old('billing_city') }}" required
+                            <input name="billing_city" type="text" value="{{ old('billing_city') }}" :required="accountType === 'company'"
                                    class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white/70 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                             @error('billing_city')<div class="mt-2 text-sm text-red-600">{{ $message }}</div>@enderror
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Land (ISO‑2) *</label>
-                            <input name="billing_country" type="text" maxlength="2" value="{{ old('billing_country','SE') }}" required
+                            <input name="billing_country" type="text" maxlength="2" value="{{ old('billing_country','SE') }}" :required="accountType === 'company'"
                                    class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white/70 placeholder-gray-400 uppercase tracking-wider focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                             @error('billing_country')<div class="mt-2 text-sm text-red-600">{{ $message }}</div>@enderror
                         </div>

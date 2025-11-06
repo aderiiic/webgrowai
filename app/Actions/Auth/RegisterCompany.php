@@ -9,9 +9,16 @@ class RegisterCompany
 {
     public function handle(\App\Models\User $user, array $input): void
     {
+        $isCompany = ($input['account_type'] ?? 'company') === 'company';
+
+        // For personal accounts, use user's name as company name
+        $companyName = $isCompany
+            ? ($input['company_name'] ?? $user->name . " Company")
+            : $user->name;
+
         $customerId = DB::table('customers')->insertGetId([
-            'name'            => $input['company_name'] ?? ($user->name." Company"),
-            'company_name'    => $input['company_name'] ?? null,
+            'name'            => $companyName,
+            'company_name'    => $isCompany ? ($input['company_name'] ?? null) : null,
             'contact_email'   => $user->email,
             'contact_name'    => $input['contact_name'] ?? $user->name,
             'contact_phone'   => $input['contact_phone'] ?? null,
