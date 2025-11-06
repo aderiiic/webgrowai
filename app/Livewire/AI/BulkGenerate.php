@@ -31,6 +31,8 @@ class BulkGenerate extends Component
     public ?string $previewTitle = null;
     public int $estimatedCount = 0;
     public int $estimatedCost = 0;
+    public array $qualityWarnings = [];
+    public bool $showQualityTips = true;
 
     public function mount(CurrentCustomer $current): void
     {
@@ -69,6 +71,7 @@ class BulkGenerate extends Component
     public function updatedTemplateText(): void
     {
         $this->parseVariables();
+        $this->validateTemplateQuality();
     }
 
     public function updatedCustomTitleTemplate(): void
@@ -246,6 +249,65 @@ class BulkGenerate extends Component
         }
 
         return $limit;
+    }
+
+    private function validateTemplateQuality(): void
+    {
+        $this->qualityWarnings = [];
+
+        if (empty($this->template_text)) {
+            return;
+        }
+
+        $text = strtolower($this->template_text);
+
+        // Check for common anti-patterns
+        if (str_contains($text, 'skriv inte samma text')) {
+            $this->qualityWarnings[] = 'Tips: Du behöver inte be AI:n att inte skriva samma text - varje text blir automatiskt unik med mänsklig variation.';
+        }
+
+        if (str_contains($text, 'se inte ut som ai') || str_contains($text, 'inte syns att det är ai')) {
+            $this->qualityWarnings[] = 'Tips: Våra texter skrivs redan med anti-AI-detektering. Fokusera istället på vad texten ska innehålla.';
+        }
+
+        if (mb_strlen($this->template_text) < 50) {
+            $this->qualityWarnings[] = 'Varning: Din mall är mycket kort. Ju mer detaljerad beskrivning, desto bättre resultat. Beskriv tonalitet, målgrupp och vad texten ska fokusera på.';
+        }
+
+        // Check if template mentions things that might be invented
+        $inventionTriggers = ['besök vår butik', 'workshop', 'evenemang', 'vårt showroom', 'fysisk butik', 'öppettider'];
+        foreach ($inventionTriggers as $trigger) {
+            if (str_contains($text, $trigger)) {
+                $this->qualityWarnings[] = "OBS: Du nämner '{$trigger}' - kontrollera att detta verkligen finns. AI:n hittar inte på fakta om det inte finns i din företagsinformation.";
+                break;
+            }
+        }
+
+        // Check for too many generic phrases
+        $genericPhrases = ['hög kvalitet', 'bästa valet', 'vi erbjuder', 'marknadens bästa'];
+        $genericCount = 0;
+        foreach ($genericPhrases as $phrase) {
+            if (str_contains($text, $phrase)) {
+                $genericCount++;
+            }
+        }
+
+        if ($genericCount >= 2) {
+            $this->qualityWarnings[] = 'Tips: Undvik generiska fraser som "hög kvalitet" och "bästa valet". Be istället om konkreta exempel och specifika fördelar.';
+        }
+
+        // Check if variables are actually used
+        preg_match_all('/\{\{([^}]+)\}\}/', $this->template_text, $matches);
+        $usedVars = $matches[1] ?? [];
+
+        if (count($usedVars) === 0 && !empty($this->variables_input)) {
+            $this->qualityWarnings[] = 'Varning: Du har inte använt några variabler i din mall. Använd {{variabelnamn}} för att infoga dynamiskt innehåll.';
+        }
+    }
+
+    public function closeQualityTips(): void
+    {
+        $this->showQualityTips = false;
     }
 
     public function render(CurrentCustomer $current): View

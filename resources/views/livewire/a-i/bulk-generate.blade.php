@@ -24,6 +24,127 @@
             </a>
         </div>
 
+        @if(!empty($qualityWarnings) && $showQualityTips)
+            <div
+                x-data="{ show: true }"
+                x-show="show"
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 transform -translate-y-2"
+                x-transition:enter-end="opacity-100 transform translate-y-0"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+                class="bg-gradient-to-r from-emerald-50 to-teal-50 border-l-4 border-emerald-500 rounded-xl shadow-sm"
+            >
+                <div class="p-5">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-6 w-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div class="ml-3 flex-1">
+                            <h3 class="text-sm font-semibold text-emerald-900 flex items-center">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                </svg>
+                                Tips för högkvalitativa, Google-optimerade texter
+                            </h3>
+                            <div class="mt-3 text-sm text-emerald-800 space-y-3">
+                                <div class="grid md:grid-cols-2 gap-4">
+                                    <div class="bg-white/60 rounded-lg p-3 border border-emerald-100">
+                                        <div class="flex items-start space-x-2 mb-2">
+                                            <svg class="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                            </svg>
+                                            <p class="font-semibold text-emerald-900">GÖR</p>
+                                        </div>
+                                        <ul class="space-y-1.5 text-xs text-emerald-800">
+                                            <li class="flex items-start">
+                                                <span class="text-emerald-500 mr-2">•</span>
+                                                <span>Skriv specifika, detaljerade instruktioner</span>
+                                            </li>
+                                            <li class="flex items-start">
+                                                <span class="text-emerald-500 mr-2">•</span>
+                                                <span>Använd variablerna naturligt i mallen</span>
+                                            </li>
+                                            <li class="flex items-start">
+                                                <span class="text-emerald-500 mr-2">•</span>
+                                                <span>Be om konkreta exempel och fördelar</span>
+                                            </li>
+                                            <li class="flex items-start">
+                                                <span class="text-emerald-500 mr-2">•</span>
+                                                <span>Specificera tonalitet (personlig, professionell, etc.)</span>
+                                            </li>
+                                            <li class="flex items-start">
+                                                <span class="text-emerald-500 mr-2">•</span>
+                                                <span>Inkludera relevant kontext om din verksamhet</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div class="bg-white/60 rounded-lg p-3 border border-red-100">
+                                        <div class="flex items-start space-x-2 mb-2">
+                                            <svg class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                            </svg>
+                                            <p class="font-semibold text-red-900">UNDVIK</p>
+                                        </div>
+                                        <ul class="space-y-1.5 text-xs text-red-800">
+                                            <li class="flex items-start">
+                                                <span class="text-red-500 mr-2">•</span>
+                                                <span>Generiska fraser som "hög kvalitet"</span>
+                                            </li>
+                                            <li class="flex items-start">
+                                                <span class="text-red-500 mr-2">•</span>
+                                                <span>Be AI:n skriva om saker som inte existerar</span>
+                                            </li>
+                                            <li class="flex items-start">
+                                                <span class="text-red-500 mr-2">•</span>
+                                                <span>För korta instruktioner utan detaljer</span>
+                                            </li>
+                                            <li class="flex items-start">
+                                                <span class="text-red-500 mr-2">•</span>
+                                                <span>Upprepande meningar i mallen</span>
+                                            </li>
+                                            <li class="flex items-start">
+                                                <span class="text-red-500 mr-2">•</span>
+                                                <span>"Skriv inte samma text som sist" (varierar automatiskt)</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="bg-white/80 rounded-lg p-3 border border-emerald-200">
+                                    <div class="flex items-start space-x-2 mb-2">
+                                        <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                                        </svg>
+                                        <div class="flex-1">
+                                            <p class="font-semibold text-emerald-900 text-xs mb-1">Exempel på bra instruktion</p>
+                                            <p class="text-xs italic text-emerald-700 leading-relaxed">
+                                                "Skriv en engagerande text på ca. 400 ord om fördelarna med att handla <code class="bg-emerald-100 px-1 rounded">@{{produkt}}</code> online hos oss istället för i fysiska butiker i <code class="bg-emerald-100 px-1 rounded">@{{stad}}</code>. Fokusera på bekvämlighet, prisfördelar och snabb leverans. Använd en personlig och vänlig ton. Inkludera konkreta exempel på hur kunder sparar tid och pengar."
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ml-3">
+                            <button
+                                wire:click="closeQualityTips"
+                                type="button"
+                                class="inline-flex rounded-md text-emerald-600 hover:text-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-emerald-50 transition-colors"
+                                aria-label="Stäng tips"
+                            >
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <!-- Help Modal -->
         <div
             x-show="showHelpModal"
@@ -187,6 +308,30 @@ Uppsala	Stolar</pre>
                 @error('template_text')
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
+
+                @if(!empty($qualityWarnings))
+                    <div class="mt-3 space-y-2">
+                        @foreach($qualityWarnings as $warning)
+                            @php
+                                $isWarning = str_starts_with($warning, 'Varning:');
+                                $isObs = str_starts_with($warning, 'OBS:');
+                                $isTip = str_starts_with($warning, 'Tips:');
+                            @endphp
+                            <div class="flex items-start space-x-2 text-sm rounded-lg p-3 {{ $isWarning || $isObs ? 'text-amber-800 bg-amber-50 border border-amber-200' : 'text-blue-800 bg-blue-50 border border-blue-200' }}">
+                                <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    @if($isWarning || $isObs)
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                    @elseif($isTip)
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                                    @else
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    @endif
+                                </svg>
+                                <span class="flex-1">{{ $warning }}</span>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
             </div>
 
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
