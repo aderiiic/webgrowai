@@ -340,15 +340,22 @@ class GenerateContentJob implements ShouldQueue
             $instruction = str_replace('{{' . $key . '}}', $value, $instruction);
         }
 
+        // Extract variable names and values for emphasis - DETTA SAKNADES!
+        $variableList = [];
+        foreach ($variables as $key => $value) {
+            $variableList[] = "{$key}: \"{$value}\"";
+        }
+        $varsString = implode(', ', $variableList);
+
         if ($language === 'en') {
-            return "YOUR TASK:\n{$instruction}\n\nKEY VARIABLES THAT MUST APPEAR IN THE TEXT:\n{$varsString}\n\nCRITICAL REQUIREMENTS:\n- You MUST use all the provided variables naturally throughout the text\n- Each variable (especially '{$varsString}') must appear multiple times in the content\n- For SEO purposes, ensure these terms are well distributed in the text\n- Make it sound natural, not forced\n- Start your response with a catchy, SEO-optimized title on the first line, then leave one blank line, then start the actual content\n- Do NOT include the title in the body text itself";
+            return "YOUR TASK:\n{$instruction}\n\nKEY VARIABLES THAT MUST APPEAR IN THE TEXT:\n{$varsString}\n\nCRITICAL REQUIREMENTS:\n- You MUST use all the provided variables naturally throughout the text\n- The variable values (like '{$varsString}') must appear AT LEAST 3-5 times each distributed throughout the content\n- For local SEO purposes, these exact terms are critical - ensure they appear naturally in different contexts\n- Make it sound natural and engaging, not forced or repetitive\n- DO NOT just mention them once and forget - weave them throughout the entire text\n- Start your response with a catchy, SEO-optimized title on the first line, then leave one blank line, then start the actual content\n- Do NOT include the title in the body text itself";
         }
 
         if ($language === 'de') {
-            return "DEINE AUFGABE:\n{$instruction}\n\nSCHLÜSSELVARIABLEN DIE IM TEXT ERSCHEINEN MÜSSEN:\n{$varsString}\n\nKRITISCHE ANFORDERUNGEN:\n- Du MUSST alle bereitgestellten Variablen natürlich im Text verwenden\n- Jede Variable (besonders '{$varsString}') muss mehrfach im Inhalt vorkommen\n- Für SEO-Zwecke, stelle sicher dass diese Begriffe gut im Text verteilt sind\n- Klinge natürlich, nicht forciert\n- Beginne deine Antwort mit einem eingängigen, SEO-optimierten Titel in der ersten Zeile, dann eine Leerzeile, dann beginne den eigentlichen Inhalt\n- Füge den Titel NICHT in den Fließtext selbst ein";
+            return "DEINE AUFGABE:\n{$instruction}\n\nSCHLÜSSELVARIABLEN DIE IM TEXT ERSCHEINEN MÜSSEN:\n{$varsString}\n\nKRITISCHE ANFORDERUNGEN:\n- Du MUSST alle bereitgestellten Variablen natürlich im Text verwenden\n- Die Variablenwerte (wie '{$varsString}') müssen MINDESTENS 3-5 mal jeweils verteilt im Inhalt vorkommen\n- Für lokale SEO-Zwecke sind diese exakten Begriffe kritisch - stelle sicher dass sie natürlich in verschiedenen Kontexten erscheinen\n- Klinge natürlich und ansprechend, nicht forciert oder repetitiv\n- Erwähne sie NICHT nur einmal und vergiss sie - verwebe sie durch den gesamten Text\n- Beginne deine Antwort mit einem eingängigen, SEO-optimierten Titel in der ersten Zeile, dann eine Leerzeile, dann beginne den eigentlichen Inhalt\n- Füge den Titel NICHT in den Fließtext selbst ein";
         }
 
-        return "DITT UPPDRAG:\n{$instruction}\n\nNYCKELVARIABLER SOM MÅSTE FÖREKOMMA I TEXTEN:\n{$varsString}\n\nKRITISKA KRAV:\n- Du MÅSTE använda alla angivna variabler naturligt genom hela texten\n- Varje variabel (särskilt '{$varsString}') måste förekomma flera gånger i innehållet\n- För SEO-syfte, se till att dessa termer är väl fördelade i texten\n- Låt det låta naturligt, inte påtvingat\n- Börja ditt svar med en catchy, SEO-optimerad titel på första raden, lämna sedan en blank rad, och börja sedan det faktiska innehållet\n- Inkludera INTE titeln i brödtexten själv";
+        return "DITT UPPDRAG:\n{$instruction}\n\nNYCKELVARIABLER SOM MÅSTE FÖREKOMMA I TEXTEN:\n{$varsString}\n\nKRITISKA KRAV:\n- Du MÅSTE använda alla angivna variabler naturligt genom hela texten\n- Variabelvärdena (som '{$varsString}') måste förekomma MINST 3-5 gånger vardera fördelade genom innehållet\n- För lokal SEO är dessa exakta termer kritiska - se till att de förekommer naturligt i olika sammanhang\n- Låt det låta naturligt och engagerande, inte påtvingat eller repetitivt\n- Nämn dem INTE bara en gång och glöm bort - väv in dem genom hela texten\n- Börja ditt svar med en catchy, SEO-optimerad titel på första raden, lämna sedan en blank rad, och börja sedan det faktiska innehållet\n- Inkludera INTE titeln i brödtexten själv";
     }
 
     /**
