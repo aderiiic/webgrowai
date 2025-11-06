@@ -18,6 +18,9 @@ class BulkGenerate extends Component
     use WithFileUploads;
 
     public string $template_text = '';
+    public string $custom_title_template = '';
+    public bool $use_custom_title = false;
+
     public string $variables_input = '';
     public string $content_type = 'social';
     public string $tone = 'short';
@@ -25,6 +28,7 @@ class BulkGenerate extends Component
 
     public array $parsedVariables = [];
     public ?string $previewText = null;
+    public ?string $previewTitle = null;
     public int $estimatedCount = 0;
     public int $estimatedCost = 0;
 
@@ -63,6 +67,16 @@ class BulkGenerate extends Component
     }
 
     public function updatedTemplateText(): void
+    {
+        $this->parseVariables();
+    }
+
+    public function updatedCustomTitleTemplate(): void
+    {
+        $this->parseVariables();
+    }
+
+    public function updatedUseCustomTitle(): void
     {
         $this->parseVariables();
     }
@@ -118,6 +132,13 @@ class BulkGenerate extends Component
         // Generate preview with first row
         if (!empty($this->parsedVariables) && !empty($this->template_text)) {
             $this->previewText = $this->replacePlaceholders($this->template_text, $this->parsedVariables[0]);
+
+            // Generate title preview
+            if ($this->use_custom_title && !empty($this->custom_title_template)) {
+                $this->previewTitle = $this->replacePlaceholders($this->custom_title_template, $this->parsedVariables[0]);
+            } else {
+                $this->previewTitle = null;
+            }
         }
     }
 
@@ -153,6 +174,7 @@ class BulkGenerate extends Component
     {
         $this->validate([
             'template_text' => 'required|string|min:10',
+            'custom_title_template' => $this->use_custom_title ? 'required|string|min:3|max:255' : 'nullable|string|max:255',
             'variables_input' => 'required|string|min:3',
             'content_type' => 'required|in:social,blog,newsletter,multi',
             'tone' => 'required|in:short,long',
@@ -190,6 +212,7 @@ class BulkGenerate extends Component
             'customer_id' => $customer->id,
             'site_id' => $this->site_id,
             'template_text' => $this->template_text,
+            'custom_title_template' => $this->use_custom_title ? $this->custom_title_template : null,
             'variables' => $this->parsedVariables,
             'status' => 'pending',
             'total_count' => $this->estimatedCount,

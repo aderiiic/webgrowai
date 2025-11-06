@@ -11,6 +11,7 @@ class BulkGeneration extends Model
     protected $fillable = [
         'customer_id',
         'template_text',
+        'custom_title_template',
         'variables',
         'status',
         'total_count',

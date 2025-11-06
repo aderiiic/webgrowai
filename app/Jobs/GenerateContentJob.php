@@ -208,6 +208,7 @@ class GenerateContentJob implements ShouldQueue
             'bulkTemplate' => $inputs['bulk_template'] ?? null,
             'bulkVariables' => $inputs['bulk_variables'] ?? [],
             'generateTitle' => (bool) ($inputs['generate_title'] ?? false),
+            'customTitle' => $inputs['custom_title'] ?? null,
         ];
     }
 
@@ -249,9 +250,11 @@ class GenerateContentJob implements ShouldQueue
 
         $summary = trim($content->site->aiContextSummary());
 
-        return $summary !== ''
-            ? "KONCERN-/VERKSAMHETSKONTEXT: {$summary}\n"
-            : '';
+        if ($summary === '') {
+            return '';
+        }
+
+        return "FÖRETAGSINFORMATION (använd denna i texten, ersätt ALDRIG med generiska platshållare som [Ditt Företagsnamn]):\n{$summary}\n";
     }
 
     /**

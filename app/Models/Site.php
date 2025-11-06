@@ -76,6 +76,7 @@ class Site extends Model
     public function aiContextSummary(): string
     {
         $parts = array_filter([
+            $this->name ? "Företag: {$this->name}" : null,
             $this->industry ? "Bransch: {$this->industry}" : null,
             $this->business_description ? "Verksamhet: {$this->business_description}" : null,
             $this->target_audience ? "Målgrupp: {$this->target_audience}" : null,

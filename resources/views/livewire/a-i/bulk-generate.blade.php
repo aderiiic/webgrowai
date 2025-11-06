@@ -189,6 +189,55 @@ Uppsala	Stolar</pre>
                 @enderror
             </div>
 
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <label class="block text-sm font-medium text-gray-900">
+                        Egen titelmall
+                    </label>
+                    <button
+                        type="button"
+                        wire:click="$toggle('use_custom_title')"
+                        class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                    >
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            @if($use_custom_title)
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            @else
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            @endif
+                        </svg>
+                        {{ $use_custom_title ? 'Använd automatisk titel' : 'Skriv egen titel' }}
+                    </button>
+                </div>
+
+                @if($use_custom_title)
+                    <div x-data="{ show: false }"
+                         x-init="setTimeout(() => show = true, 50)"
+                         x-show="show"
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 transform -translate-y-2"
+                         x-transition:enter-end="opacity-100 transform translate-y-0"
+                    >
+                        <p class="text-sm text-gray-600 mb-3">
+                            Skapa en egen titelmall. Du kan använda samma variabler som i textmallen, t.ex. <code class="bg-gray-100 px-2 py-0.5 rounded">@{{stad}}</code> och <code class="bg-gray-100 px-2 py-0.5 rounded">@{{produkt}}</code>
+                        </p>
+                        <textarea
+                            wire:model.blur="custom_title_template"
+                            rows="2"
+                            class="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
+                            placeholder="I vår butik i @{{stad}} hittar du @{{produkt}}"
+                        ></textarea>
+                        @error('custom_title_template')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                @else
+                    <p class="text-sm text-gray-500 italic">
+                        Titeln genereras automatiskt av AI baserat på din text
+                    </p>
+                @endif
+            </div>
+
             <!-- Variables Input -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <label class="block text-sm font-medium text-gray-900 mb-2">
@@ -210,8 +259,14 @@ Uppsala	Stolar</pre>
                 <!-- Preview -->
                 @if($previewText)
                     <div class="mt-4 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-indigo-200">
-                        <h4 class="text-sm font-medium text-gray-900 mb-2">Förhandsvisning (första raden):</h4>
-                        <p class="text-gray-800">{{ $previewText }}</p>
+                        @if($previewTitle)
+                            <div class="mb-3">
+                                <h4 class="text-xs font-medium text-gray-600 mb-1">Förhandsvisning av titel:</h4>
+                                <p class="text-sm font-semibold text-gray-900">{{ $previewTitle }}</p>
+                            </div>
+                        @endif
+                        <h4 class="text-xs font-medium text-gray-600 mb-1">Förhandsvisning av text (första raden):</h4>
+                        <p class="text-sm text-gray-800">{{ $previewText }}</p>
                     </div>
                 @endif
 

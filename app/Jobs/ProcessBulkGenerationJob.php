@@ -88,12 +88,15 @@ class ProcessBulkGenerationJob implements ShouldQueue
 
         // Create AI content entries and dispatch generation jobs
         foreach ($variables as $index => $varSet) {
-            $titlePlaceholder = 'Genererar...';
-            //$title = $this->replacePlaceholders($bulk->template_text, $varSet);
+            if (!empty($bulk->custom_title_template)) {
+                $titlePlaceholder = $this->replacePlaceholders($bulk->custom_title_template, $varSet);
 
-            // Limit title length
-            if (mb_strlen($titlePlaceholder) > 255) {
-                $titlePlaceholder = mb_substr($titlePlaceholder, 0, 252) . '...';
+                // Limit title length
+                if (mb_strlen($titlePlaceholder) > 255) {
+                    $titlePlaceholder = mb_substr($titlePlaceholder, 0, 252) . '...';
+                }
+            } else {
+                $titlePlaceholder = 'Genererar...';
             }
 
             $inputs = [
@@ -101,7 +104,8 @@ class ProcessBulkGenerationJob implements ShouldQueue
                 'language' => $bulk->site?->locale ?? 'sv_SE',
                 'bulk_template' => $bulk->template_text,
                 'bulk_variables' => $varSet,
-                'generate_title' => true,
+                'generate_title' => empty($bulk->custom_title_template),
+                'custom_title' => !empty($bulk->custom_title_template) ? $titlePlaceholder : null,
             ];
 
             $content = AiContent::create([
