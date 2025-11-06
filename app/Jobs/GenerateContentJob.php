@@ -597,6 +597,7 @@ class GenerateContentJob implements ShouldQueue
      */
     private function buildHardRules(AiContent $content, array $inputs, string $language): string
     {
+        /*
         $rules = [];
 
         // Length enforcement
@@ -612,6 +613,62 @@ class GenerateContentJob implements ShouldQueue
         }
 
         return implode("\n", $rules);
+        */
+
+        $siteName = $content->site?->name ?? null;
+
+        $rules = match($language) {
+            'en' => [
+                "Write in {$language} language.",
+                "Generate ONLY the main content body text, no meta-text.",
+                "NO titles, headlines or labels at the start - begin directly with content.",
+                "DO NOT use generic placeholders like '[Company Name]', '[Your Brand]', '[Product Name]' etc.",
+            ],
+            'de' => [
+                "Schreibe auf {$language}.",
+                "Generiere NUR den Hauptinhalt, keine Meta-Texte.",
+                "KEINE Titel oder Überschriften am Anfang - beginne direkt mit dem Inhalt.",
+                "Verwende KEINE generischen Platzhalter wie '[Firmenname]', '[Ihre Marke]', '[Produktname]' etc.",
+            ],
+            default => [
+                "Skriv på {$language}.",
+                "Generera ENDAST själva innehållstexten, ingen metatext.",
+                "INGA titlar, rubriker eller etiketter i början - börja direkt med innehållet.",
+                "Använd ALDRIG generiska platshållare som '[Företagsnamn]', '[Ditt Företag]', '[Produktnamn]' etc.",
+            ],
+        };
+
+        // Add specific company name rule if available
+        if ($siteName) {
+            $rules[] = match($language) {
+                'en' => "When referring to the company, always use the actual name: '{$siteName}'",
+                'de' => "Verwende bei Firmenbezug immer den tatsächlichen Namen: '{$siteName}'",
+                default => "Vid företagsreferens, använd alltid det faktiska namnet: '{$siteName}'",
+            };
+        } else {
+            $rules[] = match($language) {
+                'en' => "If no company name is provided in context, write without mentioning a specific company name.",
+                'de' => "Wenn kein Firmenname im Kontext angegeben ist, schreibe ohne spezifischen Firmennamen.",
+                default => "Om inget företagsnamn finns i kontexten, skriv utan att nämna ett specifikt företagsnamn.",
+            };
+        }
+
+        // KRITISK regel för bulk generation med variabler
+        if (!empty($inputs['bulkVariables'])) {
+            $varValues = [];
+            foreach ($inputs['bulkVariables'] as $key => $value) {
+                $varValues[] = "\"{$value}\"";
+            }
+            $valueList = implode(', ', $varValues);
+
+            $rules[] = match($language) {
+                'en' => "MANDATORY: The exact terms {$valueList} MUST each appear AT LEAST 3-5 times naturally distributed throughout the text. This is critical for local SEO and user requirements. Do NOT just mention once in intro.",
+                'de' => "OBLIGATORISCH: Die exakten Begriffe {$valueList} MÜSSEN jeweils MINDESTENS 3-5 mal natürlich verteilt im Text vorkommen. Dies ist kritisch für lokales SEO und Benutzeranforderungen. NICHT nur einmal in Intro erwähnen.",
+                default => "OBLIGATORISKT: De exakta termerna {$valueList} MÅSTE vardera förekomma MINST 3-5 gånger naturligt fördelade genom hela texten. Detta är kritiskt för lokal SEO och användarens krav. Nämn dem INTE bara en gång i introt.",
+            };
+        }
+
+        return '- ' . implode("\n- ", $rules);
     }
 
     /**
