@@ -88,16 +88,20 @@ class ProcessBulkGenerationJob implements ShouldQueue
 
         // Create AI content entries and dispatch generation jobs
         foreach ($variables as $index => $varSet) {
-            $title = $this->replacePlaceholders($bulk->template_text, $varSet);
+            $titlePlaceholder = 'Genererar...';
+            //$title = $this->replacePlaceholders($bulk->template_text, $varSet);
 
             // Limit title length
-            if (mb_strlen($title) > 255) {
-                $title = mb_substr($title, 0, 252) . '...';
+            if (mb_strlen($titlePlaceholder) > 255) {
+                $titlePlaceholder = mb_substr($titlePlaceholder, 0, 252) . '...';
             }
 
             $inputs = [
                 'channel' => $this->getChannelFromType($bulk->content_type),
                 'language' => $bulk->site?->locale ?? 'sv_SE',
+                'bulk_template' => $bulk->template_text,
+                'bulk_variables' => $varSet,
+                'generate_title' => true,
             ];
 
             $content = AiContent::create([
@@ -105,7 +109,7 @@ class ProcessBulkGenerationJob implements ShouldQueue
                 'site_id' => $bulk->site_id,
                 'template_id' => $template->id,
                 'bulk_generation_id' => $bulk->id,
-                'title' => $title,
+                'title' => $titlePlaceholder,
                 'tone' => $bulk->tone,
                 'type' => $bulk->content_type,
                 'status' => 'queued',
@@ -121,7 +125,7 @@ class ProcessBulkGenerationJob implements ShouldQueue
                 'bulk_id' => $bulk->id,
                 'content_id' => $content->id,
                 'index' => $index,
-                'title' => $title,
+                'title' => $titlePlaceholder,
             ]);
         }
 
@@ -141,6 +145,29 @@ class ProcessBulkGenerationJob implements ShouldQueue
         }
 
         return $result;
+    }
+
+    private function generateTitlePlaceholder(string $type, array $variables): string
+    {
+        // Create a short identifier from first 2 variables
+        $parts = array_slice(array_values($variables), 0, 2);
+        $identifier = implode(' - ', $parts);
+
+        $prefix = match ($type) {
+            'blog' => 'Artikel',
+            'social' => 'Inlägg',
+            'newsletter' => 'Nyhetsbrev',
+            default => 'Text',
+        };
+
+        $title = "{$prefix}: {$identifier}";
+
+        // Limit length
+        if (mb_strlen($title) > 100) {
+            $title = mb_substr($title, 0, 97) . '...';
+        }
+
+        return $title;
     }
 
     private function getTemplateForType(string $type): ?ContentTemplate

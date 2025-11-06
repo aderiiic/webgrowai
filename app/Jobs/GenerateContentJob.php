@@ -117,12 +117,33 @@ class GenerateContentJob implements ShouldQueue
 
         // Post-process output
         $output = $this->cleanOutput($output);
+
+        $generatedTitle = null;
+        if ($inputs['generateTitle']) {
+            $extracted = $this->extractAndCleanTitle($output);
+
+            if ($extracted['title']) {
+                // Title was in the output, use it
+                $generatedTitle = $extracted['title'];
+                $output = $extracted['body'];
+
+                Log::info("[BulkGen] Extracted title from body", [
+                    'content_id' => $content->id,
+                    'title' => $generatedTitle,
+                ]);
+            } else {
+                // No title in output, generate one separately
+                $generatedTitle = $this->generateSeoTitle($content, $inputs, $provider, $output);
+            }
+        }
+
         $output = $this->ensureLinkPresence($output, $inputs['linkUrl'], $inputs['channel']);
 
         // Save results
         $content->update([
             'provider' => $provider->name(),
             'body_md' => $output,
+            'title' => $generatedTitle ?? $content->title,
             'status' => 'ready',
             'error' => null,
         ]);
@@ -183,6 +204,10 @@ class GenerateContentJob implements ShouldQueue
 
             // Language
             'language' => $this->determineLanguage($inputs),
+
+            'bulkTemplate' => $inputs['bulk_template'] ?? null,
+            'bulkVariables' => $inputs['bulk_variables'] ?? [],
+            'generateTitle' => (bool) ($inputs['generate_title'] ?? false),
         ];
     }
 
@@ -236,14 +261,18 @@ class GenerateContentJob implements ShouldQueue
     {
         $language = $inputs['language'];
 
-        // Render template hint
-        $templateHint = view('prompts.' . $content->template->slug, [
-            'title' => $inputs['title'],
-            'audience' => $inputs['audience'],
-            'goal' => $inputs['goal'],
-            'keywords' => $inputs['keywords'],
-            'brand' => $inputs['brand'],
-        ])->render();
+        if ($inputs['generateTitle'] && !empty($inputs['bulkTemplate'])) {
+            $templateHint = $this->buildBulkPrompt($inputs, $language);
+        } else {
+            // Render standard template hint
+            $templateHint = view('prompts.' . $content->template->slug, [
+                'title' => $inputs['title'],
+                'audience' => $inputs['audience'],
+                'goal' => $inputs['goal'],
+                'keywords' => $inputs['keywords'],
+                'brand' => $inputs['brand'],
+            ])->render();
+        }
 
         // Build context array
         $context = $this->buildContextArray($inputs, $bizContext, $language);
@@ -292,6 +321,57 @@ class GenerateContentJob implements ShouldQueue
 {$labels['template']}
 {$templateHint}
         ");
+    }
+
+    /**
+     * Build prompt for bulk generation
+     */
+    private function buildBulkPrompt(array $inputs, string $language): string
+    {
+        $template = $inputs['bulkTemplate'];
+        $variables = $inputs['bulkVariables'];
+
+        // Replace variables in template
+        $instruction = $template;
+        foreach ($variables as $key => $value) {
+            $instruction = str_replace('{{' . $key . '}}', $value, $instruction);
+        }
+
+        if ($language === 'en') {
+            return "YOUR TASK:\n{$instruction}\n\nIMPORTANT: Start your response with a catchy, SEO-optimized title on the first line, then leave one blank line, then start the actual content. Do NOT include the title in the body text itself.";
+        }
+
+        return "DITT UPPDRAG:\n{$instruction}\n\nVIKTIGT: Börja ditt svar med en catchy, SEO-optimerad titel på första raden, lämna sedan en blank rad, och börja sedan det faktiska innehållet. Inkludera INTE titeln i brödtexten själv.";
+    }
+
+    /**
+     * Extract title from body if present and clean body
+     */
+    private function extractAndCleanTitle(string $body): array
+    {
+        $lines = explode("\n", $body);
+
+        // Check if first line looks like a title
+        if (count($lines) > 2) {
+            $firstLine = trim($lines[0]);
+            $secondLine = trim($lines[1] ?? '');
+
+            // If first line is short and second line is empty (our format)
+            if ($firstLine !== '' && $secondLine === '' && mb_strlen($firstLine) < 120) {
+                // Remove markdown heading if present
+                $title = preg_replace('/^#+\s*/', '', $firstLine);
+
+                // Remove first two lines (title + blank line)
+                array_shift($lines);
+                array_shift($lines);
+
+                $cleanBody = trim(implode("\n", $lines));
+
+                return ['title' => $title, 'body' => $cleanBody];
+            }
+        }
+
+        return ['title' => null, 'body' => $body];
     }
 
     /**
@@ -733,6 +813,62 @@ class GenerateContentJob implements ShouldQueue
             'blog',
             'photo'
         ))->onQueue('ai');
+    }
+
+    private function generateSeoTitle(AiContent $content, array $inputs, $provider, string $generatedBody): string
+    {
+        $language = $inputs['language'];
+        $placeholders = $content->placeholders ?? [];
+
+        // Create excerpt from generated body (first 300 chars)
+        $excerpt = mb_substr(strip_tags($generatedBody), 0, 300);
+
+        $titlePrompt = match($language) {
+            'en' => "Create a short, catchy, SEO-optimized title (max 60 characters) for this content:\n\n{$excerpt}\n\nContext: " . json_encode($placeholders, JSON_UNESCAPED_SLASHES) . "\n\nProvide ONLY the title text, no quotes, no labels, just the title.",
+            'de' => "Erstelle einen kurzen, eingängigen, SEO-optimierten Titel (max 60 Zeichen) für diesen Inhalt:\n\n{$excerpt}\n\nKontext: " . json_encode($placeholders, JSON_UNESCAPED_SLASHES) . "\n\nNur den Titeltext, keine Anführungszeichen, keine Labels.",
+            default => "Skapa en kort, catchy, SEO-optimerad titel (max 60 tecken) för detta innehåll:\n\n{$excerpt}\n\nKontext: " . json_encode($placeholders, JSON_UNESCAPED_SLASHES) . "\n\nGe ENDAST titeltexten, inga citattecken, inga etiketter, bara titeln.",
+        };
+
+        try {
+            $title = $provider->generate($titlePrompt, [
+                'temperature' => 0.7,
+                'max_tokens' => 60,
+            ]);
+
+            // Aggressive cleaning
+            $title = trim($title);
+            $title = preg_replace('/^["\'\[\](){}]+|["\'\[\](){}]+$/', '', $title); // Remove quotes and brackets
+            $title = preg_replace('/^(Titel|Title|Rubrik|Headline):\s*/i', '', $title); // Remove labels
+            $title = preg_replace('/^#+\s*/', '', $title); // Remove markdown headers
+
+            // Limit length strictly
+            if (mb_strlen($title) > 70) {
+                // Try to cut at last space before 70 chars
+                $title = mb_substr($title, 0, 70);
+                $lastSpace = mb_strrpos($title, ' ');
+                if ($lastSpace && $lastSpace > 50) {
+                    $title = mb_substr($title, 0, $lastSpace);
+                }
+                $title .= '...';
+            }
+
+            Log::info("[BulkGen] Generated fallback title", [
+                'content_id' => $content->id,
+                'title' => $title,
+            ]);
+
+            return $title;
+        } catch (\Throwable $e) {
+            Log::error("[BulkGen] Failed to generate title", [
+                'content_id' => $content->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            // Fallback: Use variable values
+            $parts = array_slice(array_values($placeholders), 0, 2);
+            $fallback = implode(' - ', array_filter($parts));
+            return mb_substr($fallback ?: 'Genererad text', 0, 60);
+        }
     }
 
     /**
