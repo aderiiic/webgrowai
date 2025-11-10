@@ -14,6 +14,9 @@ class Upgrade extends Component
     public string $billing_cycle = 'monthly';
     public ?string $note = null;
 
+    public ?array $currentSubscription = null;
+    public ?int $currentPlanId = null;
+
     // UI: estimat
     public int $estimate_amount = 0; // ören
     public string $estimate_text = '';
@@ -34,6 +37,55 @@ class Upgrade extends Component
                 'stripe_price_yearly'  => (string)($p->stripe_price_yearly ?? ''),
             ])
             ->toArray();
+
+        $this->loadCurrentSubscription();
+    }
+
+    private function loadCurrentSubscription(): void
+    {
+        $user = auth()->user();
+
+        if (!$user || !$user->subscribed('default')) {
+            return;
+        }
+
+        $subscription = $user->subscription('default');
+
+        if (!$subscription) {
+            return;
+        }
+
+        // Hämta Stripe Price ID från prenumerationen
+        $stripePriceId = $subscription->stripe_price ?? null;
+
+        if ($stripePriceId) {
+            // Hitta plan baserat på Stripe Price ID
+            $plan = DB::table('plans')
+                ->where(function($q) use ($stripePriceId) {
+                    $q->where('stripe_price_monthly', $stripePriceId)
+                        ->orWhere('stripe_price_yearly', $stripePriceId);
+                })
+                ->first();
+
+            if ($plan) {
+                $this->currentPlanId = $plan->id;
+
+                // Bestäm om det är månadsvis eller årsvis
+                $isYearly = $stripePriceId === $plan->stripe_price_yearly;
+
+                $this->currentSubscription = [
+                    'plan_id' => $plan->id,
+                    'plan_name' => $plan->name,
+                    'is_yearly' => $isYearly,
+                    'price' => $isYearly ? $plan->price_yearly : $plan->price_monthly,
+                    'ends_at' => $subscription->ends_at?->format('Y-m-d'),
+                    'on_grace_period' => $subscription->onGracePeriod(),
+                ];
+
+                // Sätt billing_cycle baserat på nuvarande prenumeration
+                $this->billing_cycle = $isYearly ? 'annual' : 'monthly';
+            }
+        }
     }
 
     public function updatedDesiredPlanId(): void

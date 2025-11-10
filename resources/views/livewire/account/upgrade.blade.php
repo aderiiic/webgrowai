@@ -1,4 +1,3 @@
-
 <div>
     <div class="max-w-6xl mx-auto space-y-8">
         <!-- Header -->
@@ -37,6 +36,55 @@
             </div>
         @endif
 
+        <!-- Current Plan Card -->
+        @if($currentSubscription)
+            <div class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border-2 border-purple-200 p-6">
+                <div class="flex items-start justify-between">
+                    <div class="flex items-start space-x-4">
+                        <div class="w-14 h-14 bg-purple-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-3 mb-2">
+                                <h3 class="text-xl font-bold text-purple-900">Din nuvarande plan</h3>
+                                @if($currentSubscription['on_grace_period'])
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                        </svg>
+                                        Upphör snart
+                                    </span>
+                                @endif
+                            </div>
+                            <div class="space-y-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-2xl font-bold text-purple-900">{{ $currentSubscription['plan_name'] }}</span>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                        {{ $currentSubscription['is_yearly'] ? 'Årsvis' : 'Månadsvis' }}
+                                    </span>
+                                </div>
+                                <p class="text-purple-700">
+                                    <span class="text-lg font-semibold">{{ number_format($currentSubscription['price'], 0, ',', ' ') }} kr</span>
+                                    <span class="text-sm">{{ $currentSubscription['is_yearly'] ? '/år' : '/månad' }}</span>
+                                    <span class="text-sm ml-2">({{ number_format($currentSubscription['price'] * 1.25, 0, ',', ' ') }} kr inkl. moms)</span>
+                                </p>
+                                @if($currentSubscription['on_grace_period'] && $currentSubscription['ends_at'])
+                                    <p class="text-sm text-amber-700 font-medium">
+                                        ⚠️ Prenumerationen upphör: {{ \Carbon\Carbon::parse($currentSubscription['ends_at'])->format('Y-m-d') }}
+                                    </p>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    <a href="{{ route('billing.portal') }}" class="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-semibold rounded-lg hover:bg-purple-700 transition-colors">
+                        Hantera
+                    </a>
+                </div>
+            </div>
+        @endif
+
         <!-- Info card -->
         <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-200/50 p-6">
             <div class="flex items-start space-x-4">
@@ -68,6 +116,12 @@
                                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                             </svg>
                             Uppdatera betalningsmetod
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                            <strong>Byt plan</strong> (Stripe hanterar proration automatiskt)
                         </li>
                     </ul>
                 </div>
@@ -107,6 +161,7 @@
                     $priceIdYearly  = (string)($plan['stripe_price_yearly']  ?? '');
 
                     $isPopular = $index === 1;
+                    $isCurrentPlan = $currentPlanId === $plan['id'];
 
                     // Beräkna årlig besparing
                     $monthlyCost = $priceMonthly * 12;
@@ -114,7 +169,13 @@
                 @endphp
 
                 <div class="relative group">
-                    @if($isPopular)
+                    @if($isCurrentPlan)
+                        <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
+                            <span class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-1 rounded-full text-sm font-medium shadow-lg">
+                                Din plan
+                            </span>
+                        </div>
+                    @elseif($isPopular)
                         <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
                             <span class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-1 rounded-full text-sm font-medium shadow-lg">
                                 Populärast
@@ -123,14 +184,13 @@
                     @endif
 
                     <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-2
-                               {{ $isPopular ? 'border-indigo-200 ring-2 ring-indigo-100' : 'border-gray-100' }}
+                               {{ $isCurrentPlan ? 'border-purple-300 ring-2 ring-purple-100' : ($isPopular ? 'border-indigo-200 ring-2 ring-indigo-100' : 'border-gray-100') }}
                                p-6 lg:p-8 h-full flex flex-col">
 
                         <!-- Plan Name -->
                         <div class="text-center mb-6">
                             <h2 class="text-2xl font-bold text-gray-900 mb-2">{{ $plan['name'] }}</h2>
                         </div>
-
 
                         <!-- Price Display -->
                         <div class="text-center mb-8">
@@ -177,46 +237,60 @@
 
                         <!-- Action Button -->
                         <div class="mt-auto">
-                            @if($billing_cycle === 'monthly')
-                                <form method="POST" action="{{ route('billing.checkout') }}" class="w-full">
-                                    @csrf
-                                    <input type="hidden" name="price" value="{{ $priceIdMonthly }}">
-                                    <button
-                                        type="submit"
-                                        class="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed
-                                               text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200
-                                               transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl
-                                               focus:outline-none focus:ring-4 focus:ring-indigo-200"
-                                        {{ empty($priceIdMonthly) ? 'disabled' : '' }}
-                                    >
-                                        <span class="flex items-center justify-center">
-                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                            </svg>
-                                            Välj månadsvis
-                                        </span>
-                                    </button>
-                                </form>
+                            @if($isCurrentPlan)
+                                <button
+                                    disabled
+                                    class="w-full bg-gray-300 cursor-not-allowed text-gray-600 font-semibold py-4 px-6 rounded-xl"
+                                >
+                                    <span class="flex items-center justify-center">
+                                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                        </svg>
+                                        Nuvarande plan
+                                    </span>
+                                </button>
                             @else
-                                <form method="POST" action="{{ route('billing.checkout') }}" class="w-full">
-                                    @csrf
-                                    <input type="hidden" name="price" value="{{ $priceIdYearly }}">
-                                    <button
-                                        type="submit"
-                                        class="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed
-                                               text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200
-                                               transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl
-                                               focus:outline-none focus:ring-4 focus:ring-emerald-200"
-                                        {{ empty($priceIdYearly) ? 'disabled' : '' }}
-                                    >
-                                        <span class="flex items-center justify-center">
-                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                            </svg>
-                                            Välj årsvis
-                                        </span>
-                                    </button>
-                                </form>
+                                @if($billing_cycle === 'monthly')
+                                    <form method="POST" action="{{ route('billing.checkout') }}" class="w-full">
+                                        @csrf
+                                        <input type="hidden" name="price" value="{{ $priceIdMonthly }}">
+                                        <button
+                                            type="submit"
+                                            class="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed
+                                                   text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200
+                                                   transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl
+                                                   focus:outline-none focus:ring-4 focus:ring-indigo-200"
+                                            {{ empty($priceIdMonthly) ? 'disabled' : '' }}
+                                        >
+                                            <span class="flex items-center justify-center">
+                                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                </svg>
+                                                {{ $currentSubscription ? 'Byt till denna' : 'Välj månadsvis' }}
+                                            </span>
+                                        </button>
+                                    </form>
+                                @else
+                                    <form method="POST" action="{{ route('billing.checkout') }}" class="w-full">
+                                        @csrf
+                                        <input type="hidden" name="price" value="{{ $priceIdYearly }}">
+                                        <button
+                                            type="submit"
+                                            class="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed
+                                                   text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200
+                                                   transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl
+                                                   focus:outline-none focus:ring-4 focus:ring-emerald-200"
+                                            {{ empty($priceIdYearly) ? 'disabled' : '' }}
+                                        >
+                                            <span class="flex items-center justify-center">
+                                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                </svg>
+                                                {{ $currentSubscription ? 'Byt till denna' : 'Välj årsvis' }}
+                                            </span>
+                                        </button>
+                                    </form>
+                                @endif
                             @endif
                         </div>
                     </div>
