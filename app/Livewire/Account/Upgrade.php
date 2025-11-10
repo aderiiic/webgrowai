@@ -20,12 +20,20 @@ class Upgrade extends Component
 
     public function mount(): void
     {
-        $this->plans = DB::table('plans')->where('is_active', true)->orderBy('price_monthly')->get()->map(fn($p) => [
-            'id' => $p->id,
-            'name' => $p->name,
-            'price_monthly' => (int)$p->price_monthly,
-            'price_yearly'  => (int)$p->price_yearly,
-        ])->toArray();
+        $this->plans = DB::table('plans')
+            ->select('id', 'name', 'price_monthly', 'price_yearly', 'stripe_price_monthly', 'stripe_price_yearly')
+            ->where('is_active', true)
+            ->orderBy('price_monthly')
+            ->get()
+            ->map(fn($p) => [
+                'id' => (int)$p->id,
+                'name' => (string)$p->name,
+                'price_monthly' => (int)$p->price_monthly,
+                'price_yearly'  => (int)$p->price_yearly,
+                'stripe_price_monthly' => (string)($p->stripe_price_monthly ?? ''),
+                'stripe_price_yearly'  => (string)($p->stripe_price_yearly ?? ''),
+            ])
+            ->toArray();
     }
 
     public function updatedDesiredPlanId(): void

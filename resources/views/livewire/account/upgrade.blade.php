@@ -1,20 +1,28 @@
 
 <div>
-    <div class="max-w-4xl mx-auto space-y-8">
+    <div class="max-w-6xl mx-auto space-y-8">
         <!-- Header -->
         <div class="flex items-center justify-between">
             <h1 class="text-3xl font-bold text-gray-900 flex items-center">
                 <svg class="w-8 h-8 mr-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-4 4"/>
                 </svg>
-                Uppgradera plan
+                Uppgradera eller ändra plan
             </h1>
-            <a href="{{ route('account.usage') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 hover:border-gray-400 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-200 shadow-sm hover:shadow-md">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                </svg>
-                Se förbrukning
-            </a>
+            <div class="flex gap-3">
+                <a href="{{ route('billing.portal') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 shadow-sm hover:shadow-md">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                    </svg>
+                    Hantera betalningar
+                </a>
+                <a href="{{ route('account.usage') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 hover:border-gray-400 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-200 shadow-sm hover:shadow-md">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                    Se förbrukning
+                </a>
+            </div>
         </div>
 
         <!-- Success notification -->
@@ -30,143 +38,190 @@
         @endif
 
         <!-- Info card -->
-        <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl border border-emerald-200/50 p-6">
+        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-200/50 p-6">
             <div class="flex items-start space-x-4">
-                <div class="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                <div class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
                     <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                 </div>
-                <div>
-                    <h3 class="text-lg font-semibold text-emerald-900 mb-2">Planuppgradering</h3>
-                    <p class="text-emerald-800">Begär uppgradering till en högre plan för att få tillgång till fler funktioner och högre kvoter. Din begäran kommer att behandlas inom 24 timmar.</p>
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-blue-900 mb-2">Ändra eller avsluta din prenumeration</h3>
+                    <p class="text-blue-800 mb-3">
+                        Välj en ny plan nedan eller klicka på <strong>"Hantera betalningar"</strong> för att:
+                    </p>
+                    <ul class="space-y-1 text-sm text-blue-700">
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                            Avsluta prenumeration (löper ut på sista dagen innan förnyelse)
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                            Visa och ladda ner fakturor
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                            Uppdatera betalningsmetod
+                        </li>
+                    </ul>
                 </div>
             </div>
         </div>
 
-        <!-- Upgrade form -->
-        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 p-8">
-            <div class="space-y-8">
-                <!-- Plan selection -->
-                <div class="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200/50">
-                    <div class="flex items-center space-x-3 mb-4">
-                        <div class="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <label class="text-lg font-semibold text-gray-900">Välj plan</label>
-                            <p class="text-sm text-blue-700">Välj den plan som passar dina behov bäst</p>
-                        </div>
-                    </div>
-                    <select wire:model="desired_plan_id" class="w-full px-4 py-3 bg-white border border-blue-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
-                        <option value="">Välj ny plan...</option>
-                        @foreach($plans as $p)
-                            <option value="{{ $p['id'] }}">
-                                {{ $p['name'] }} — {{ number_format($p['price_monthly']/100, 0, ',', ' ') }} kr/månad
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('desired_plan_id')
-                    <p class="mt-2 text-sm text-red-600 flex items-center">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        {{ $message }}
-                    </p>
-                    @enderror
-                </div>
-
-                <!-- Billing cycle -->
-                <div class="p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200/50">
-                    <div class="flex items-center space-x-3 mb-4">
-                        <div class="w-10 h-10 bg-purple-500 rounded-xl flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <label class="text-lg font-semibold text-gray-900">Faktureringsintervall</label>
-                            <p class="text-sm text-purple-700">Välj hur ofta du vill betala</p>
-                        </div>
-                    </div>
-                    <select wire:model="billing_cycle" class="w-full px-4 py-3 bg-white border border-purple-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
-                        <option value="monthly">Månadsvis</option>
-                        <option value="annual">Årsvis (med rabatt)</option>
-                    </select>
-                    @error('billing_cycle')
-                    <p class="mt-2 text-sm text-red-600 flex items-center">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        {{ $message }}
-                    </p>
-                    @enderror
-                </div>
-
-                <!-- Price estimate -->
-                @if($estimate_amount > 0)
-                    <div class="p-6 bg-gradient-to-r from-yellow-50 to-amber-50 rounded-xl border border-yellow-200/50">
-                        <div class="flex items-center space-x-3 mb-4">
-                            <div class="w-10 h-10 bg-yellow-500 rounded-xl flex items-center justify-center">
-                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <div class="text-lg font-semibold text-gray-900">Prisuppskattning</div>
-                                <p class="text-sm text-yellow-700">Nästa faktura (ungefär)</p>
-                            </div>
-                        </div>
-                        <div class="bg-white bg-opacity-60 border border-yellow-200/50 rounded-lg p-4">
-                            <div class="text-2xl font-bold text-yellow-900 mb-1">{{ number_format($estimate_amount/100, 2, ',', ' ') }} kr</div>
-                            <div class="text-sm text-yellow-800">{{ $estimate_text }}</div>
-                        </div>
-                    </div>
-                @endif
-
-                <!-- Message -->
-                <div class="p-6 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-200/50">
-                    <div class="flex items-center space-x-3 mb-4">
-                        <div class="w-10 h-10 bg-gray-500 rounded-xl flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <label class="text-lg font-semibold text-gray-900">Meddelande</label>
-                            <p class="text-sm text-gray-700">Valfritt meddelande eller specialönskemål</p>
-                        </div>
-                    </div>
-                    <textarea wire:model.defer="note" rows="4" class="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-all duration-200 resize-none" placeholder="Skriv eventuella önskemål eller frågor här..."></textarea>
-                </div>
-
-                <!-- Action button -->
-                <div class="flex items-center justify-between pt-6 border-t border-gray-200">
-                    <div class="text-sm text-gray-600">
-                        <div class="flex items-center mb-1">
-                            <svg class="w-4 h-4 mr-1 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            Begäran behandlas inom 24 timmar
-                        </div>
-                        <div class="flex items-center">
-                            <svg class="w-4 h-4 mr-1 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                            </svg>
-                            Du får bekräftelse via e-post
-                        </div>
-                    </div>
-
-                    <button wire:click="submit" class="inline-flex items-center px-8 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl hover:from-emerald-700 hover:to-teal-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transform hover:scale-[1.02] transition-all duration-200 shadow-lg hover:shadow-xl">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
-                        </svg>
-                        Skicka uppgraderingsbegäran
-                    </button>
-                </div>
+        <!-- Billing Cycle Toggle -->
+        <div class="text-center">
+            <div class="inline-flex items-center bg-white rounded-full p-1 shadow-lg border">
+                <button
+                    class="px-6 py-2 rounded-full text-sm font-medium transition-all duration-200
+                           {{ $billing_cycle === 'monthly' ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900' }}"
+                    wire:click="$set('billing_cycle', 'monthly')"
+                >
+                    Månadsvis
+                </button>
+                <button
+                    class="px-6 py-2 rounded-full text-sm font-medium transition-all duration-200
+                           {{ $billing_cycle === 'annual' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900' }}"
+                    wire:click="$set('billing_cycle', 'annual')"
+                >
+                    Årsvis <span class="ml-1 text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">SPARA</span>
+                </button>
             </div>
+        </div>
+
+        <!-- Plans Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
+            @foreach($plans as $index => $plan)
+                @php
+                    $priceMonthly = (int)($plan['price_monthly'] ?? 0);
+                    $priceYearly  = (int)($plan['price_yearly']  ?? 0);
+                    $inclMonthly  = (int) round($priceMonthly * 1.25);
+                    $inclYearly   = (int) round($priceYearly  * 1.25);
+
+                    $priceIdMonthly = (string)($plan['stripe_price_monthly'] ?? '');
+                    $priceIdYearly  = (string)($plan['stripe_price_yearly']  ?? '');
+
+                    $isPopular = $index === 1;
+
+                    // Beräkna årlig besparing
+                    $monthlyCost = $priceMonthly * 12;
+                    $yearlySavings = $monthlyCost > 0 ? round((($monthlyCost - $priceYearly) / $monthlyCost) * 100) : 0;
+                @endphp
+
+                <div class="relative group">
+                    @if($isPopular)
+                        <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
+                            <span class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-1 rounded-full text-sm font-medium shadow-lg">
+                                Populärast
+                            </span>
+                        </div>
+                    @endif
+
+                    <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-2
+                               {{ $isPopular ? 'border-indigo-200 ring-2 ring-indigo-100' : 'border-gray-100' }}
+                               p-6 lg:p-8 h-full flex flex-col">
+
+                        <!-- Plan Name -->
+                        <div class="text-center mb-6">
+                            <h2 class="text-2xl font-bold text-gray-900 mb-2">{{ $plan['name'] }}</h2>
+                        </div>
+
+
+                        <!-- Price Display -->
+                        <div class="text-center mb-8">
+                            @if($billing_cycle === 'monthly')
+                                <div class="mb-2">
+                                    <span class="text-4xl font-bold text-gray-900">{{ number_format($priceMonthly, 0, ',', ' ') }}</span>
+                                    <span class="text-lg text-gray-600 ml-1">kr/mån</span>
+                                </div>
+                                <p class="text-sm text-gray-500">
+                                    {{ number_format($inclMonthly, 0, ',', ' ') }} kr inkl. moms
+                                </p>
+                            @else
+                                <div class="mb-2">
+                                    <span class="text-4xl font-bold text-gray-900">{{ number_format($priceYearly, 0, ',', ' ') }}</span>
+                                    <span class="text-lg text-gray-600 ml-1">kr/år</span>
+                                </div>
+                                <p class="text-sm text-gray-500 mb-1">
+                                    {{ number_format($inclYearly, 0, ',', ' ') }} kr inkl. moms
+                                </p>
+                                @if($yearlySavings > 0)
+                                    <div class="inline-flex items-center bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-medium">
+                                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                        </svg>
+                                        Spara {{ $yearlySavings }}%
+                                    </div>
+                                @endif
+                            @endif
+                        </div>
+
+                        <!-- Price Breakdown -->
+                        <div class="bg-gray-50 rounded-xl p-4 mb-6">
+                            <div class="grid grid-cols-2 gap-4 text-center">
+                                <div>
+                                    <div class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Månad</div>
+                                    <div class="text-sm font-semibold text-gray-900">{{ number_format($priceMonthly, 0, ',', ' ') }} kr</div>
+                                </div>
+                                <div>
+                                    <div class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">År</div>
+                                    <div class="text-sm font-semibold text-gray-900">{{ number_format($priceYearly, 0, ',', ' ') }} kr</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Button -->
+                        <div class="mt-auto">
+                            @if($billing_cycle === 'monthly')
+                                <form method="POST" action="{{ route('billing.checkout') }}" class="w-full">
+                                    @csrf
+                                    <input type="hidden" name="price" value="{{ $priceIdMonthly }}">
+                                    <button
+                                        type="submit"
+                                        class="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed
+                                               text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200
+                                               transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl
+                                               focus:outline-none focus:ring-4 focus:ring-indigo-200"
+                                        {{ empty($priceIdMonthly) ? 'disabled' : '' }}
+                                    >
+                                        <span class="flex items-center justify-center">
+                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                            </svg>
+                                            Välj månadsvis
+                                        </span>
+                                    </button>
+                                </form>
+                            @else
+                                <form method="POST" action="{{ route('billing.checkout') }}" class="w-full">
+                                    @csrf
+                                    <input type="hidden" name="price" value="{{ $priceIdYearly }}">
+                                    <button
+                                        type="submit"
+                                        class="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed
+                                               text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200
+                                               transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl
+                                               focus:outline-none focus:ring-4 focus:ring-emerald-200"
+                                        {{ empty($priceIdYearly) ? 'disabled' : '' }}
+                                    >
+                                        <span class="flex items-center justify-center">
+                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                            </svg>
+                                            Välj årsvis
+                                        </span>
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            @endforeach
         </div>
     </div>
 </div>
