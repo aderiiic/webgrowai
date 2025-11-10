@@ -722,7 +722,7 @@
                                     </svg>
                                     <div>
                                         <span class="font-semibold">Multi-text</span>
-                                        <p class="text-xs text-indigo-100 mt-0.5">Skapa 25 texter samtidigt – perfekt för kampanjer</p>
+                                        <p class="text-xs text-indigo-100 mt-0.5">Skapa 50 texter samtidigt – perfekt för kampanjer</p>
                                     </div>
                                 </li>
                                 <li class="flex items-start gap-3 text-white">
@@ -807,7 +807,7 @@
                                     </svg>
                                     <div>
                                         <span class="font-semibold">Multi-text PRO</span>
-                                        <p class="text-xs text-slate-400 mt-0.5">Skapa 50 texter samtidigt – skala snabbt</p>
+                                        <p class="text-xs text-slate-400 mt-0.5">Skapa 100 texter samtidigt – skala snabbt</p>
                                     </div>
                                 </li>
                                 <li class="flex items-start gap-3 text-slate-300">

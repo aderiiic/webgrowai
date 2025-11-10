@@ -169,7 +169,7 @@
                                 <svg class="w-5 h-5 text-yellow-300 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
-                                <span class="font-semibold">Multi-text (25 texter samtidigt)</span>
+                                <span class="font-semibold">Multi-text (50 texter samtidigt)</span>
                             </li>
                             <li class="flex items-start gap-3 text-white">
                                 <svg class="w-5 h-5 text-yellow-300 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -239,7 +239,7 @@
                                 <svg class="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
-                                <span class="font-semibold">Multi-text PRO (50 texter samtidigt)</span>
+                                <span class="font-semibold">Multi-text PRO (100 texter samtidigt)</span>
                             </li>
                             <li class="flex items-start gap-3 text-slate-300">
                                 <svg class="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -325,10 +325,10 @@
                                     </svg>
                                 </td>
                                 <td class="p-6 text-center bg-white/5">
-                                    <span class="text-emerald-400 font-semibold">25</span>
+                                    <span class="text-emerald-400 font-semibold">50</span>
                                 </td>
                                 <td class="p-6 text-center">
-                                    <span class="text-purple-400 font-semibold">50</span>
+                                    <span class="text-purple-400 font-semibold">100</span>
                                 </td>
                             </tr>
 
