@@ -297,5 +297,201 @@
                 </div>
             @endforeach
         </div>
+
+        <div class="max-w-6xl mx-auto mb-16">
+            <div class="bg-black backdrop-blur-xl rounded-3xl border border-white/10 overflow-hidden">
+                <div class="p-8 bg-black/5 border-b border-white/10">
+                    <h2 class="text-3xl font-bold text-white text-center">Jämför funktioner</h2>
+                    <p class="text-slate-300 text-center mt-2">Se vad som ingår i varje plan</p>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                        <tr class="border-b border-white/10">
+                            <th class="text-left p-6 text-white font-semibold">Funktioner</th>
+                            <th class="text-center p-6 text-white font-semibold">Starter</th>
+                            <th class="text-center p-6 text-white font-semibold bg-white/5">
+                                <div class="flex flex-col items-center">
+                                    <span>Growth</span>
+                                    <span class="text-xs text-emerald-400 font-normal mt-1">Mest populär</span>
+                                </div>
+                            </th>
+                            <th class="text-center p-6 text-white font-semibold">Pro</th>
+                        </tr>
+                        </thead>
+                        <tbody class="text-slate-300">
+                        <!-- Credits -->
+                        <tr class="border-b border-white/10">
+                            <td class="p-6 font-medium text-white">Credits per månad</td>
+                            <td class="p-6 text-center">5 000</td>
+                            <td class="p-6 text-center bg-white/5">15 000</td>
+                            <td class="p-6 text-center">50 000</td>
+                        </tr>
+
+                        <!-- Websites -->
+                        <tr class="border-b border-white/10">
+                            <td class="p-6 font-medium text-white">Antal webbplatser</td>
+                            <td class="p-6 text-center">1</td>
+                            <td class="p-6 text-center bg-white/5">3</td>
+                            <td class="p-6 text-center">10</td>
+                        </tr>
+
+                        <!-- Users -->
+                        <tr class="border-b border-white/10">
+                            <td class="p-6 font-medium text-white">Antal användare</td>
+                            <td class="p-6 text-center">1</td>
+                            <td class="p-6 text-center bg-white/5">2</td>
+                            <td class="p-6 text-center">3</td>
+                        </tr>
+
+                        <!-- Multi-text -->
+                        <tr class="border-b border-white/10">
+                            <td class="p-6 font-medium text-white">Multi-text (samtidiga texter)</td>
+                            <td class="p-6 text-center">
+                                <svg class="w-5 h-5 text-slate-500 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                </svg>
+                            </td>
+                            <td class="p-6 text-center bg-white/5">
+                                <span class="text-emerald-400 font-semibold">50</span>
+                            </td>
+                            <td class="p-6 text-center">
+                                <span class="text-purple-400 font-semibold">100</span>
+                            </td>
+                        </tr>
+
+                        <!-- AI Text -->
+                        <tr class="border-b border-white/10">
+                            <td class="p-6 font-medium text-white">AI-textgenerering</td>
+                            <td class="p-6 text-center">
+                                <svg class="w-6 h-6 text-emerald-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </td>
+                            <td class="p-6 text-center bg-white/5">
+                                <svg class="w-6 h-6 text-emerald-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </td>
+                            <td class="p-6 text-center">
+                                <svg class="w-6 h-6 text-emerald-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </td>
+                        </tr>
+
+                        <!-- AI Images -->
+                        <tr class="border-b border-white/10">
+                            <td class="p-6 font-medium text-white">AI-bildgenerering</td>
+                            <td class="p-6 text-center">
+                                <svg class="w-6 h-6 text-emerald-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </td>
+                            <td class="p-6 text-center bg-white/5">
+                                <svg class="w-6 h-6 text-emerald-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </td>
+                            <td class="p-6 text-center">
+                                <svg class="w-6 h-6 text-emerald-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </td>
+                        </tr>
+
+                        <!-- Publishing -->
+                        <tr class="border-b border-white/10">
+                            <td class="p-6 font-medium text-white">Automatisk publicering</td>
+                            <td class="p-6 text-center">
+                                <svg class="w-6 h-6 text-emerald-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </td>
+                            <td class="p-6 text-center bg-white/5">
+                                <svg class="w-6 h-6 text-emerald-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </td>
+                            <td class="p-6 text-center">
+                                <svg class="w-6 h-6 text-emerald-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </td>
+                        </tr>
+
+                        <!-- SEO -->
+                        <tr class="border-b border-white/10">
+                            <td class="p-6 font-medium text-white">SEO-optimering & nyckelordsanalys</td>
+                            <td class="p-6 text-center">
+                                <svg class="w-5 h-5 text-slate-500 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                </svg>
+                            </td>
+                            <td class="p-6 text-center bg-white/5">
+                                <svg class="w-6 h-6 text-emerald-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </td>
+                            <td class="p-6 text-center">
+                                <svg class="w-6 h-6 text-emerald-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </td>
+                        </tr>
+
+                        <!-- CRO -->
+                        <tr class="border-b border-white/10">
+                            <td class="p-6 font-medium text-white">Konverteringsanalys & lead tracking</td>
+                            <td class="p-6 text-center">
+                                <svg class="w-5 h-5 text-slate-500 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                </svg>
+                            </td>
+                            <td class="p-6 text-center bg-white/5">
+                                <svg class="w-6 h-6 text-emerald-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </td>
+                            <td class="p-6 text-center">
+                                <svg class="w-6 h-6 text-emerald-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </td>
+                        </tr>
+
+                        <!-- Analytics -->
+                        <tr class="border-b border-white/10">
+                            <td class="p-6 font-medium text-white">Avancerad analys & rapporter</td>
+                            <td class="p-6 text-center">
+                                <svg class="w-5 h-5 text-slate-500 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                </svg>
+                            </td>
+                            <td class="p-6 text-center bg-white/5">
+                                <svg class="w-5 h-5 text-slate-500 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                </svg>
+                            </td>
+                            <td class="p-6 text-center">
+                                <svg class="w-6 h-6 text-emerald-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </td>
+                        </tr>
+
+                        <!-- Support -->
+                        <tr>
+                            <td class="p-6 font-medium text-white">Support</td>
+                            <td class="p-6 text-center">E-post</td>
+                            <td class="p-6 text-center bg-white/5">Prioriterad</td>
+                            <td class="p-6 text-center">Dedikerad kontakt</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 </div>

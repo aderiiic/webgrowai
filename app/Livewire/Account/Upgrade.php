@@ -10,22 +10,42 @@ use Livewire\Component;
 class Upgrade extends Component
 {
     public array $plans = [];
-    public ?int $desired_plan_id = null;
     public string $billing_cycle = 'monthly';
-    public ?string $note = null;
 
     public ?array $currentSubscription = null;
     public ?int $currentPlanId = null;
 
-    // UI: estimat
-    public int $estimate_amount = 0; // ören
-    public string $estimate_text = '';
+    // För jämförelsetabell
+    public array $planFeatures = [];
 
     public function mount(): void
     {
-        $this->plans = DB::table('plans')
-            ->select('id', 'name', 'price_monthly', 'price_yearly', 'stripe_price_monthly', 'stripe_price_yearly')
-            ->where('is_active', true)
+        // Ladda nuvarande prenumeration först
+        $this->loadCurrentSubscription();
+
+        // Hämta alla aktiva planer + inkludera nuvarande plan även om den är inaktiv
+        $this->loadPlans();
+
+        // Hämta features för alla planer
+        $this->loadPlanFeatures();
+    }
+
+    private function loadPlans(): void
+    {
+        $query = DB::table('plans')
+            ->select('id', 'name', 'price_monthly', 'price_yearly', 'stripe_price_monthly', 'stripe_price_yearly');
+
+        // Om användaren har en inaktiv plan, inkludera den ändå
+        if ($this->currentPlanId) {
+            $query->where(function($q) {
+                $q->where('is_active', true)
+                    ->orWhere('id', $this->currentPlanId);
+            });
+        } else {
+            $query->where('is_active', true);
+        }
+
+        $this->plans = $query
             ->orderBy('price_monthly')
             ->get()
             ->map(fn($p) => [
@@ -37,114 +57,120 @@ class Upgrade extends Component
                 'stripe_price_yearly'  => (string)($p->stripe_price_yearly ?? ''),
             ])
             ->toArray();
-
-        $this->loadCurrentSubscription();
     }
 
     private function loadCurrentSubscription(): void
     {
         $user = auth()->user();
-
-        if (!$user || !$user->subscribed('default')) {
+        if (!$user) {
             return;
         }
 
-        $subscription = $user->subscription('default');
+        // Försök först hämta från Cashiers subscriptions-tabell
+        if ($user->subscribed('default')) {
+            $subscription = $user->subscription('default');
+            $stripePriceId = $subscription->stripe_price ?? null;
 
-        if (!$subscription) {
+            if ($stripePriceId) {
+                $plan = DB::table('plans')
+                    ->where(function($q) use ($stripePriceId) {
+                        $q->where('stripe_price_monthly', $stripePriceId)
+                            ->orWhere('stripe_price_yearly', $stripePriceId);
+                    })
+                    ->first();
+
+                if ($plan) {
+                    $this->setCurrentSubscription($plan, $stripePriceId, $subscription);
+                    return;
+                }
+            }
+        }
+
+        // Annars försök hämta från app_subscriptions (din egen tabell)
+        $customer = DB::table('customers')
+            ->join('customer_user', 'customers.id', '=', 'customer_user.customer_id')
+            ->where('customer_user.user_id', $user->id)
+            ->select('customers.*')
+            ->first();
+
+        if (!$customer) {
             return;
         }
 
-        // Hämta Stripe Price ID från prenumerationen
-        $stripePriceId = $subscription->stripe_price ?? null;
+        $appSubscription = DB::table('app_subscriptions')
+            ->where('customer_id', $customer->id)
+            ->where('status', 'active')
+            ->orderByDesc('id')
+            ->first();
 
-        if ($stripePriceId) {
-            // Hitta plan baserat på Stripe Price ID
-            $plan = DB::table('plans')
-                ->where(function($q) use ($stripePriceId) {
-                    $q->where('stripe_price_monthly', $stripePriceId)
-                        ->orWhere('stripe_price_yearly', $stripePriceId);
-                })
-                ->first();
+        if ($appSubscription) {
+            $plan = DB::table('plans')->find($appSubscription->plan_id);
 
             if ($plan) {
                 $this->currentPlanId = $plan->id;
-
-                // Bestäm om det är månadsvis eller årsvis
-                $isYearly = $stripePriceId === $plan->stripe_price_yearly;
+                $isYearly = $appSubscription->billing_cycle === 'annual';
 
                 $this->currentSubscription = [
                     'plan_id' => $plan->id,
                     'plan_name' => $plan->name,
                     'is_yearly' => $isYearly,
                     'price' => $isYearly ? $plan->price_yearly : $plan->price_monthly,
-                    'ends_at' => $subscription->ends_at?->format('Y-m-d'),
-                    'on_grace_period' => $subscription->onGracePeriod(),
+                    'ends_at' => $appSubscription->current_period_end ?? null,
+                    'on_grace_period' => false,
                 ];
 
-                // Sätt billing_cycle baserat på nuvarande prenumeration
                 $this->billing_cycle = $isYearly ? 'annual' : 'monthly';
             }
         }
     }
 
-    public function updatedDesiredPlanId(): void
+    private function setCurrentSubscription($plan, $stripePriceId, $subscription): void
     {
-        $this->recalcEstimate();
+        $this->currentPlanId = $plan->id;
+        $isYearly = $stripePriceId === $plan->stripe_price_yearly;
+
+        $this->currentSubscription = [
+            'plan_id' => $plan->id,
+            'plan_name' => $plan->name,
+            'is_yearly' => $isYearly,
+            'price' => $isYearly ? $plan->price_yearly : $plan->price_monthly,
+            'ends_at' => $subscription->ends_at?->format('Y-m-d'),
+            'on_grace_period' => $subscription->onGracePeriod(),
+        ];
+
+        $this->billing_cycle = $isYearly ? 'annual' : 'monthly';
     }
 
-    public function updatedBillingCycle(): void
+    private function loadPlanFeatures(): void
     {
-        $this->recalcEstimate();
-    }
+        // Hämta alla features för varje plan (inklusive inaktiva planer om de är nuvarande)
+        $planIds = collect($this->plans)->pluck('id')->toArray();
 
-    private function recalcEstimate(): void
-    {
-        $plan = collect($this->plans)->firstWhere('id', $this->desired_plan_id);
-        if (!$plan) {
-            $this->estimate_amount = 0;
-            $this->estimate_text = '';
+        if (empty($planIds)) {
             return;
         }
 
-        if ($this->billing_cycle === 'annual') {
-            $this->estimate_amount = (int)($plan['price_yearly'] ?? 0);
-            $this->estimate_text = 'Årspremie (ex moms), debiteras årligen';
-        } else {
-            $this->estimate_amount = (int)($plan['price_monthly'] ?? 0);
-            $this->estimate_text = 'Månadspremie (ex moms), debiteras månadsvis';
+        $features = DB::table('plan_features')
+            ->whereIn('plan_id', $planIds)
+            ->where('is_enabled', true)
+            ->get()
+            ->groupBy('plan_id');
+
+        foreach ($this->plans as $plan) {
+            $planFeatures = $features->get($plan['id'], collect());
+
+            $this->planFeatures[$plan['id']] = $planFeatures
+                ->keyBy('key')
+                ->map(fn($f) => [
+                    'enabled' => true,
+                    'limit' => $f->limit_value ?? null,
+                ])
+                ->toArray();
         }
-    }
-
-    public function submit(): void
-    {
-        $customer = app(\App\Support\CurrentCustomer::class)->get();
-        abort_unless($customer, 403);
-
-        $this->validate([
-            'desired_plan_id' => 'required|integer|exists:plans,id',
-            'billing_cycle'   => 'required|in:monthly,annual',
-        ]);
-
-        DB::table('subscription_change_requests')->insert([
-            'customer_id'      => $customer->id,
-            'desired_plan_id'  => $this->desired_plan_id,
-            'billing_cycle'    => $this->billing_cycle,
-            'status'           => 'pending',
-            'note'             => $this->note,
-            'created_at'       => now(),
-            'updated_at'       => now(),
-        ]);
-
-        session()->flash('success', 'Begäran skickad. Vi återkommer inom kort.');
-        $this->redirectRoute('account.usage');
     }
 
     public function render()
     {
-        // håll estimatet uppdaterat vid initial render
-        $this->recalcEstimate();
-
         return view('livewire.account.upgrade');
     }
 }
