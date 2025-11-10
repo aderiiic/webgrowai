@@ -53,4 +53,9 @@ class Customer extends Model
             'id'
         )->orderBy('newsletter_products.sort_order');
     }
+
+    public function subscription(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Subscription::class)->latestOfMany();
+    }
 }

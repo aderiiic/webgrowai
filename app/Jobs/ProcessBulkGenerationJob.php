@@ -24,7 +24,7 @@ class ProcessBulkGenerationJob implements ShouldQueue
 
     public function handle(QuotaGuard $quotaGuard): void
     {
-        $bulk = BulkGeneration::with('customer', 'site')->findOrFail($this->bulkGenerationId);
+        $bulk = BulkGeneration::with('customer.subscription.plan.features', 'site')->findOrFail($this->bulkGenerationId);
 
         if ($bulk->status !== 'pending') {
             Log::info("[BulkGen] Hoppar över - status är {$bulk->status}", ['bulk_id' => $bulk->id]);
@@ -207,7 +207,18 @@ class ProcessBulkGenerationJob implements ShouldQueue
             return 10; // Default för free/trial
         }
 
-        return match ($plan->slug) {
+        $limit = $plan->quota('ai.bulk_limit');
+
+        if ($limit !== null) {
+            return $limit;
+        }
+
+        Log::warning("[BulkGen] ai.bulk_limit not configured for plan, using fallback", [
+            'plan_id' => $plan->id,
+            'plan_name' => $plan->name,
+        ]);
+
+        return match ($plan->slug ?? '') {
             'starter' => 10,
             'growth' => 100,
             'pro', 'enterprise' => 200,

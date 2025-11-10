@@ -232,23 +232,26 @@ class BulkGenerate extends Component
 
     private function getMaxTextsForPlan($customer): int
     {
-        $featureGuard = app(FeatureGuard::class);
+        $plan = $customer->subscription?->plan;
 
-        // Hämta limit från plan_features
-        $limit = $featureGuard->getFeatureLimit($customer, FeatureGuard::FEATURE_BULK_LIMIT);
-
-        // Fallback om inte konfigurerat
-        if ($limit === null) {
-            $plan = $customer->subscription?->plan;
-
-            return match ($plan?->slug ?? '') {
-                'growth' => 25,
-                'pro', 'enterprise' => 50,
-                default => 10,
-            };
+        if (!$plan) {
+            return 10; // Default för kunder utan subscription
         }
 
-        return $limit;
+        // Try to get limit from plan_features table using the quota() helper
+        $limit = $plan->quota('ai.bulk_limit');
+
+        if ($limit !== null) {
+            return $limit;
+        }
+
+        // Fallback to hardcoded values if feature not configured
+        return match ($plan->slug ?? '') {
+            'starter' => 10,
+            'growth' => 100,
+            'pro', 'enterprise' => 200,
+            default => 10,
+        };
     }
 
     private function validateTemplateQuality(): void
