@@ -492,7 +492,8 @@
                         <li>Du bryter mot dessa användarvillkor</li>
                         <li>Betalning uteblivit i mer än 30 dagar</li>
                         <li>Kontot använts för olaglig verksamhet</li>
-                        <li>Vi upphör med tjänsten (med 90 dagars varsel)</li>
+                        <li>Vi upphör med tjänsten</li>
+                        <li>Kontot har varit kostnadsfritt, utan aktiv prenumeration eller betalning i minst 30 dagar efter att provperioden avslutats. I sådant fall har vi rätt att avsluta kontot och radera tillhörande data enligt vår integritetspolicy.</li>
                     </ul>
 
                     <h3>Vid avslut:</h3>
@@ -514,14 +515,6 @@
                         <li>Förtydliga befintliga regler</li>
                         <li>Lägga till nya funktioner</li>
                     </ul>
-
-                    <h3>Ändringsprocess:</h3>
-                    <ol>
-                        <li>E-postmeddelande till alla användare minst 30 dagar före</li>
-                        <li>Notifikation i tjänsten</li>
-                        <li>Möjlighet att avsluta kontot om du inte accepterar</li>
-                        <li>Fortsatt användning = acceptans av nya villkor</li>
-                    </ol>
 
                     <h2>13. Ansvarsbegränsning</h2>
                     <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 my-6">
