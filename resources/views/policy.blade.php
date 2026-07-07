@@ -349,7 +349,7 @@
                                 <tbody class="divide-y divide-gray-200 text-sm">
                                 <tr>
                                     <td class="px-4 py-2 font-medium">Kontouppgifter</td>
-                                    <td class="px-4 py-2">Under avtalsperioden + 3 år</td>
+                                    <td class="px-4 py-2">30 dagar efter provperiodens slut eller 30 dagars inaktivitet</td>
                                     <td class="px-4 py-2">Avtalsuppfyllelse, bokföring</td>
                                 </tr>
                                 <tr class="bg-amber-50">
@@ -549,7 +549,7 @@
                                 <tbody class="divide-y divide-gray-200 text-sm">
                                 <tr>
                                     <td class="px-4 py-2 font-medium">Kontouppgifter</td>
-                                    <td class="px-4 py-2">Under avtalsperioden + 3 år</td>
+                                    <td class="px-4 py-2">Under avtalsperioden + 30 dagar efter kontoavslut</td>
                                     <td class="px-4 py-2">Avtalsuppfyllelse, bokföring</td>
                                 </tr>
                                 <tr>
